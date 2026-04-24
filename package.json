@@ -1,0 +1,30 @@
+{
+  "name": "sc-borrow",
+  "version": "1.0.0",
+  "description": "Projeto de soluções computacionais do curso de Engenharia de Software/UCB",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enrique-sem-h/sc-borrow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/enrique-sem-h/sc-borrow/issues"
+  },
+  "homepage": "https://github.com/enrique-sem-h/sc-borrow#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.22.2",
+    "next": "^16.2.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
+  }
+}
