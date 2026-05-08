@@ -1,0 +1,46 @@
+import {
+  mysqlTable,
+  int,
+  varchar,
+  float,
+  boolean,
+} from "drizzle-orm/mysql-core";
+import { randomUUID } from "node:crypto";
+import { usuarios } from "./usuariosSchema";
+
+export const anuncios = mysqlTable("anuncios", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: varchar("descricao", { length: 255 }).notNull(),
+  categoria: varchar("categoria", {
+    length: 255,
+    enum: [
+      "Moda e Acessórios",
+      "Eletrônicos",
+      "Beleza e Cuidados",
+      "Casa e decoração",
+      "Animais e Acessórios",
+    ],
+  }).notNull(),
+  valorDiario: float("valor_diario").notNull(),
+  caucao: float("caucao").notNull(),
+
+  usuarioId: varchar("usuario_id", { length: 36 })
+    .references(() => usuarios.id)
+    .notNull(),
+});
+
+export const fotoAnuncios = mysqlTable("foto_anuncio", {
+  id: varchar("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  url: varchar("url", { length: 255 }).notNull(),
+  ordem: int("ordem").notNull(),
+  principal: boolean("principal").notNull().default(false),
+
+  anuncioId: varchar("anuncio_id", { length: 36 })
+    .references(() => anuncios.id)
+    .notNull(),
+});
