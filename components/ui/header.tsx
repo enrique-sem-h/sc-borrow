@@ -2,10 +2,22 @@
 import { useState } from "react";
 import { Search, Bell, ClipboardList, MessageCircle } from "lucide-react";
 import LoginModal from "@/components/ui/login-modal";
+import RegisterModal from "./register-modal";
 
 export default function Header() {
       const [isLoginOpen, setIsLoginOpen] = useState(false);
+      const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
+
+      const onRegisterBtnClick = () => {
+        setIsLoginOpen(false)
+        setIsRegisterOpen(true)
+      }
+
+      const onLoginBtnClick = () => {
+        setIsLoginOpen(true)
+        setIsRegisterOpen(false)
+      }
   return (
     <>
         <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4">
@@ -76,6 +88,13 @@ export default function Header() {
         <LoginModal
             isOpen={isLoginOpen}
             onClose={() => setIsLoginOpen(false)}
+            onRegisterClick={onRegisterBtnClick}
+            />
+
+        <RegisterModal
+            isOpen={isRegisterOpen}
+            onClose={() => setIsRegisterOpen(false)}
+            onLogin={onLoginBtnClick}
             />
     </>
   );

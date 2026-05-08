@@ -1,25 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { Input } from "./input";
 
-interface LoginModalProps {
+interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRegisterClick: () => void;
+  onLogin: () => void;
 }
 
-export default function LoginModal({
+export default function RegisterModal({
   isOpen,
   onClose,
-  onRegisterClick
-}: LoginModalProps) {
+  onLogin
+}: RegisterModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   if (!isOpen) return null;
 
-  const onRegisterBtnClick = () => {
-    onRegisterClick()
+  const onLoginClick =() => {
+    onLogin()
   }
 
   return (
@@ -48,49 +50,22 @@ export default function LoginModal({
 
         <div className="border-b mt-5 mb-7" />
 
-        <h2 className="text-3xl font-bold mb-7">
-          Acesse sua conta
+        <h2 className="text-3xl font-bold mb-7 text-center">
+        Crie sua conta
         </h2>
 
         <form className="flex flex-col gap-5">
 
-          <input
-            type="text"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="
-              border-2
-              rounded-xl
-              px-5
-              py-3
-              text-lg
-              outline-none
-              text-gray-700
-              placeholder:text-gray-400
-              focus:border-gray-400
-              transition
-            "
-          />
 
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="
-              border-2
-              rounded-xl
-              px-5
-              py-3
-              text-lg
-              outline-none
-              text-gray-700
-              placeholder:text-gray-400
-              focus:border-gray-400
-              transition
-            "
-          />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Input placeholder="Nome Completo" name="name" />
+            <Input placeholder="Telefone" name="phone" />
+            <Input placeholder="Email" type="email" name="email" />
+            <Input placeholder="CPF" name="cpf" />
+            <Input placeholder="Senha" type="password" name="password" />
+            <Input placeholder="Confirmar Senha" type="password" name="confirm-password" />
+            <Input placeholder="Endereço" name="address" className="col-span-2"  />
+          </div>
 
           <button
             className="
@@ -104,24 +79,20 @@ export default function LoginModal({
               mt-2
             "
           >
-            Entrar
+           Cadastrar-se
           </button>
         </form>
 
         <div className="text-center mt-6 text-gray-500">
 
-          <p className="text-base mb-2 cursor-pointer hover:text-black transition">
-            Esqueceu a senha?
-          </p>
-
           <p className="text-base">
-            Não possui uma conta?{" "}
+           Já possui conta?{" "}
 
             <button
-            onClick={onRegisterBtnClick}
+            onClick={onLoginClick}
               className="underline hover:text-black transition"
             >
-              Cadastrar-se
+            Login
             </button>
           </p>
         </div>

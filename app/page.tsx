@@ -3,6 +3,7 @@
 import { useState } from "react";
 import LoginModal from "@/components/ui/login-modal";
 import { Shrikhand } from "next/font/google";
+import RegisterModal from "@/components/ui/register-modal";
 
 const shrikhand = Shrikhand({ 
   weight: "400", 
@@ -12,6 +13,12 @@ const shrikhand = Shrikhand({
 
 export default function Home() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+      const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+      const onRegisterBtnClick = () => {
+        setIsLoginOpen(false)
+        setIsRegisterOpen(true)
+      }
 
   const categories = [
     {
@@ -168,10 +175,6 @@ export default function Home() {
         </div>
       </section>
 
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-      />
     </main>
   );
 }
