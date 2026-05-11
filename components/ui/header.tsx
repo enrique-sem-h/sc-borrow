@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import { Search, Bell, ClipboardList, MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import LoginModal from "@/components/ui/login-modal";
 import RegisterModal from "./register-modal";
 
 export default function Header() {
+      const router = useRouter();
       const [isLoginOpen, setIsLoginOpen] = useState(false);
       const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
@@ -23,9 +26,9 @@ export default function Header() {
         <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
 
-            <h1 className="text-3xl md:text-4xl font-['Shrikhand'] tracking-tight shrink-0">
+            <Link  href="/" className="text-3xl md:text-4xl font-['Shrikhand'] tracking-tight shrink-0">
             BORROW
-            </h1>
+            </Link>
 
             <div className="flex items-center bg-[#f5f5f5] border border-gray-300 rounded-lg px-5 py-3 w-full max-w-xl">
             <input
@@ -42,7 +45,7 @@ export default function Header() {
 
             <div className="flex items-center gap-2 md:gap-4 text-lg text-gray-700">
             <button
-                onClick={() => { /* TODO: ir para página "meus-anuncios" */ }}
+                onClick={() => router.push("/Meusanuncios")}
                 aria-label="Meus anúncios"
                 className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             >
@@ -68,7 +71,7 @@ export default function Header() {
             </button>
 
             <button
-                onClick={() => { /* TODO: ir para página "anunciar" */ }}
+                onClick={() => router.push("/anunciar")}
                 className="border border-gray-300 rounded-xl px-4 md:px-8 py-2 hover:bg-gray-100 transition text-sm md:text-base"
             >
                 Anunciar

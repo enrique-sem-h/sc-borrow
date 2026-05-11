@@ -48,7 +48,7 @@ export default function LoginModal({
 
         <div className="border-b mt-5 mb-7" />
 
-        <h2 className="text-3xl font-bold mb-7">
+        <h2 className="text-3xl font-bold mb-7 text-center">
           Acesse sua conta
         </h2>
 

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/ui/header";
+import { Shrikhand } from "next/font/google";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +13,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const shrikhand = Shrikhand({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-shrikhand",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
