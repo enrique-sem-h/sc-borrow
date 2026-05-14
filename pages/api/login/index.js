@@ -9,7 +9,7 @@ export default function handler(req, res) {
 
   const { email, cpf, password } = req.body;
 
-  if ((!email && !cpf) || !password) {
+  if (!email || !cpf || !password) {
     return res.status(400).json({
       error: "Dados incompletos.",
     });

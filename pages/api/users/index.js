@@ -1,4 +1,5 @@
 export const users = [];
+import { db } from "../../../infra/database/index";
 
 export default function handler(req, res) {
   if (req.method === "POST") {
