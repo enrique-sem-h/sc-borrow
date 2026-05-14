@@ -7,8 +7,8 @@ class TestController extends BaseController {
     this.use(func)
   }
 
-  public run(req: any, res: any) {
-    this.handleRequest(req, res)
+  public run(req: any, res: any, ...rest: any[]) {
+    this.handleRequest(req, res, ...rest)
   }
 }
 
@@ -23,6 +23,10 @@ test('if middlwares are being called correctly', () => {
     next()
   })
 
+  const fn3 = vi.fn((req: NextApiRequest, res: NextApiResponse, next) => {
+    next()
+  })
+
   const testController = new TestController()
 
   const req = () => {}
@@ -31,7 +35,7 @@ test('if middlwares are being called correctly', () => {
   testController.exposeUse(fn1)
   testController.exposeUse(fn2)
 
-  testController.run(req, res)
+  testController.run(req, res, fn3)
 
   expect(fn1).toHaveBeenCalledTimes(1)
   expect(fn2).toHaveBeenCalledTimes(1)
@@ -51,6 +55,11 @@ test('if middlwares are being called in correct order', () => {
     next()
   })
 
+  const fn3 = vi.fn((req: NextApiRequest, res: NextApiResponse, next) => {
+    order.push(3)
+    next()
+  })
+
   const testController = new TestController()
 
   const req = () => {}
@@ -59,9 +68,9 @@ test('if middlwares are being called in correct order', () => {
   testController.exposeUse(fn1)
   testController.exposeUse(fn2)
 
-  testController.run(req, res)
+  testController.run(req, res, fn3)
 
-  expect(order).toEqual([1, 2])
+  expect(order).toEqual([1, 2, 3])
 
 })
 })
