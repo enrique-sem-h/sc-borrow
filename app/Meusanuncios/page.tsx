@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-  User, LayoutGrid, Key, DollarSign, MessageCircle, 
-  HelpCircle, Edit3, Trash2, Star 
+import { useRouter } from 'next/navigation';
+import {
+  User, LayoutGrid, Key, DollarSign, MessageCircle,
+  HelpCircle, Edit3, Trash2, Star
 } from 'lucide-react';
 
 import { DeleteModal } from '@/components/ui/delete-modal';
@@ -23,6 +24,7 @@ const MenuItem = ({ icon, label, active = false}: any) => (
 // TERMINAR ESSA PAGINA
 
 export default function MeusAnunciosPage() {
+  const router = useRouter();
   const [modalType, setModalType] = useState<'none' | 'confirm' | 'success'>('none');
   
   const itemExcluir = "Furadeira Tramontina"; 
@@ -63,8 +65,8 @@ export default function MeusAnunciosPage() {
               
               <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
                 <div className="absolute top-3 right-3 flex gap-2">
-                  <button 
-                    //onClick={() => setModalType()} // editar caminho
+                  <button
+                    onClick={() => router.push(`/Meusanuncios/${i}/editar`)}
                     className="bg-white/90 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition"
                   >
                     <Edit3 size={18} />
