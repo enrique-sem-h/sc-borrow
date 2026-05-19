@@ -8,7 +8,6 @@ const config = {
   database: process.env.DB_NAME,
 };
 
-console.log(config);
 
 const poolConnection = mysql.createPool(config);
 export const db = drizzle(poolConnection);

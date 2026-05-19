@@ -12,7 +12,7 @@ class BaseController {
   protected handleRequest(req: NextApiRequest, res: NextApiResponse, ...all: (ControllerMiddleware)[]) {
     const allMiddlewares = [
       ...this.middlewares,
-      ...all
+      ...all,
     ]
     
 

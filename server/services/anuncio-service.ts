@@ -4,13 +4,15 @@ import BaseService from "./base-service";
 
 class AnuncioService extends BaseService {
   public create(body: CreateAnuncioDTO): Anuncio {
+    console.log(body);
+
     return AnuncioRepository.create(body);
   }
 
   public update(body: UpdateAnuncioDTO) {
     return AnuncioRepository.update(body);
   }
-  
+
   public read(id: string) {
     return AnuncioRepository.read(id);
   }
@@ -20,4 +22,4 @@ class AnuncioService extends BaseService {
   }
 }
 
-export default AnuncioService
+export default AnuncioService;

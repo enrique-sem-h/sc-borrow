@@ -1,12 +1,12 @@
-import AnuncioController from "../controllers/anuncio-controller"
+import AnuncioController from "../controllers/anuncio-controller";
 
-const controller = new AnuncioController()
+const controller = new AnuncioController();
 
 const anuncioHandlers = {
-  create: controller.create,
-  read: controller.read,
-  delete: controller.delete,
-  update: controller.update,
-}
+  create: controller.create.bind(controller),
+  read: controller.read.bind(controller),
+  delete: controller.delete.bind(controller),
+  update: controller.update.bind(controller),
+};
 
-export default anuncioHandlers 
+export default anuncioHandlers;
