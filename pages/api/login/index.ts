@@ -1,6 +1,8 @@
-import { users } from "../users/index";
+import { eq } from "drizzle-orm";
+import { db } from "../../../infra/database/index";
+import { usuarios } from "../../../infra/database/schemas/usuariosSchema";
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Método não permitido",
@@ -9,21 +11,29 @@ export default function handler(req, res) {
 
   const { email, cpf, password } = req.body;
 
-  if (!email || !cpf || !password) {
+  if ((!email && !cpf) || !password) {
     return res.status(400).json({
       error: "Dados incompletos.",
     });
   }
 
-  const user = users.find((user) => user.cpf === cpf);
+  let user;
 
-  if (!user) {
+  if (cpf) {
+    user = await db.select().from(usuarios).where(eq(usuarios.cpf, cpf));
+  } else {
+    user = await db.select().from(usuarios).where(eq(usuarios.email, email));
+  }
+
+  const foundUser = user[0];
+
+  if (!foundUser) {
     return res.status(401).json({
       error: "Usuário não encontrado.",
     });
   }
 
-  if (user.password != password) {
+  if (foundUser.senha != password) {
     return res.status(401).json({
       error: "Senha incorreta.",
     });
@@ -31,5 +41,9 @@ export default function handler(req, res) {
 
   return res.status(200).json({
     message: "Login realizado com sucesso.",
+    user: {
+      ...foundUser,
+      senha: undefined,
+    },
   });
 }
