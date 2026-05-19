@@ -1,6 +1,22 @@
 import { NextApiRequest, NextApiResponse } from "next"
+import handlers, { HandlerMethod } from "../handlers/handlers"
 
 type ControllerMiddleware = (req: NextApiRequest, res: NextApiResponse, next?: () => void) => void
+
+export function Router(method: HandlerMethod, route: string) {
+  
+ return function(descriptor) {
+   const originalMethod  = descriptor.descriptor.value
+
+      handlers.addHandler({
+        route: route.split('/'),
+        method,
+        func: originalMethod
+      })
+
+      return descriptor
+  }
+}
 
 class BaseController {
   private middlewares: ControllerMiddleware[] = []

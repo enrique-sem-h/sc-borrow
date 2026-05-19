@@ -1,7 +1,25 @@
+import handlers, { HandlerMethod }  from '../../../server/handlers/handlers'
 import BaseController from '../../../server/controllers/base-controller'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { expect, test, vi , describe} from 'vitest'
 
+const asdd = []
+
+function Router(method: HandlerMethod, route: string) {
+  return function(ctr: Function) {
+    handlers.addHandler({
+      route: route.split('/'),
+      method
+    })
+  }
+}
+
+function loggedMethod(constructor: Function) {
+  
+}
+
+
+@loggedMethod
 class TestController extends BaseController {
   public exposeUse(func) {
     this.use(func)
@@ -9,6 +27,12 @@ class TestController extends BaseController {
 
   public run(req: any, res: any, ...rest: any[]) {
     this.handleRequest(req, res, ...rest)
+  }
+
+
+  @Router("GET", "router")
+  public routerTest() {
+
   }
 }
 
