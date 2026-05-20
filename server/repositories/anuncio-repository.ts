@@ -5,12 +5,8 @@ import { db } from "@/infra/database/index";
 class AnuncioRepository {
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para criar anuncio
-    console.log("caiu");
-
     await db.insert(anuncios).values(body);
-    console.log("inseriu");
-    console.log(body as Anuncio);
-
+    
     return body as Anuncio;
   }
 

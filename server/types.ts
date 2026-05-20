@@ -1,4 +1,5 @@
 export type CreateAnuncioDTO = {
+  id?: string;
   titulo: string;
   descricao: string;
   categoria:
@@ -15,3 +16,16 @@ export type CreateAnuncioDTO = {
 export type UpdateAnuncioDTO = {};
 
 export type Anuncio = {};
+
+export type userParse = {
+  id: string;
+  nome: number;
+  email: boolean;
+};
+
+export type CreateFotoAnuncioDTO = {
+  anuncioId: string;
+  url: string;
+  ordem: number;
+  principal: boolean;
+};
