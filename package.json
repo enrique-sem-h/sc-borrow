@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
-  },
+    "lint": "eslint",
+    "test": "npx vitest"
+ },
   "dependencies": {
     "better-sqlite3": "^12.9.0",
     "class-variance-authority": "^0.7.1",
