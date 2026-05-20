@@ -25,6 +25,17 @@ export default async function handler(req, res) {
       });
     }
 
+    let user;
+    user = await db.select().from(usuarios).where(eq(usuarios.cpf, cpf));
+
+    const foundUser = user[0];
+
+    if (foundUser) {
+      return res.status(409).json({
+        error: " Este usuário já existe.",
+      });
+    }
+
     const [result] = await db.insert(usuarios).values({
       nome,
       telefone,
