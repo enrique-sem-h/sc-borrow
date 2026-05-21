@@ -96,7 +96,24 @@ class AnuncioController extends BaseController {
     });
   }
 
-  public delete(req: NextApiRequest, res: NextApiResponse) {}
+  public delete(req: NextApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const id = req.query.id as string;
+
+        await this.anuncioService.delete(id);
+
+        res.send("Anuncio deleted successfully");
+      } catch (err: Error) {
+        console.log(err.message);
+
+        res.send({
+          error: err.message,
+        });
+        res.status(500);
+      }
+    });
+  }
 }
 
 export default AnuncioController;

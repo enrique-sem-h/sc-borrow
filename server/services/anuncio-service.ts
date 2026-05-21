@@ -18,6 +18,12 @@ class AnuncioService extends BaseService {
   }
 
   public delete(id: string) {
+    const anuncio = AnuncioRepository.read(id);
+
+    if (!anuncio) {
+      throw new Error("No anuncio with this id");
+    }
+
     return AnuncioRepository.delete(id);
   }
 }

@@ -30,8 +30,9 @@ class AnuncioRepository {
     return anuncio;
   }
 
-  static delete(id: string): void {
+  static async delete(id: string): Promise<void> {
     // Chamar o Drizzle para deletar anuncio
+    await db.delete(anuncios).where(eq(anuncios.id, id));
   }
 }
 
