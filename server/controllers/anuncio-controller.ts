@@ -3,7 +3,7 @@ import BaseController from "./base-controller";
 import AnuncioService from "../services/anuncio-service";
 import { CreateAnuncioDTO } from "../types";
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
-import { error } from "console";
+import { eror } from "console";
 
 class AnuncioController extends BaseController {
   private anuncioService = new AnuncioService();
@@ -67,7 +67,34 @@ class AnuncioController extends BaseController {
 
   public update(req: NextApiRequest, res: NextApiResponse) {}
 
-  public read(req: NextApiRequest, res: NextApiResponse) {}
+  public async read(req: NextApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const id = req.query.id as string;
+
+        const anuncio = await this.anuncioService.read(id);
+
+        if (!anuncio) {
+          res.status(404);
+          res.send({
+            error: "No anuncio found with this id",
+          });
+          return;
+        }
+
+        res.send({
+          data: anuncio,
+        });
+      } catch (err: Error) {
+        console.log(err.message);
+
+        res.send({
+          error: err.message,
+        });
+        res.status(500);
+      }
+    });
+  }
 
   public delete(req: NextApiRequest, res: NextApiResponse) {}
 }

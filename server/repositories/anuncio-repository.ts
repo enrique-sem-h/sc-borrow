@@ -1,6 +1,7 @@
 import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
+import { eq } from "drizzle-orm";
 
 class AnuncioRepository {
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
@@ -18,8 +19,15 @@ class AnuncioRepository {
     // Chamar o Drizzle para editar anuncio
   }
 
-  static read(id: string): Anuncio {
+  static async read(id: string): Promise<Anuncio | undefined> {
     // Chamar o Drizzle para ler anuncio
+    const [anuncio] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id))
+      .limit(1);
+
+    return anuncio;
   }
 
   static delete(id: string): void {
