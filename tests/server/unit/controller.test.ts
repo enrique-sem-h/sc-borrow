@@ -15,6 +15,7 @@ class TestController extends BaseController {
 
 describe("BaseController", () => {
   test("if middlwares are being called correctly", () => {
+    console.log(process.env.DB_NAME);
     const fn1 = vi.fn((req: NextApiRequest, res: NextApiResponse, next) => {
       next();
     });

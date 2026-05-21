@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "migrate:test": "cross-env NODE_ENV=test drizzle-kit migrate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
