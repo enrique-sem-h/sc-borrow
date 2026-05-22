@@ -15,7 +15,7 @@ class AnuncioController extends BaseController {
     this.use(auth);
   }
 
-  public async create(req: NextAuthApiRequest, res: NextApiResponse) {
+  public async create(req: NextApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {
       // Fazer a validação dos dados
       const form = formidable({
