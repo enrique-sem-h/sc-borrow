@@ -1,5 +1,5 @@
-import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
-import { anuncios } from "@/infra/database/schemas/anunciosSchema";
+import { CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
+import { Anuncio, anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
 import { eq } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";

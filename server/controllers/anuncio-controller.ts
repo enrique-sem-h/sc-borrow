@@ -75,6 +75,19 @@ class AnuncioController extends BaseController {
         const id = req.query.id as string;
 
         const newData = req.body;
+        newData.usuarioId = undefined;
+
+        const anuncio = await this.anuncioService.read(id);
+
+        if (!anuncio) {
+          return res.status(404).send("Anuncio not found");
+        }
+
+        if (anuncio.usuarioId !== req.userId) {
+          return res
+            .status(403)
+            .send("User doesn't have permission to edit this anuncio");
+        }
 
         const updated = await this.anuncioService.update(id, newData);
 
@@ -107,6 +120,13 @@ class AnuncioController extends BaseController {
           return;
         }
 
+        const anuncioUserId = anuncio.usuarioId;
+        if (anuncioUserId !== req.userId) {
+          return res
+            .status(403)
+            .send("You don't have permission to get this anuncio");
+        }
+
         res.send({
           data: anuncio,
         });
@@ -125,6 +145,23 @@ class AnuncioController extends BaseController {
     this.handleRequest(req, res, async () => {
       try {
         const id = req.query.id as string;
+
+        const anuncio = await this.anuncioService.read(id);
+
+        if (!anuncio) {
+          res.status(404);
+          res.send({
+            error: "No anuncio found with this id",
+          });
+          return;
+        }
+
+        const anuncioUserId = anuncio.usuarioId;
+        if (anuncioUserId !== req.userId) {
+          return res
+            .status(403)
+            .send("You don't have permission to get this anuncio");
+        }
 
         await this.anuncioService.delete(id);
 
