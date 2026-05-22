@@ -14,7 +14,7 @@ export const usuarios = mysqlTable("usuarios", {
   bairro: varchar("bairro", { length: 255 }).notNull(),
   numero: int("numero").notNull(),
   uf: varchar("uf", { length: 2, enum: ["DF"] }).notNull(),
-  complemento: varchar("complemento", { length: 50 }).notNull(),
+  complemento: varchar("complemento", { length: 50 }),
   rep: float("rep", { precision: 4, scale: 2 }).notNull(),
   saldo: float("saldo").notNull().default(0),
 });
