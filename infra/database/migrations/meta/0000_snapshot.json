@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "d8a58bca-b32c-448d-b66c-cb8347c49fbf",
+  "id": "a09b7946-0fbe-400e-a502-209aebf805c9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "alugueis": {
@@ -830,7 +830,7 @@
           "name": "complemento",
           "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "rep": {
