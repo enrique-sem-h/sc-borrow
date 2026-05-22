@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export const anuncios = mysqlTable("anuncios", {
   id: varchar("id", { length: 36 })
@@ -31,6 +32,9 @@ export const anuncios = mysqlTable("anuncios", {
     .references(() => usuarios.id)
     .notNull(),
 });
+
+export type Anuncio = InferSelectModel<typeof anuncios>;
+export type AnuncioInsert = InferInsertModel<typeof anuncios>;
 
 export const fotoAnuncios = mysqlTable("foto_anuncio", {
   id: varchar("id", { length: 36 })

@@ -1,25 +1,51 @@
-import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
-import { anuncios } from "@/infra/database/schemas/anunciosSchema";
+import { CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
+import { Anuncio, anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
+import { eq } from "drizzle-orm";
+import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 
 class AnuncioRepository {
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para criar anuncio
-    await db.insert(anuncios).values(body);
-    
-    return body as Anuncio;
+
+    const [result] = await db.insert(anuncios).values(body).$returningId();
+    const id = result.id;
+
+    const [anuncio] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id));
+
+    return anuncio;
   }
 
-  static update(body: UpdateAnuncioDTO): Anuncio {
+  static async update(id: string, body: UpdateAnuncioDTO): Anuncio {
     // Chamar o Drizzle para editar anuncio
+    //
+    await db.update(anuncios).set(body).where(eq(anuncios.id, id));
+
+    const [result] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id));
+
+    return result;
   }
 
-  static read(id: string): Anuncio {
+  static async read(id: string): Promise<Anuncio | undefined> {
     // Chamar o Drizzle para ler anuncio
+    const [anuncio] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id))
+      .limit(1);
+
+    return anuncio;
   }
 
-  static delete(id: string): void {
+  static async delete(id: string): Promise<void> {
     // Chamar o Drizzle para deletar anuncio
+    await db.delete(anuncios).where(eq(anuncios.id, id));
   }
 }
 

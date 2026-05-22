@@ -1,37 +1,54 @@
-import { NextApiRequest, NextApiResponse } from "next"
+import { NextApiRequest, NextApiResponse } from "next";
+import handlers, { HandlerMethod } from "../handlers/handlers";
 
-type ControllerMiddleware = (req: NextApiRequest, res: NextApiResponse, next?: () => void) => void
+export type NextFunction = () => void | undefined;
+export type ControllerMiddleware<T extends NextApiRequest = NextApiRequest> = (
+  req: T,
+  res: NextApiResponse,
+  next: NextFunction,
+) => void;
+
+export function Router(method: HandlerMethod, route: string) {
+  return function (descriptor) {
+    const originalMethod = descriptor.descriptor.value;
+
+    handlers.addHandler({
+      route: route.split("/"),
+      method,
+      func: originalMethod,
+    });
+
+    return descriptor;
+  };
+}
 
 class BaseController {
-  private middlewares: ControllerMiddleware[] = []
+  private middlewares: ControllerMiddleware[] = [];
 
   protected use(middleware: ControllerMiddleware) {
-    this.middlewares.push(middleware)
+    this.middlewares.push(middleware);
   }
 
-  protected handleRequest(req: NextApiRequest, res: NextApiResponse, ...all: (ControllerMiddleware)[]) {
-    const allMiddlewares = [
-      ...this.middlewares,
-      ...all,
-    ]
-    
+  protected handleRequest(
+    req: NextApiRequest,
+    res: NextApiResponse,
+    ...all: ControllerMiddleware[]
+  ) {
+    const allMiddlewares = [...this.middlewares, ...all];
 
-    let index = 0
-    
+    let index = 0;
 
     const next = () => {
-
-      if (index > allMiddlewares.length  - 1) {
-        return null
+      if (index > allMiddlewares.length - 1) {
+        return;
       }
-      const current = allMiddlewares[index++]
-      
+      const current = allMiddlewares[index++];
 
-      current(req, res, next)
-    }
+      current(req, res, next);
+    };
 
-    return next()
+    return next();
   }
 }
 
-export default BaseController
+export default BaseController;

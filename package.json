@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "migrate:test": "cross-env NODE_ENV=test drizzle-kit migrate",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npx vitest"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -38,6 +40,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "next-test-api-route-handler": "^5.0.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.6"
