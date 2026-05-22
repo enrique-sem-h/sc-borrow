@@ -1,6 +1,22 @@
 import { mysqlTable, int, varchar, float } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 
+export type Usuario = {
+  id: string;
+  cpf: string;
+  nome: string;
+  email: string;
+  senha: string;
+  cep: string;
+  logradouro: string;
+  bairro: string;
+  numero: number;
+  uf: string;
+  complemento: string;
+  rep: number;
+  saldo: number;
+};
+
 export const usuarios = mysqlTable("usuarios", {
   id: varchar("id", { length: 36 })
     .primaryKey()
