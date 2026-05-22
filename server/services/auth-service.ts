@@ -1,5 +1,6 @@
 import UserRepository from "../repositories/user-repository";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 class AuthService {
   public async register(body: any) {
@@ -43,7 +44,13 @@ class AuthService {
       };
     }
 
-    return foundUser;
+    const token = jwt.sign(
+      { id: foundUser.id, email: foundUser.email },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1d" },
+    );
+
+    return { user: foundUser, token };
   }
 }
 

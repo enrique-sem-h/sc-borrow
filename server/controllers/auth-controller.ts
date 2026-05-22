@@ -86,9 +86,10 @@ class AuthController {
     return res.status(200).json({
       message: "Login realizado com sucesso.",
       user: {
-        ...result,
+        ...result.user,
         senha: undefined,
       },
+      token: result.token,
     });
   }
 }
