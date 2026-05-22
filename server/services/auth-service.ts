@@ -1,4 +1,5 @@
 import UserRepository from "../repositories/user-repository";
+import bcrypt from "bcrypt";
 
 class AuthService {
   public async register(body: any) {
@@ -10,6 +11,8 @@ class AuthService {
       };
     }
 
+    const hashed_Password = await bcrypt.hash(body.senha, 10);
+    body.senha = hashed_Password;
     const newUser = await UserRepository.create(body);
 
     return newUser;
@@ -32,7 +35,9 @@ class AuthService {
       };
     }
 
-    if (foundUser.senha != password) {
+    const passwordMatch = await bcrypt.compare(password, foundUser.senha);
+
+    if (!passwordMatch) {
       return {
         error: "senha incorreta",
       };
