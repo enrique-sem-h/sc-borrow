@@ -18,7 +18,7 @@ console.log({
 });
 export default defineConfig({
   schema: "./infra/database/schemas/*",
-  out: "./drizzle",
+  out: "./infra/database/migrations",
   dialect: "mysql",
   dbCredentials: {
     database: process.env.DB_NAME,
