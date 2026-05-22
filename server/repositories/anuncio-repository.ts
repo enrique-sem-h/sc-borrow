@@ -7,7 +7,6 @@ import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 class AnuncioRepository {
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para criar anuncio
-    console.log("caiu");
 
     const [result] = await db.insert(anuncios).values(body).$returningId();
     const id = result.id;
@@ -16,7 +15,6 @@ class AnuncioRepository {
       .select()
       .from(anuncios)
       .where(eq(anuncios.id, id));
-    console.log(anuncio);
 
     return anuncio;
   }

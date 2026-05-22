@@ -229,6 +229,21 @@ describe("Anuncio endpoints", async () => {
     test("if POST /anuncio actually inserts a post in database and returns correctly", async () => {
       const user = await createUser();
 
+      const pngBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg==";
+      const buffer = Uint8Array.from(atob(pngBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([buffer], { type: "image/png" });
+      const fotos = [atob(pngBase64)];
+      const formData = new FormData();
+
+      Object.entries(anuncioMock).forEach(([key, value]) =>
+        formData.append(key, String(value)),
+      );
+
+      formData.append("fotos", blob, "foto1.png");
+      formData.append("fotos", blob, "foto2.png");
+      formData.append("fotos", blob, "foto3.png");
+
       await testApiHandler({
         pagesHandler: anuncioHandler,
         // requestPatcher is optional
@@ -239,14 +254,7 @@ describe("Anuncio endpoints", async () => {
         async test({ fetch }) {
           const res = await fetch({
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              ...anuncioMock,
-              // To test if the anuncio user will be authenticated user
-              usuarioId: "other_user",
-            }),
+            body: formData,
           });
           const status = res.status;
           const json = await res.json();
@@ -254,7 +262,7 @@ describe("Anuncio endpoints", async () => {
 
           const id = json.data?.id;
 
-          expect(status).toBe(200);
+          expect(status).toBe(201);
           expect(id).toBeDefined();
 
           const [insertedAnuncio] = await db
