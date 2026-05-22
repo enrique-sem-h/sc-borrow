@@ -1,20 +1,29 @@
-import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
+import { usuarios } from "../../infra/database/schemas/usuariosSchema";
+import { db } from "../../infra/database/index";
+import { eq } from "drizzle-orm";
 
 class UserRepository {
-  static create(body: CreateAnuncioDTO): Anuncio {
-    // Chamar o Drizzle para criar anuncio
+  static async findByCpf(cpf: string) {
+    const user = await db.select().from(usuarios).where(eq(usuarios.cpf, cpf));
+    return user[0];
   }
 
-  static update(body: UpdateAnuncioDTO): Anuncio {
-    // Chamar o Drizzle para editar anuncio
+  static async findByEmail(email: string) {
+    const user = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.email, email));
+    return user[0];
   }
 
-  static read(id: string): Anuncio {
-    // Chamar o Drizzle para ler anuncio
-  }
+  static async create(body: any) {
+    const [result] = await db.insert(usuarios).values(body);
+    const newUser = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.id, result.insertId));
 
-  static delete(id: string): void {
-    // Chamar o Drizzle para deletar anuncio
+    return newUser[0];
   }
 }
 
