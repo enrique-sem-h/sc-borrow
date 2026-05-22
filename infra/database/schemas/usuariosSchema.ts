@@ -21,16 +21,5 @@ export const usuarios = mysqlTable("usuarios", {
   saldo: float("saldo").notNull().default(0),
 });
 
-export const usuarioTelefones = mysqlTable("usuario_telefones", {
-  id: varchar("id", { length: 36 })
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  telefone: varchar("telefone", { length: 20 }).notNull(),
-
-  usuarioId: varchar("usuario_id", { length: 36 })
-    .references(() => usuarios.id)
-    .notNull(),
-});
-
 export type Usuario = InferSelectModel<typeof usuarios>;
 export type UsuarioInsert = InferInsertModel<typeof usuarios>;

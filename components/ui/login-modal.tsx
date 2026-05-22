@@ -1,6 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import FormInput from "./form-input";
+import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
+import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -8,25 +13,33 @@ interface LoginModalProps {
   onRegisterClick: () => void;
 }
 
+type FormType = Pick<UsuarioInsert, "email" | "senha">;
+
+const schema = insertUserSchema.pick({
+  email: true,
+  senha: true,
+});
+
 export default function LoginModal({
   isOpen,
   onClose,
-  onRegisterClick
+  onRegisterClick,
 }: LoginModalProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { handleSubmit, control } = useForm<FormType>({
+    resolver: zodResolver(schema),
+  });
 
   if (!isOpen) return null;
 
   const onRegisterBtnClick = () => {
-    onRegisterClick()
-  }
+    onRegisterClick();
+  };
+
+  const onFormSubmit = (data: FormData) => {};
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-
       <div className="bg-white w-[520px] rounded-[30px] px-8 py-6 relative shadow-xl">
-
         <button
           onClick={onClose}
           className="
@@ -52,44 +65,36 @@ export default function LoginModal({
           Acesse sua conta
         </h2>
 
-        <form className="flex flex-col gap-5">
-
-          <input
-            type="text"
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="
-              border-2
-              rounded-xl
-              px-5
-              py-3
-              text-lg
-              outline-none
-              text-gray-700
-              placeholder:text-gray-400
-              focus:border-gray-400
-              transition
-            "
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={handleSubmit(onFormSubmit)}
+        >
+          <Controller
+            name="email"
+            control={control}
+            render={({ field, fieldState }) => {
+              return (
+                <FormInput
+                  placeholder="Email"
+                  error={fieldState.error?.message}
+                  {...field}
+                />
+              );
+            }}
           />
 
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="
-              border-2
-              rounded-xl
-              px-5
-              py-3
-              text-lg
-              outline-none
-              text-gray-700
-              placeholder:text-gray-400
-              focus:border-gray-400
-              transition
-            "
+          <Controller
+            name="senha"
+            control={control}
+            render={({ field, fieldState }) => {
+              return (
+                <FormInput
+                  placeholder="Senha"
+                  error={fieldState.error?.message}
+                  {...field}
+                />
+              );
+            }}
           />
 
           <button
@@ -109,16 +114,14 @@ export default function LoginModal({
         </form>
 
         <div className="text-center mt-6 text-gray-500">
-
           <p className="text-base mb-2 cursor-pointer hover:text-black transition">
             Esqueceu a senha?
           </p>
 
           <p className="text-base">
             Não possui uma conta?{" "}
-
             <button
-            onClick={onRegisterBtnClick}
+              onClick={onRegisterBtnClick}
               className="underline hover:text-black transition"
             >
               Cadastrar-se
