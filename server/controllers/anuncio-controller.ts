@@ -13,8 +13,8 @@ class AnuncioController extends BaseController {
     this.use(auth);
   }
 
-  public create(req: NextAuthApiRequest, res: NextApiResponse) {
-    this.handleRequest(req, res, () => {
+  public async create(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
       if (!req.body.titulo) {
         res
           .status(400)
@@ -59,7 +59,7 @@ class AnuncioController extends BaseController {
       } as CreateAnuncioDTO;
       console.log("create: ", this.anuncioService);
 
-      const anuncio = this.anuncioService.create(anuncioDto);
+      const anuncio = await this.anuncioService.create(anuncioDto);
 
       res.send({
         data: {
@@ -69,7 +69,28 @@ class AnuncioController extends BaseController {
     });
   }
 
-  public update(req: NextAuthApiRequest, res: NextApiResponse) {}
+  public update(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const id = req.query.id as string;
+
+        const newData = req.body;
+
+        const updated = await this.anuncioService.update(id, newData);
+
+        res.send({
+          data: { ...updated },
+        });
+      } catch (err: Error) {
+        console.log(err.message);
+
+        res.send({
+          error: err.message,
+        });
+        res.status(500);
+      }
+    });
+  }
 
   public async read(req: NextAuthApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {

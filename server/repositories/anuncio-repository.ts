@@ -2,21 +2,36 @@ import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
 import { eq } from "drizzle-orm";
+import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 
 class AnuncioRepository {
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para criar anuncio
     console.log("caiu");
 
-    await db.insert(anuncios).values(body);
-    console.log("inseriu");
-    console.log(body as Anuncio);
+    const [result] = await db.insert(anuncios).values(body).$returningId();
+    const id = result.id;
 
-    return body as Anuncio;
+    const [anuncio] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id));
+    console.log(anuncio);
+
+    return anuncio;
   }
 
-  static update(body: UpdateAnuncioDTO): Anuncio {
+  static async update(id: string, body: UpdateAnuncioDTO): Anuncio {
     // Chamar o Drizzle para editar anuncio
+    //
+    await db.update(anuncios).set(body).where(eq(anuncios.id, id));
+
+    const [result] = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.id, id));
+
+    return result;
   }
 
   static async read(id: string): Promise<Anuncio | undefined> {

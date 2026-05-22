@@ -1,3 +1,6 @@
+import { anuncios } from "@/infra/database/schemas/anunciosSchema";
+import { InferInsertModel } from "drizzle-orm";
+
 export type CreateAnuncioDTO = {
   titulo: string;
   descricao: string;
@@ -12,6 +15,6 @@ export type CreateAnuncioDTO = {
   usuarioId: string;
 };
 
-export type UpdateAnuncioDTO = {};
+export type UpdateAnuncioDTO = InferInsertModel<typeof anuncios>;
 
 export type Anuncio = {};

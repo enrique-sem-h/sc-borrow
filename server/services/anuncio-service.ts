@@ -3,14 +3,14 @@ import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
 import BaseService from "./base-service";
 
 class AnuncioService extends BaseService {
-  public create(body: CreateAnuncioDTO): Anuncio {
+  public async create(body: CreateAnuncioDTO): Anuncio {
     console.log(body);
 
     return AnuncioRepository.create(body);
   }
 
-  public update(body: UpdateAnuncioDTO) {
-    return AnuncioRepository.update(body);
+  public async update(id: string, body: UpdateAnuncioDTO) {
+    return AnuncioRepository.update(id, body);
   }
 
   public read(id: string) {
