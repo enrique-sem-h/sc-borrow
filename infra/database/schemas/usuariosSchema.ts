@@ -1,12 +1,13 @@
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { mysqlTable, int, varchar, float } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
+import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 
 export const usuarios = mysqlTable("usuarios", {
   id: varchar("id", { length: 36 })
     .primaryKey()
     .$defaultFn(() => randomUUID()),
   cpf: varchar("cpf", { length: 255 }).notNull(),
+  telefone: varchar("telefone", { length: 12 }).notNull(),
   nome: varchar("nome", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   senha: varchar("senha", { length: 255 }).notNull(),
@@ -20,9 +21,6 @@ export const usuarios = mysqlTable("usuarios", {
   saldo: float("saldo").notNull().default(0),
 });
 
-export type Usuario = InferSelectModel<typeof usuarios>;
-export type UsuarioInsert = InferInsertModel<typeof usuarios>;
-
 export const usuarioTelefones = mysqlTable("usuario_telefones", {
   id: varchar("id", { length: 36 })
     .primaryKey()
@@ -33,3 +31,6 @@ export const usuarioTelefones = mysqlTable("usuario_telefones", {
     .references(() => usuarios.id)
     .notNull(),
 });
+
+export type Usuario = InferSelectModel<typeof usuarios>;
+export type UsuarioInsert = InferInsertModel<typeof usuarios>;

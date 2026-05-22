@@ -8,6 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Field, FieldError } from "@/components/ui/field";
 import FormInput from "./form-input";
+import {
+  Anuncio,
+  AnuncioInsert,
+} from "@/infra/database/schemas/anunciosSchema";
+import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
+import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
+import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
 
 const BAIRROS_DF = [
   "Águas Claras",
@@ -51,11 +58,9 @@ interface RegisterModalProps {
   onLogin: () => void;
 }
 
-type FormType = {
-  name: string;
-};
+type FormType = UsuarioInsert;
 
-const schema = z.object({});
+const schema = insertUserSchema;
 
 export default function RegisterModal({
   isOpen,
@@ -69,6 +74,9 @@ export default function RegisterModal({
 
   const { handleSubmit, control } = useForm<FormType>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      uf: "DF",
+    },
   });
 
   if (!isOpen) return null;
@@ -112,7 +120,7 @@ export default function RegisterModal({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Controller
-              name="name"
+              name="nome"
               control={control}
               render={({ field, fieldState }) => {
                 return (
@@ -125,66 +133,174 @@ export default function RegisterModal({
               }}
             />
 
-            <Input placeholder="Telefone" name="phone" />
-            <Input placeholder="Email" type="email" name="email" />
-            <Input placeholder="CPF" name="cpf" />
-            <Input placeholder="Senha" type="password" name="password" />
-            <Input
-              placeholder="Confirmar Senha"
-              type="password"
-              name="confirm-password"
+            <Controller
+              name="telefone"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Telefone"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="email"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Email"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="cpf"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="CPF"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="senha"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Senha"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
+            />
+            <Controller
+              name="confirmar-senha"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Confirmar Senha"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
             />
           </div>
 
           <div className="border-b border-gray-100" />
 
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              placeholder="CEP"
+            <Controller
               name="cep"
-              value={cep}
-              onChange={handleCepChange}
-              inputMode="numeric"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="CEP"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
             />
-
-            <Input
+            <Controller
               name="uf"
-              value="DF"
-              readOnly
-              className="bg-gray-100 text-gray-500 cursor-not-allowed"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="UF"
+                    error={fieldState.error?.message}
+                    readOnly
+                    {...field}
+                    value="DF"
+                  />
+                );
+              }}
             />
 
-            <Input
-              placeholder="Logradouro"
+            <Controller
               name="logradouro"
-              className="col-span-2"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    className="col-span-2"
+                    placeholder="Logradouro"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
             />
 
-            <select
+            <Controller
               name="bairro"
-              defaultValue=""
-              className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
-            >
-              <option value="" disabled>
-                Bairro
-              </option>
-              {BAIRROS_DF.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-
-            <Input
-              placeholder="Número"
-              name="numero"
-              inputMode="numeric"
-              value={numero}
-              onChange={handleNumeroChange}
-              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <select
+                    name="bairro"
+                    defaultValue=""
+                    className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
+                  >
+                    <option value="" disabled>
+                      Bairro
+                    </option>
+                    {BAIRROS_DF.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                );
+              }}
             />
 
-            <Input placeholder="Complemento (opcional)" name="complemento" />
+            <Controller
+              name="numero"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Numero"
+                    error={fieldState.error?.message}
+                    {...field}
+                    onChange={(e) => {
+                      handleNumeroChange(e);
+                      field.onChange(e);
+                    }}
+                  />
+                );
+              }}
+            />
+
+            <Controller
+              name="complemento"
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <FormInput
+                    placeholder="Complemento (opcional)"
+                    error={fieldState.error?.message}
+                    {...field}
+                  />
+                );
+              }}
+            />
           </div>
 
           <button className="bg-gray-300 hover:bg-gray-400 transition rounded-xl py-3 text-2xl font-semibold mt-2">
