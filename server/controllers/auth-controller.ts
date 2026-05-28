@@ -50,7 +50,7 @@ class AuthController {
 
       return res.status(201).json({
         message: "Usuário cadastrado com sucesso!",
-        user: {
+        data: {
           ...result,
           senha: undefined,
         },
@@ -61,9 +61,9 @@ class AuthController {
   }
 
   public async login(req: NextApiRequest, res: NextApiResponse) {
-    const { email, cpf, password } = req.body;
+    const { email, cpf, senha } = req.body;
 
-    if ((!email && !cpf) || !password) {
+    if (!email || !senha) {
       return res.status(400).json({
         error: "Dados incompletos.",
       });
@@ -72,7 +72,7 @@ class AuthController {
     const result = await this.authService.login({
       email,
       cpf,
-      password,
+      senha,
     });
 
     if (result.error === "Usuário não encontrado") {

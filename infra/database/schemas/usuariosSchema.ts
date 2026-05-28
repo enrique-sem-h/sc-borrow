@@ -23,3 +23,7 @@ export const usuarios = mysqlTable("usuarios", {
 
 export type Usuario = InferSelectModel<typeof usuarios>;
 export type UsuarioInsert = InferInsertModel<typeof usuarios>;
+export type UsuarioLogin = Pick<
+  InferInsertModel<typeof usuarios>,
+  "email" | "senha"
+>;

@@ -41,6 +41,10 @@ export default function Header() {
     setIsRegisterOpen(false);
   }
 
+  function onLoginSuccess(): void {
+    setIsLoginOpen(false);
+  }
+
   return (
     <>
       <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4">
@@ -178,6 +182,7 @@ export default function Header() {
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
         onRegisterClick={onRegisterBtnClick}
+        onLoginSuccess={onLoginSuccess}
       />
 
       <RegisterModal
