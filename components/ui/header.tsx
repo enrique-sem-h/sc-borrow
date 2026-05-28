@@ -13,12 +13,15 @@ import Link from "next/link";
 import LoginModal from "@/components/ui/login-modal";
 import RegisterModal from "./register-modal";
 import { toast } from "react-toastify";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { isAuth } = useAuth();
 
   const onRegisterBtnClick = () => {
     setIsLoginOpen(false);
@@ -101,7 +104,14 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => router.push("/anunciar")}
+              onClick={() => {
+                if (isAuth) {
+                  router.push("/anunciar");
+                } else {
+                  toast("Logue-se para poder anunciar!");
+                  setIsLoginOpen(true);
+                }
+              }}
               className="border border-gray-300 rounded-xl px-4 md:px-8 py-2 hover:bg-gray-100 transition text-sm md:text-base"
             >
               Anunciar
