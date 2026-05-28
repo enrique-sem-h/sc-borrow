@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Input } from "./input";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Field, FieldError } from "@/components/ui/field";
@@ -15,6 +15,7 @@ import {
 import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
+import apiService from "@/services/api";
 
 const BAIRROS_DF = [
   "Águas Claras",
@@ -56,26 +57,48 @@ interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: () => void;
+  onSuccess: () => void;
 }
 
-type FormType = UsuarioInsert;
+type FormType = UsuarioInsert & {
+  confirmarSenha: string;
+};
 
-const schema = insertUserSchema;
+const schema = insertUserSchema
+  .extend({
+    confirmarSenha: z.string().min(0),
+    numero: z.coerce.number(),
+  })
+  .refine(
+    (data) => {
+      return data.senha === data.confirmarSenha;
+    },
+    {
+      message: "Senhas não condizem",
+      path: ["confirmarSenha"],
+    },
+  );
 
 export default function RegisterModal({
   isOpen,
   onClose,
   onLogin,
+  onSuccess,
 }: RegisterModalProps) {
   const [cep, setCep] = useState("");
   const [numero, setNumero] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const { handleSubmit, control } = useForm<FormType>({
+  const {
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FormType>({
     resolver: zodResolver(schema),
     defaultValues: {
       uf: "DF",
+      bairro: "",
     },
   });
 
@@ -83,7 +106,8 @@ export default function RegisterModal({
 
   function handleCepChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-    setCep(
+    setValue(
+      "cep",
       digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits,
     );
   }
@@ -91,10 +115,18 @@ export default function RegisterModal({
   function handleNumeroChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, "");
     const parsed = parseInt(digits, 10);
-    setNumero(isNaN(parsed) || parsed <= 0 ? "" : String(parsed));
+    setValue("numero", isNaN(parsed) || parsed <= 0 ? 0 : parsed);
   }
 
-  const onFormSubmit = () => {};
+  const onFormSubmit = async (data: any): SubmitHandler<any> => {
+    try {
+      const response = await apiService.register(data);
+
+      onSuccess();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -185,8 +217,9 @@ export default function RegisterModal({
                 );
               }}
             />
+
             <Controller
-              name="confirmar-senha"
+              name="confirmarSenha"
               control={control}
               render={({ field, fieldState }) => {
                 return (
@@ -212,6 +245,10 @@ export default function RegisterModal({
                     placeholder="CEP"
                     error={fieldState.error?.message}
                     {...field}
+                    onChange={(e) => {
+                      handleCepChange(e);
+                      field.onChange(e);
+                    }}
                   />
                 );
               }}
@@ -254,17 +291,18 @@ export default function RegisterModal({
                 return (
                   <select
                     name="bairro"
-                    defaultValue=""
                     className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
                   >
-                    <option value="" disabled>
+                    <option value={""} disabled>
                       Bairro
                     </option>
-                    {BAIRROS_DF.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
-                      </option>
-                    ))}
+                    {BAIRROS_DF.map((b) => {
+                      return (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      );
+                    })}
                   </select>
                 );
               }}
@@ -279,6 +317,7 @@ export default function RegisterModal({
                     placeholder="Numero"
                     error={fieldState.error?.message}
                     {...field}
+                    type="number"
                     onChange={(e) => {
                       handleNumeroChange(e);
                       field.onChange(e);

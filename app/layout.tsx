@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/ui/header";
 import { Shrikhand } from "next/font/google";
 import "./globals.css";
+import { ToastContainer } from "react-toastify";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <ToastContainer />
       <body className="min-h-full flex flex-col">
-          <Header />
-          {children}
+        <Header />
+        {children}
       </body>
     </html>
   );

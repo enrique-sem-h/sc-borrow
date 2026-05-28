@@ -17,7 +17,7 @@ export const usuarios = mysqlTable("usuarios", {
   numero: int("numero").notNull(),
   uf: varchar("uf", { length: 2, enum: ["DF"] }).notNull(),
   complemento: varchar("complemento", { length: 50 }),
-  rep: float("rep", { precision: 4, scale: 2 }).notNull(),
+  rep: float("rep", { precision: 4, scale: 2 }),
   saldo: float("saldo").notNull().default(0),
 });
 

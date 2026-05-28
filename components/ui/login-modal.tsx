@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import FormInput from "./form-input";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
@@ -35,7 +35,7 @@ export default function LoginModal({
     onRegisterClick();
   };
 
-  const onFormSubmit = (data: FormData) => {};
+  const onFormSubmit: SubmitHandler<FormType> = (data) => {};
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
