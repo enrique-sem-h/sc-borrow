@@ -1,10 +1,18 @@
 "use client";
 import { useState } from "react";
-import { Search, Bell, ClipboardList, MessageCircle, Menu, X } from "lucide-react";
+import {
+  Search,
+  Bell,
+  ClipboardList,
+  MessageCircle,
+  Menu,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LoginModal from "@/components/ui/login-modal";
 import RegisterModal from "./register-modal";
+import { toast } from "react-toastify";
 
 export default function Header() {
   const router = useRouter();
@@ -27,12 +35,24 @@ export default function Header() {
     router.push(path);
   };
 
+  function onRegisterSuccess(): void {
+    toast("Registro feito com sucesso!");
+    setIsLoginOpen(true);
+    setIsRegisterOpen(false);
+  }
+
+  function onLoginSuccess(): void {
+    setIsLoginOpen(false);
+  }
+
   return (
     <>
       <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
-
-          <Link href="/" className="text-3xl md:text-4xl font-['Shrikhand'] tracking-tight shrink-0">
+          <Link
+            href="/"
+            className="text-3xl md:text-4xl font-['Shrikhand'] tracking-tight shrink-0"
+          >
             BORROW
           </Link>
 
@@ -60,7 +80,9 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => { /* TODO: ir para página "chat" */ }}
+              onClick={() => {
+                /* TODO: ir para página "chat" */
+              }}
               aria-label="Chat"
               className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             >
@@ -69,7 +91,9 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => { /* TODO: abrir as "notificações" */ }}
+              onClick={() => {
+                /* TODO: abrir as "notificações" */
+              }}
               aria-label="Notificações"
               className="p-2 rounded-lg hover:bg-gray-100 transition"
             >
@@ -96,7 +120,11 @@ export default function Header() {
             aria-label="Menu"
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition shrink-0"
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -111,7 +139,9 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => { /* TODO: ir para página "chat" */ }}
+              onClick={() => {
+                /* TODO: ir para página "chat" */
+              }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
             >
               <MessageCircle className="w-5 h-5" />
@@ -119,7 +149,9 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => { /* TODO: abrir as "notificações" */ }}
+              onClick={() => {
+                /* TODO: abrir as "notificações" */
+              }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
             >
               <Bell className="w-5 h-5" />
@@ -134,7 +166,10 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => { setIsMenuOpen(false); setIsLoginOpen(true); }}
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsLoginOpen(true);
+              }}
               className="px-4 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-gray-700"
             >
               Entrar
@@ -147,12 +182,14 @@ export default function Header() {
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
         onRegisterClick={onRegisterBtnClick}
+        onLoginSuccess={onLoginSuccess}
       />
 
       <RegisterModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
         onLogin={onLoginBtnClick}
+        onSuccess={onRegisterSuccess}
       />
     </>
   );
