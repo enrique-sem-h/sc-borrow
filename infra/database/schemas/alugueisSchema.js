@@ -17,10 +17,14 @@ export const alugueis = mysqlTable("alugueis", {
   dataInicio: timestamp("data_inicio").notNull(),
   dataFim: timestamp("data_fim").notNull(),
 
-  idAnuncio: varchar("id_anuncio", { length: 36 })
-    .references(() => anuncios.id)
+  idAnuncio: varchar("id_anuncio", { length: 36 }).references(
+    () => anuncios.id,
+    { onDelete: "set null" },
+  ),
+  idLocador: varchar("id_usuario", { length: 36 })
+    .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
-  idUsuario: varchar("id_usuario", { length: 36 })
-    .references(() => usuarios.id)
+  idLocatario: varchar("id_usuario", { length: 36 })
+    .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
 });

@@ -27,7 +27,7 @@ class AuthController {
         });
       }
 
-      const result = await this.authService.register({
+      const result = (await this.authService.register({
         nome,
         telefone,
         email,
@@ -40,9 +40,9 @@ class AuthController {
         uf,
         complemento,
         rep,
-      });
-
-      if (result?.error) {
+      })) as { error?: string;[key: string]: any };
+      
+      if (result.error) {
         return res.status(409).json({
           error: result.error,
         });

@@ -5,14 +5,10 @@ import {
   NextFunction,
 } from "../controllers/base-controller";
 import { Usuario } from "@/infra/database/schemas/usuariosSchema";
-
-interface NextAuthMiddlewareApiRequest extends NextApiRequest {
-  userId?: string;
-}
-
-export interface NextAuthApiRequest extends NextApiRequest {
-  userId: string;
-}
+import {
+  NextAuthMiddlewareApiRequest,
+  NextAuthApiRequest,
+} from "@/server/types";
 
 const authMiddleware: ControllerMiddleware = (
   req: NextAuthMiddlewareApiRequest,
@@ -22,7 +18,6 @@ const authMiddleware: ControllerMiddleware = (
   try {
     const headers = req.headers;
     const authorizationHeader = headers["authorization"];
-
     if (!authorizationHeader) {
       res.status(401);
       return res.send("Missing authorization header");

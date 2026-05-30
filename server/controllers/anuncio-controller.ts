@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import BaseController from "./base-controller";
 import AnuncioService from "../services/anuncio-service";
-import { CreateAnuncioDTO, userParse } from "../types";
+import { CreateAnuncioDTO, NextAuthApiRequest } from "../types";
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
-import auth, { NextAuthApiRequest } from "../middlewares/auth";
+import auth from "../middlewares/auth";
 import { error, log } from "console";
 import formidable from "formidable";
 
@@ -15,7 +15,7 @@ class AnuncioController extends BaseController {
     this.use(auth);
   }
 
-  public async create(req: NextApiRequest, res: NextApiResponse) {
+  public async create(req: NextAuthApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {
       // Fazer a validação dos dados
       const form = formidable({
@@ -32,7 +32,6 @@ class AnuncioController extends BaseController {
 
         const getField = (key: string) =>
           Array.isArray(fields[key]) ? fields[key]?.[0] : fields[key];
-        console.log(files, fields);
 
         const fotos = [files.fotos].flat().filter(Boolean) as formidable.File[];
         const titulo = getField("titulo");
@@ -40,13 +39,14 @@ class AnuncioController extends BaseController {
         const categoria = getField("categoria");
         const valorDiario = Number(getField("valorDiario"));
         const caucao = Number(getField("caucao"));
-        console.log(files["fotos[]"]);
 
         if (fotos.length < 3)
           return fail("Tente novamente! Fotos não preenchidas ou inválidas");
         if (!titulo) return fail("Tente novamente! Título não preenchido");
         if (!descricao)
-          return fail("Tente novamente! Descricao nao preenchida");
+          return res
+            .status(400)
+            .json({ message: "Tente novamente! Descricao nao preenchida" });
         if (
           !categoria ||
           !(anuncios.categoria.enumValues as any).includes(categoria)
@@ -69,13 +69,12 @@ class AnuncioController extends BaseController {
           usuarioId: req.userId,
         } as CreateAnuncioDTO;
 
-        console.log("anuncioDto", anuncioDto);
-
         const anuncio = await this.anuncioService.create(anuncioDto, fotos);
 
         return res.status(201).json({ data: anuncio });
-      } catch (error: Error) {
-        return fail(error.message, 500);
+      } catch (error) {
+        console.error(error);
+        return fail("Erro interno", 500);
       }
     });
   }
@@ -105,13 +104,9 @@ class AnuncioController extends BaseController {
         res.send({
           data: { ...updated },
         });
-      } catch (err: Error) {
-        console.log(err.message);
-
-        res.send({
-          error: err.message,
-        });
-        res.status(500);
+      } catch (err) {
+        console.error(error);
+        return res.status(500).json("Erro interno");
       }
     });
   }
@@ -141,13 +136,12 @@ class AnuncioController extends BaseController {
         res.send({
           data: anuncio,
         });
-      } catch (err: Error) {
-        console.log(err.message);
+      } catch (err) {
+        console.error(err);
 
-        res.send({
-          error: err.message,
+        res.status(500).send({
+          error: "Erro interno",
         });
-        res.status(500);
       }
     });
   }
@@ -177,13 +171,10 @@ class AnuncioController extends BaseController {
         await this.anuncioService.delete(id);
 
         res.send("Anuncio deleted successfully");
-      } catch (err: Error) {
-        console.log(err.message);
+      } catch (err) {
+        console.error(err);
 
-        res.send({
-          error: err.message,
-        });
-        res.status(500);
+        res.status(500).json({ error: "Erro Interno" });
       }
     });
   }
