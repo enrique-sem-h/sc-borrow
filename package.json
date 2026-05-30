@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "migrate:test": "cross-env NODE_ENV=test drizzle-kit migrate",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "npx drizzle-kit migrate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
