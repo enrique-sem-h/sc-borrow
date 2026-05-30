@@ -30,6 +30,7 @@ const userMock: UsuarioInsert = {
   complemento: "Apto 302",
   rep: 4.75,
   saldo: 1500.5,
+  telefone: "61994311593",
 };
 
 const anuncioMock: AnuncioInsert = {
@@ -258,8 +259,6 @@ describe("Anuncio endpoints", async () => {
           });
           const status = res.status;
           const json = await res.json();
-          console.log(json);
-
           const id = json.data?.id;
 
           expect(status).toBe(201);

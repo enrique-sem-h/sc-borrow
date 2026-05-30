@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import FormInput from "./form-input";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import apiService from "@/services/api";
+import { login } from "@/actions/login";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "react-toastify";
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRegisterClick: () => void;
+  onLoginSuccess: () => void;
 }
 
 type FormType = Pick<UsuarioInsert, "email" | "senha">;
@@ -24,10 +29,14 @@ export default function LoginModal({
   isOpen,
   onClose,
   onRegisterClick,
+  onLoginSuccess,
 }: LoginModalProps) {
   const { handleSubmit, control } = useForm<FormType>({
     resolver: zodResolver(schema),
   });
+
+  const authContext = useAuth();
+  const { login } = authContext;
 
   if (!isOpen) return null;
 
@@ -35,7 +44,21 @@ export default function LoginModal({
     onRegisterClick();
   };
 
-  const onFormSubmit = (data: FormData) => {};
+  const onFormSubmit: SubmitHandler<FormType> = async (data) => {
+    try {
+      const response = await login(data);
+
+      toast("Login efetuado com sucesso!", {});
+
+      setTimeout(() => {
+        onLoginSuccess();
+      }, 3000);
+    } catch (error) {
+      toast("Email ou senha incorretos", {
+        type: "error",
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -92,6 +115,7 @@ export default function LoginModal({
                   placeholder="Senha"
                   error={fieldState.error?.message}
                   {...field}
+                  type="password"
                 />
               );
             }}

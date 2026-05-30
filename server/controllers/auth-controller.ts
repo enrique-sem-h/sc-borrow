@@ -5,61 +5,65 @@ class AuthController {
   private authService = new AuthService();
 
   public async register(req: NextApiRequest, res: NextApiResponse) {
-    const {
-      nome,
-      telefone,
-      email,
-      cpf,
-      senha,
-      cep,
-      logradouro,
-      bairro,
-      numero,
-      uf,
-      complemento,
-      rep,
-    } = req.body;
+    try {
+      const {
+        nome,
+        telefone,
+        email,
+        cpf,
+        senha,
+        cep,
+        logradouro,
+        bairro,
+        numero,
+        uf,
+        complemento,
+        rep,
+      } = req.body;
 
-    if (!nome || !telefone || !email || !cpf || !senha) {
-      return res.status(400).json({
-        error: "Dados incompletos.",
+      if (!nome || !telefone || !email || !cpf || !senha) {
+        return res.status(400).json({
+          error: "Dados incompletos.",
+        });
+      }
+
+      const result = (await this.authService.register({
+        nome,
+        telefone,
+        email,
+        cpf,
+        senha,
+        cep,
+        logradouro,
+        bairro,
+        numero,
+        uf,
+        complemento,
+        rep,
+      })) as { error?: string;[key: string]: any };
+      
+      if (result.error) {
+        return res.status(409).json({
+          error: result.error,
+        });
+      }
+
+      return res.status(201).json({
+        message: "Usuário cadastrado com sucesso!",
+        data: {
+          ...result,
+          senha: undefined,
+        },
       });
+    } catch (error) {
+      console.log(error);
     }
-
-    const result = (await this.authService.register({
-      nome,
-      telefone,
-      email,
-      cpf,
-      senha,
-      cep,
-      logradouro,
-      bairro,
-      numero,
-      uf,
-      complemento,
-      rep,
-    })) as { error?: string; [key: string]: any };
-
-    if (result.error) {
-      return res.status(409).json({
-        error: result.error,
-      });
-    }
-
-    return res.status(201).json({
-      message: "Usuário cadastrado com sucesso!",
-      user: {
-        ...result,
-        senha: undefined,
-      },
-    });
   }
 
   public async login(req: NextApiRequest, res: NextApiResponse) {
-    const { email, cpf, password } = req.body;
+    const { email, cpf, senha } = req.body;
 
-    if ((!email && !cpf) || !password) {
+    if (!email || !senha) {
       return res.status(400).json({
         error: "Dados incompletos.",
       });
@@ -68,7 +72,7 @@ class AuthController {
     const result = await this.authService.login({
       email,
       cpf,
-      password,
+      senha,
     });
 
     if (result.error === "Usuário não encontrado") {
@@ -85,11 +89,11 @@ class AuthController {
 
     return res.status(200).json({
       message: "Login realizado com sucesso.",
-      user: {
+      data: {
         ...result.user,
         senha: undefined,
+        token: result.token,
       },
-      token: result.token,
     });
   }
 }

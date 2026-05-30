@@ -17,11 +17,12 @@ class UserRepository {
   }
 
   static async create(body: any) {
-    const [result] = await db.insert(usuarios).values(body);
+    const [resultId] = await db.insert(usuarios).values(body).$returningId();
+
     const newUser = await db
       .select()
       .from(usuarios)
-      .where(eq(usuarios.id, result.insertId));
+      .where(eq(usuarios.id, resultId.id));
 
     return newUser[0];
   }

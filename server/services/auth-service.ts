@@ -20,15 +20,9 @@ class AuthService {
   }
 
   public async login(body: any) {
-    const { cpf, email, password } = body;
+    const { cpf, email, senha } = body;
 
-    let foundUser;
-
-    if (cpf) {
-      foundUser = await UserRepository.findByCpf(cpf);
-    } else {
-      foundUser = await UserRepository.findByEmail(email);
-    }
+    const foundUser = await UserRepository.findByEmail(email);
 
     if (!foundUser) {
       return {
@@ -36,7 +30,7 @@ class AuthService {
       };
     }
 
-    const passwordMatch = await bcrypt.compare(password, foundUser.senha);
+    const passwordMatch = bcrypt.compare(senha, foundUser.senha);
 
     if (!passwordMatch) {
       return {
@@ -46,7 +40,7 @@ class AuthService {
 
     const token = jwt.sign(
       { id: foundUser.id, email: foundUser.email },
-      process.env.JWT_SECRET as string,
+      process.env.SECRET as string,
       { expiresIn: "1d" },
     );
 
