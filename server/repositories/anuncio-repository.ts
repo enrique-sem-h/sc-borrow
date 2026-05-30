@@ -19,7 +19,7 @@ class AnuncioRepository {
     return anuncio;
   }
 
-  static async update(id: string, body: UpdateAnuncioDTO): Anuncio {
+  static async update(id: string, body: UpdateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para editar anuncio
     //
     await db.update(anuncios).set(body).where(eq(anuncios.id, id));
