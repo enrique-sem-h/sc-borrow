@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
   User, LayoutGrid, Key, DollarSign, MessageCircle,
   HelpCircle, Edit3, Trash2, Star, LogOut
-  HelpCircle, Edit3, Trash2, Star, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -50,12 +49,14 @@ const MenuItem = ({ icon, label, active, onClick }: any) => (
 export default function MeusAnunciosPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const auth = useAuth();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [modalType, setModalType] = useState<'none' | 'confirm' | 'success'>('none');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<Anuncio | null>(null);
 
   useEffect(() => {
@@ -72,9 +73,8 @@ export default function MeusAnunciosPage() {
           console.error("Falha ao responder a API de anúncios");
         }
 
-        // Substituir dps
         setUsuario({
-          id: "usr-123",
+          id: "user-teste-123", // Trocar dps | teste rapido apenas
           nome: "Fulano da Silvia",
           rep: 5.00,
           saldo: 0
@@ -90,7 +90,7 @@ export default function MeusAnunciosPage() {
     carregarDados();
   }, []);
 
-  // --- ROTAS | (TROCAR CASO MUDE O NOME) ---
+  // --- ROTAS ---
   const menuItems = [
     { id: 'dados', label: 'Meus dados', icon: <User size={20} />, path: '/Meusdados' },
     { id: 'anuncios', label: 'Meus anúncios', icon: <LayoutGrid size={20} />, path: '/Meusanuncios' },
@@ -125,7 +125,8 @@ export default function MeusAnunciosPage() {
   };
 
   const handleLogout = () => {
-    router.push('/login');
+    auth?.logout();
+    router.push('/');
   };
 
   if (loading) {
@@ -135,15 +136,6 @@ export default function MeusAnunciosPage() {
       </div>
     );
   }
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const auth = useAuth();
-
-  const handleLogout = () => {
-    auth?.logout();
-    router.push('/');
-  };
-  
-  const itemExcluir = "Furadeira Tramontina"; 
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
@@ -181,27 +173,12 @@ export default function MeusAnunciosPage() {
         </div>
 
         <button 
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
           className="w-full flex items-center justify-center gap-2 p-3 mt-8 text-gray-500 hover:text-red-600 transition font-medium border-t border-gray-100"
         >
           <LogOut size={18} />
           <span>Sair</span>
         </button>
-        <nav className="w-full space-y-1">
-          <MenuItem icon={<User size={20} />} label="Meus dados" />
-          <MenuItem icon={<LayoutGrid size={20} />} label="Meus anúncios" active badge={1} />
-          <MenuItem icon={<Key size={20} />} label="Meus aluguéis" />
-          <MenuItem icon={<DollarSign size={20} />} label="Carteira" />
-          <MenuItem icon={<MessageCircle size={20} />} label="Chats" badge={2} />
-          <MenuItem icon={<HelpCircle size={20} />} label="Ajuda" />
-          <button
-            onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center gap-3 p-3 rounded-xl w-full text-left text-red-500 hover:bg-red-50 transition font-medium mt-1"
-          >
-            <LogOut size={20} />
-            <span>Sair</span>
-          </button>
-        </nav>
       </aside>
 
       <section className="flex-1">
@@ -267,20 +244,18 @@ export default function MeusAnunciosPage() {
         onClose={() => setModalType('none')}
         onConfirm={handleConfirmDelete} 
         itemName={itemSelecionado?.titulo || ""}
-        onConfirm={() => setModalType('success')}
-        itemName={itemExcluir}
-      />
-
-      <LogoutModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
       />
 
       <SuccessModal 
         isOpen={modalType === 'success'} 
         onClose={() => setModalType('none')}
         itemName={itemSelecionado?.titulo || ""}
+      />
+
+      <LogoutModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
       />
 
     </main>
