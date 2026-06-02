@@ -213,6 +213,7 @@ export default function RegisterModal({
                     placeholder="Senha"
                     error={fieldState.error?.message}
                     {...field}
+                    type="password"
                   />
                 );
               }}
@@ -227,6 +228,7 @@ export default function RegisterModal({
                     placeholder="Confirmar Senha"
                     error={fieldState.error?.message}
                     {...field}
+                    type="password"
                   />
                 );
               }}
