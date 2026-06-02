@@ -72,7 +72,7 @@ export default function Home() {
         "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
       rating: "5.0",
     },
-  ];   // as foto e de ia, preguica de pesquisar 
+  ];   
 
   return (
     <main className="min-h-screen bg-[#f5f5f5]">
