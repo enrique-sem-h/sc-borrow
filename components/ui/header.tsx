@@ -21,7 +21,9 @@ export default function Header() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const { isAuth } = useAuth();
+  const auth = useAuth();
+  const isAuth = auth?.isAuth ?? false;
+  const user = auth?.user ?? null;
 
   const onRegisterBtnClick = () => {
     setIsLoginOpen(false);
@@ -117,12 +119,22 @@ export default function Header() {
               Anunciar
             </button>
 
-            <button
-              onClick={() => setIsLoginOpen(true)}
-              className="border border-gray-300 rounded-xl px-4 md:px-8 py-2 hover:bg-gray-100 transition text-sm md:text-base"
-            >
-              Entrar
-            </button>
+            {isAuth ? (
+              <button
+                onClick={() => router.push("/meusdados")}
+                aria-label="Perfil"
+                className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-lg hover:opacity-80 transition shrink-0"
+              >
+                {user?.nome?.charAt(0).toUpperCase()}
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLoginOpen(true)}
+                className="border border-gray-300 rounded-xl px-4 md:px-8 py-2 hover:bg-gray-100 transition text-sm md:text-base"
+              >
+                Entrar
+              </button>
+            )}
           </div>
 
           <button
@@ -175,15 +187,27 @@ export default function Header() {
               Anunciar
             </button>
 
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                setIsLoginOpen(true);
-              }}
-              className="px-4 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-gray-700"
-            >
-              Entrar
-            </button>
+            {isAuth ? (
+              <button
+                onClick={() => navigate("/meusdados")}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
+              >
+                <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-base shrink-0">
+                  {user?.nome?.charAt(0).toUpperCase()}
+                </span>
+                Meu perfil
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setIsLoginOpen(true);
+                }}
+                className="px-4 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-gray-700"
+              >
+                Entrar
+              </button>
+            )}
           </div>
         )}
       </header>

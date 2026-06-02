@@ -4,11 +4,13 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User, LayoutGrid, Key, DollarSign, MessageCircle,
-  HelpCircle, Edit3, Trash2, Star
+  HelpCircle, Edit3, Trash2, Star, LogOut
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { DeleteModal } from '@/components/ui/delete-modal';
 import { SuccessModal } from '@/components/ui/success-delete-modal';
+import { LogoutModal } from '@/components/ui/logout-modal';
 
 const MenuItem = ({ icon, label, active = false}: any) => (
   <div className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${
@@ -26,6 +28,13 @@ const MenuItem = ({ icon, label, active = false}: any) => (
 export default function MeusAnunciosPage() {
   const router = useRouter();
   const [modalType, setModalType] = useState<'none' | 'confirm' | 'success'>('none');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const auth = useAuth();
+
+  const handleLogout = () => {
+    auth?.logout();
+    router.push('/');
+  };
   
   const itemExcluir = "Furadeira Tramontina"; 
 
@@ -51,6 +60,13 @@ export default function MeusAnunciosPage() {
           <MenuItem icon={<DollarSign size={20} />} label="Carteira" />
           <MenuItem icon={<MessageCircle size={20} />} label="Chats" badge={2} />
           <MenuItem icon={<HelpCircle size={20} />} label="Ajuda" />
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="flex items-center gap-3 p-3 rounded-xl w-full text-left text-red-500 hover:bg-red-50 transition font-medium mt-1"
+          >
+            <LogOut size={20} />
+            <span>Sair</span>
+          </button>
         </nav>
       </aside>
 
@@ -98,11 +114,17 @@ export default function MeusAnunciosPage() {
         </div>
       </section>
 
-      <DeleteModal 
-        isOpen={modalType === 'confirm'} 
+      <DeleteModal
+        isOpen={modalType === 'confirm'}
         onClose={() => setModalType('none')}
-        onConfirm={() => setModalType('success')} 
+        onConfirm={() => setModalType('success')}
         itemName={itemExcluir}
+      />
+
+      <LogoutModal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
       />
 
       <SuccessModal 

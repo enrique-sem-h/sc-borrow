@@ -47,7 +47,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", token);
     setUser(response.data);
   };
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    apiService.setToken("");
+    setUser(null);
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isAuth }}>
