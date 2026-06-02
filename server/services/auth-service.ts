@@ -30,7 +30,7 @@ class AuthService {
       };
     }
 
-    const passwordMatch = bcrypt.compare(senha, foundUser.senha);
+    const passwordMatch = await bcrypt.compare(senha, foundUser.senha);
 
     if (!passwordMatch) {
       return {
