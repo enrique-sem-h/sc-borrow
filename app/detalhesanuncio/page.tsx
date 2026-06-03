@@ -104,12 +104,16 @@ export default function DetalhesAnuncioPage() {
   // ------------------------
 
   const onSolicitarReserva = (data: ReservaFormValues) => {
-    console.log("Dados puros enviados pelo React Hook Form:", {
-      id_anuncio: idAnuncio,
-      ...data,
-      valor_total: valorTotal,
+    const query = new URLSearchParams({
+      titulo:      DADOS_ANUNCIO.titulo,
+      foto:        DADOS_ANUNCIO.foto_principal ?? "",
+      dataInicio:  data.dataInicio,
+      dataFim:     data.dataFim,
+      valorDiario: String(DADOS_ANUNCIO.valor_diario),
+      caucao:      String(DADOS_ANUNCIO.caucao),
+      totalDias:   String(totalDias),
     });
-    alert("Solicitação enviada de forma limpa pelo Hook Form!");
+    router.push(`/confirmarreserva?${query.toString()}`);
   };
 
   return (
