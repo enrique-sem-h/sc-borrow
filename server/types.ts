@@ -2,6 +2,7 @@ import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { NextApiRequest } from "next";
+import formidable from "formidable";
 
 type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -50,4 +51,8 @@ export interface NextAuthMiddlewareApiRequest extends NextApiRequest {
 
 export interface NextAuthApiRequest extends NextApiRequest {
   userId: string;
+}
+
+export interface NextFormApiRequest extends NextApiRequest {
+  files?: formidable.Files<string>;
 }
