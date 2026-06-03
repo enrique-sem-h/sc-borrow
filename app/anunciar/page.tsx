@@ -124,17 +124,19 @@ export default function CriarAnuncioPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-4 gap-3 mb-6 shrink-0">
+            <div className="grid grid-cols-4 gap-3 mb-6 shrink-0  ">
               {[1, 2, 3, 4].map((i, index) => {
                 const file = (watch("fotos") || []).at(index);
                 const url = file ? URL.createObjectURL(file) : null;
                 return (
                   <div
                     key={i}
-                    className="aspect-square bg-[#f8f9fa] rounded-2xl border border-gray-100 flex items-center justify-center"
+                    className="aspect-square bg-[#f8f9fa] rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden"
                   >
                     {!url && <ImageIcon size={20} className="text-gray-300" />}
-                    {url && <img src={url} className="h-full object-cover" />}
+                    {url && (
+                      <img src={url} className="w-full h-full object-cover" />
+                    )}
                   </div>
                 );
               })}
