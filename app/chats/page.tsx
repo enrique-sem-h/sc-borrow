@@ -1,0 +1,258 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, Image as ImageIcon, Send, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+
+// npx expo install firebase  | caso precisem
+
+import { dbFirebase } from "@/infra/firebase";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+
+interface Mensagem {
+  id: string;
+  texto: string;
+  remetenteId: string;
+  timestamp: string;
+}
+
+interface Conversa {
+  id: string;
+  nomeUsuario: string;
+  itemAcordo: string;
+  periodoAcordo: string;
+}
+
+type ChatFormValues = {
+  mensagemTexto: string;
+  buscaConversa: string;
+};
+
+export default function ChatsPage() {
+  const router = useRouter();
+  const mensagensEndRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const usuarioLogadoId = "user-teste-123"; 
+
+  const [conversas, setConversas] = useState<Conversa[]>([]);
+  const [conversaAtiva, setConversaAtiva] = useState<Conversa | null>(null);
+  const [mensagens, setMensagens] = useState<Mensagem[]>([]);
+
+  const { handleSubmit, control, reset, watch } = useForm<ChatFormValues>({
+    defaultValues: {
+      mensagemTexto: "",
+      buscaConversa: "",
+    },
+  });
+
+  const termoBusca = watch("buscaConversa");
+
+  const conversasFiltradas = conversas.filter((c) =>
+    c.nomeUsuario.toLowerCase().includes(termoBusca.toLowerCase()) ||
+    c.itemAcordo.toLowerCase().includes(termoBusca.toLowerCase())
+  );
+
+  useEffect(() => {
+    mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensagens]);
+
+  useEffect(() => {
+    const caminhoConversas = collection(dbFirebase, "conversas");
+    
+    const unsubscribe = onSnapshot(caminhoConversas, (snapshot) => {
+      const listaSalas = snapshot.docs.map((doc) => {
+        const dados = doc.data();
+        return {
+          id: doc.id,
+          nomeUsuario: dados.nomeUsuario || "Usuário",
+          itemAcordo: dados.itemAcordo || "Produto",
+          periodoAcordo: dados.periodoAcordo || "Período",
+        } as Conversa;
+      });
+
+      setConversas(listaSalas);
+      
+      if (listaSalas.length > 0 && !conversaAtiva) {
+        setConversaAtiva(listaSalas[0]);
+      }
+    }, (error) => {
+      console.error("Erro ao carregar lista de conversas:", error);
+    });
+
+    return () => unsubscribe();
+  }, [conversaAtiva]);
+
+  useEffect(() => {
+    if (!conversaAtiva) return;
+
+    const caminhoColecao = collection(dbFirebase, "conversas", conversaAtiva.id, "mensagens");
+    const consultaFiltrada = query(caminhoColecao, orderBy("timestamp", "asc"));
+
+    const unsubscribe = onSnapshot(consultaFiltrada, (snapshot) => {
+      const listaMensagens = snapshot.docs.map((doc) => {
+        const dados = doc.data();
+        
+        let horaFormatada = "15:36"; 
+        if (dados.timestamp) {
+          const dataJS = dados.timestamp.toDate();
+          horaFormatada = dataJS.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        return {
+          id: doc.id,
+          texto: dados.texto,
+          remetenteId: dados.remetenteId,
+          timestamp: horaFormatada,
+        } as Mensagem;
+      });
+
+      setMensagens(listaMensagens);
+    }, (error) => {
+      console.error("Erro nas mensagens:", error);
+    });
+
+    return () => unsubscribe();
+  }, [conversaAtiva]);
+
+  const onEnviarMensagemSubmit = async (data: ChatFormValues) => {
+    if (!conversaAtiva || !data.mensagemTexto.trim()) return;
+
+    const textoParaEnviar = data.mensagemTexto;
+    reset({ ...data, mensagemTexto: "" }); 
+
+    try {
+      await addDoc(collection(dbFirebase, "conversas", conversaAtiva.id, "mensagens"), {
+        texto: textoParaEnviar,
+        remetenteId: usuarioLogadoId,
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Erro ao enviar:", error);
+    }
+  };
+
+  const handleBotaoFotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleArquivoSelecionado = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0];
+    if (arquivo) {
+      alert(`Foto "${arquivo.name}" selecionada! Pronto para o Storage.`);
+    }
+  };
+
+  return (
+    <div className="w-full h-[calc(100vh-80px)] flex bg-white font-sans text-[#1a1a1a] min-h-0">
+      
+      <aside className="w-80 border-r border-gray-100 flex flex-col justify-between p-6 shrink-0 h-full">
+        <div className="space-y-3 overflow-y-auto flex-1">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-black transition text-sm font-medium mb-4">
+            <ChevronLeft size={18} /> Voltar
+          </button>
+
+          {conversasFiltradas.length === 0 ? (
+            <p className="text-gray-400 text-xs text-center pt-4">Nenhuma conversa encontrada.</p>
+          ) : (
+            conversasFiltradas.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setConversaAtiva(c)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${
+                  conversaAtiva?.id === c.id ? "bg-gray-100 font-bold" : "hover:bg-gray-50"
+                }`}
+              >
+                <div className="w-10 h-10 bg-gray-200 rounded-full shrink-0" />
+                <div className="truncate">
+                  <p className="text-sm text-gray-900">{c.nomeUsuario}</p>
+                  <p className="text-xs text-gray-400 truncate">{c.itemAcordo}</p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+
+        <div className="relative mt-4 pt-2 border-t border-gray-100">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Controller
+            name="buscaConversa"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                type="text"
+                placeholder="Procurar conversa..."
+                className="w-full bg-[#f8f9fa] border border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition text-gray-700"
+              />
+            )}
+          />
+        </div>
+      </aside>
+
+      <section className="flex-1 flex flex-col bg-white min-h-0 h-full">
+        {conversaAtiva ? (
+          <>
+            <div className="px-8 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
+              <div className="w-10 h-10 bg-gray-200 rounded-full" />
+              <span className="font-bold text-gray-900">{conversaAtiva.nomeUsuario}</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-white">
+              <p className="text-center text-xs text-gray-300 font-semibold tracking-wide py-2">
+                Acordo iniciado para: {conversaAtiva.itemAcordo} (Período: {conversaAtiva.periodoAcordo})
+              </p>
+
+              {mensagens.map((m) => {
+                const ehMinha = m.remetenteId === usuarioLogadoId;
+                return (
+                  <div key={m.id} className={`flex flex-col ${ehMinha ? "items-end" : "items-start"}`}>
+                    <div className="flex items-end gap-2 max-w-[70%]">
+                      {!ehMinha && <div className="w-7 h-7 bg-gray-200 rounded-full shrink-0 mb-1" />}
+                      <div className={`rounded-[22px] px-5 py-3 text-sm leading-relaxed ${
+                        ehMinha ? "bg-gray-200 text-gray-800 rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"
+                      }`}>
+                        {m.texto}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-300 font-bold mt-1 px-9">{m.timestamp}</span>
+                  </div>
+                );
+              })}
+              <div ref={mensagensEndRef} />
+            </div>
+
+            <form onSubmit={handleSubmit(onEnviarMensagemSubmit)} className="p-6 border-t border-gray-100 flex items-center gap-4 shrink-0 bg-white">
+              <input type="file" ref={fileInputRef} onChange={handleArquivoSelecionado} accept="image/*" className="hidden" />
+              <button type="button" onClick={handleBotaoFotoClick} className="text-gray-400 hover:text-blue-500 transition shrink-0">
+                <ImageIcon size={24} />
+              </button>
+
+              <Controller
+                name="mensagemTexto"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="Digite sua mensagem..."
+                    className="flex-1 bg-[#f8f9fa] border border-gray-100 rounded-full px-6 py-3 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition text-gray-700"
+                  />
+                )}
+              />
+              
+              <button type="submit" className="p-3 bg-gray-100 hover:bg-blue-600 hover:text-white rounded-full transition text-gray-500 shadow-sm shrink-0">
+                <Send size={18} />
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+            Selecione uma conversa para iniciar.
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
