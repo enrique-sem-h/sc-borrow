@@ -214,7 +214,10 @@ export default function MeusAlugueisPage() {
       <section className="flex-1">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-4xl font-serif font-bold text-gray-900">Meus aluguéis</h1>
-          <button className="px-5 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition">
+          <button
+            onClick={() => router.push('/meusalugueis/historico')}
+            className="px-5 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
+          >
             Histórico
           </button>
         </div>
