@@ -92,12 +92,12 @@ export default function MeusAnunciosPage() {
 
   // --- ROTAS ---
   const menuItems = [
-    { id: 'dados', label: 'Meus dados', icon: <User size={20} />, path: '/Meusdados' },
+    { id: 'dados', label: 'Meus dados', icon: <User size={20} />, path: '/meusdados' },
     { id: 'anuncios', label: 'Meus anúncios', icon: <LayoutGrid size={20} />, path: '/Meusanuncios' },
-    { id: 'alugueis', label: 'Meus aluguéis', icon: <Key size={20} />, path: '/Meusalugueis' },
-    { id: 'carteira', label: 'Carteira', icon: <DollarSign size={20} />, path: '/Carteira' },
-    { id: 'chats', label: 'Chats', icon: <MessageCircle size={20} />, path: '/Chats' },
-    { id: 'ajuda', label: 'Ajuda', icon: <HelpCircle size={20} />, path: '/Ajuda' },
+    { id: 'alugueis', label: 'Meus aluguéis', icon: <Key size={20} />, path: '/meusalugueis' },
+    { id: 'carteira', label: 'Carteira', icon: <DollarSign size={20} />, path: '/carteira' },
+    { id: 'chats', label: 'Chats', icon: <MessageCircle size={20} />, path: '/chats' },
+    { id: 'ajuda', label: 'Ajuda', icon: <HelpCircle size={20} />, path: '/ajuda' },
   ];
 
   const handleOpenDeleteModal = (anuncio: Anuncio) => {
