@@ -7,6 +7,10 @@ import { randomUUID } from "node:crypto";
 import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 
 class AnuncioService extends BaseService {
+  public async getAll(userId: string) {
+    return AnuncioRepository.getAll(userId);
+  }
+
   public async create(
     body: CreateAnuncioDTO,
     userId: string,

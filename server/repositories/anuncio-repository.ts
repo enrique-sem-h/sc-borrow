@@ -5,6 +5,16 @@ import { eq } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 
 class AnuncioRepository {
+  static async getAll(userId: string): Promise<Anuncio[]> {
+    // Chamar o Drizzle para criar anuncio
+
+    const results = await db
+      .select()
+      .from(anuncios)
+      .where(eq(anuncios.usuarioId, userId));
+
+    return results;
+  }
   static async create(body: CreateAnuncioDTO): Promise<Anuncio> {
     // Chamar o Drizzle para criar anuncio
 

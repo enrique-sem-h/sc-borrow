@@ -12,4 +12,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "POST") {
     return anuncioHandlers.create(req as NextAuthApiRequest, res);
   }
+  if (req.method === "GET") {
+    return anuncioHandlers.getAll(req as NextAuthApiRequest, res);
+  }
 }

@@ -91,6 +91,21 @@ describe("Anuncio endpoints", async () => {
     await db.delete(usuarios);
   });
   describe("Test /anuncio authentication", () => {
+    test("if GET /anuncio returns 404 without authorization", async () => {
+      await testApiHandler({
+        pagesHandler: anuncioHandler,
+        // requestPatcher is optional
+        requestPatcher(request) {
+          request.headers.authorization = undefined;
+        },
+
+        async test({ fetch }) {
+          const res = await fetch({ method: "GET" });
+          const status = res.status;
+          expect(status).toBe(401);
+        },
+      });
+    });
     test("if GET /anuncio/[id] returns 404 without authorization", async () => {
       await testApiHandler({
         pagesHandler: anuncioIdHandler,
@@ -154,6 +169,47 @@ describe("Anuncio endpoints", async () => {
   });
 
   describe("Test /anuncio behavior", () => {
+    test("if GET /anuncio returns all auth user anuncios", async () => {
+      const user = await createUser();
+
+      const anuncios = [];
+      const anunciosCountToGenerate = 10;
+
+      for (let index = 0; index < anunciosCountToGenerate; index++) {
+        const anuncio = await createAnuncio({
+          titulo: `Anuncio ${index + 1}`,
+          usuarioId: user.id,
+        });
+        anuncios.push(anuncio);
+      }
+
+      await testApiHandler({
+        pagesHandler: anuncioHandler,
+        // requestPatcher is optional
+        requestPatcher(request) {
+          authenticateRequest(user, request);
+        },
+
+        async test({ fetch }) {
+          const res = await fetch({ method: "GET" });
+          const data = await res.json();
+          const status = res.status;
+          expect(status).toBe(200);
+          expect(res.data.anuncios.length).toBe(anuncios.length);
+          const anuncios = res.data.anuncios;
+
+          for (const anuncio of anuncios) {
+            expect(anuncio.id).toBeDefined();
+            expect(anuncio.titulo).toBeDefined();
+            expect(anuncio.descricao).toBeDefined();
+            expect(anuncio.categoria).toBeDefined();
+            expect(anuncio.valorDiario).toBeDefined();
+            expect(anuncio.caucao).toBeDefined();
+            expect(anuncio.usuarioId).toBeDefined();
+          }
+        },
+      });
+    });
     test("if GET /anuncio/[id] returns 404 if anuncio does not exist", async () => {
       const user = await createUser();
 

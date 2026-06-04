@@ -15,9 +15,28 @@ class AnuncioController extends BaseController {
     this.use(auth);
   }
 
-  public async create(req: NextAuthApiRequest, res: NextApiResponse) {
-    console.log(req);
+  public async getAll(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const userId = req.userId;
 
+        const anuncios = await this.anuncioService.getAll(userId);
+
+        return res.send({
+          data: {
+            anuncios: [...anuncios],
+          },
+        });
+      } catch (error) {
+        console.error(error.message);
+        return res.send({
+          error: "Error when getting anuncios",
+        });
+      }
+    });
+  }
+
+  public async create(req: NextAuthApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {
       // Fazer a validação dos dados
       const form = formidable({
