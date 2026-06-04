@@ -52,7 +52,3 @@ export interface NextAuthMiddlewareApiRequest extends NextApiRequest {
 export interface NextAuthApiRequest extends NextApiRequest {
   userId: string;
 }
-
-export interface NextFormApiRequest extends NextApiRequest {
-  files?: formidable.Files<string>;
-}
