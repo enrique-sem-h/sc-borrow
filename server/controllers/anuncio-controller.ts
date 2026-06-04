@@ -38,7 +38,9 @@ class AnuncioController extends BaseController {
         const fotos = [files.fotos].flat().filter(Boolean) as formidable.File[];
         const titulo = getField("titulo");
         const descricao = getField("descricao");
-        const categoria = getField("categoria");
+        const categoria = getField(
+          "categoria",
+        ) as CreateAnuncioDTO["categoria"];
         const valorDiario = Number(getField("valorDiario"));
         const caucao = Number(getField("caucao"));
 
@@ -62,16 +64,19 @@ class AnuncioController extends BaseController {
             "Tente novamente! Valor cação não preenchido ou inválido",
           );
 
-        const anuncioDto = {
+        const anuncioDto: CreateAnuncioDTO = {
           titulo,
           descricao,
           categoria,
           valorDiario,
           caucao,
-          usuarioId: req.userId,
-        } as CreateAnuncioDTO;
+          fotos,
+        };
 
-        const anuncio = await this.anuncioService.create(anuncioDto, fotos);
+        const anuncio = await this.anuncioService.create(
+          anuncioDto,
+          req.userId,
+        );
 
         return res.status(201).json({ data: anuncio });
       } catch (error) {

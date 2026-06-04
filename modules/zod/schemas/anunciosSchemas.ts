@@ -7,8 +7,12 @@ export const insertAnuncioSchema = createInsertSchema(anuncios, {
   descricao: (schema) => schema.min(1),
   valorDiario: z.coerce.number().positive().min(1),
   caucao: z.coerce.number().positive().min(1),
-  usuarioId: z.any().optional(),
-}).extend({
-  fotos: z.array(z.instanceof(File)).min(3),
-});
+})
+  .extend({
+    fotos: z.array(z.instanceof(File)).min(3),
+  })
+  .omit({
+    id: true,
+    usuarioId: true,
+  });
 export const anuncioSchema = createSelectSchema(anuncios);

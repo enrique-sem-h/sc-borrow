@@ -4,17 +4,25 @@ import FotoAnuncioService from "../services/foto-anuncio-service";
 import { Anuncio, CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
 import BaseService from "./base-service";
 import { randomUUID } from "node:crypto";
+import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 
 class AnuncioService extends BaseService {
   public async create(
     body: CreateAnuncioDTO,
-    fotos: formidable.File[],
+    userId: string,
   ): Promise<Anuncio> {
     const fotoAnuncioService = new FotoAnuncioService();
     const anuncioId = randomUUID();
 
+    const payload: AnuncioInsert = {
+      ...body,
+      usuarioId: userId,
+    };
+
+    const fotos = body.fotos as formidable.File[];
+
     body.id = anuncioId;
-    const anuncio = await AnuncioRepository.create(body);
+    const anuncio = await AnuncioRepository.create(payload);
 
     // upload das fotos
     await fotoAnuncioService.bulkUpload(anuncioId, fotos);

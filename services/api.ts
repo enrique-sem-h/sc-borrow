@@ -1,7 +1,9 @@
+import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 import {
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
+import { CreateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
 class ApiService {
@@ -27,6 +29,29 @@ class ApiService {
   public setToken(token: string) {
     this.api.defaults.headers.Authorization = `Bearer ${token}`;
   }
+
+  public anuncios = {
+    insert: async (data: CreateAnuncioDTO) => {
+      const formData = new FormData();
+      const { fotos, ...restData } = data;
+      for (const [key, value] of Object.entries(restData)) {
+        formData.append(key, value);
+      }
+
+      fotos.forEach((foto) => {
+        const parsed = foto as File;
+        formData.append("fotos", parsed, parsed.name);
+      });
+
+      const response = await this.api.post("anuncio", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return response;
+    },
+  };
 }
 
 const apiService = new ApiService();

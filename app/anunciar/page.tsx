@@ -6,6 +6,7 @@ import FormInput, {
 } from "@/components/ui/form-input";
 import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
+import { useAddAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +29,7 @@ const schema = insertAnuncioSchema;
 export default function CriarAnuncioPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const addAnuncioMutation = useAddAnuncio();
 
   const {
     handleSubmit,
@@ -41,16 +43,17 @@ export default function CriarAnuncioPage() {
     },
   });
 
-  const [loading, setLoading] = useState(false);
+  const loading = addAnuncioMutation.isPending;
   const [showModal, setShowModal] = useState(false);
 
   const onFormSubmit: SubmitHandler<FormType> = async (data: FormType) => {
-    const formData = new FormData();
+    console.log(data);
 
-    for (const [key, value] of Object.entries(data)) {
-      formData.append(key, value);
-    }
-    console.log(formData.entries().toArray());
+    try {
+      const response = await addAnuncioMutation.mutateAsync(data);
+
+      setShowModal(true);
+    } catch (error) {}
   };
 
   return (
@@ -309,7 +312,10 @@ export default function CriarAnuncioPage() {
             </p>
 
             <div className="flex gap-4">
-              <button className="flex-1 py-3 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all">
+              <button
+                className="flex-1 py-3 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all"
+                onClick={() => setShowModal(false)}
+              >
                 Fechar
               </button>
 
