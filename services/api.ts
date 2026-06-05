@@ -3,7 +3,7 @@ import {
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
-import { CreateAnuncioDTO } from "@/server/types";
+import { CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
 class ApiService {
@@ -63,6 +63,13 @@ class ApiService {
     },
     delete: async (id: string) => {
       const response = await this.api.delete(`anuncio/${id}`);
+
+      return response.data;
+    },
+    edit: async (id: string, newData: UpdateAnuncioDTO) => {
+      console.log("new data", newData);
+
+      const response = await this.api.put(`anuncio/${id}`, newData);
 
       return response.data;
     },

@@ -22,9 +22,27 @@ export function useDeleteAnuncio() {
   const mutation = useMutation({
     mutationFn: apiService.anuncios.delete,
     async onSuccess(data, variables, onMutateResult, context) {
+      console.log("Variables", variables);
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["anuncios"] }),
         queryClient.invalidateQueries({ queryKey: ["anuncio", variables] }),
+      ]);
+    },
+  });
+
+  return mutation;
+}
+
+export function useEditAnuncio() {
+  const mutation = useMutation({
+    mutationFn: (data) => apiService.anuncios.edit(data.id, data.data),
+    async onSuccess(data, variables, onMutateResult, context) {
+      console.log("Variables", variables);
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["anuncios"] }),
+        queryClient.invalidateQueries({ queryKey: ["anuncio", variables.id] }),
       ]);
     },
   });

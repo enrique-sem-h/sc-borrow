@@ -1,12 +1,15 @@
 "use client";
 import AnunciarForm from "@/components/forms/anunciar-form";
+import { useEditAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { useGetAnuncio } from "@/modules/react-query/queries/anuncios-queries";
 import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
+import { UpdateAnuncioDTO } from "@/server/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, Image as ImageIcon, Check } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 import z from "zod";
 
 function maskCurrency(value: string): string {
@@ -15,8 +18,10 @@ function maskCurrency(value: string): string {
   return (parseInt(digits, 10) / 100).toFixed(2).replace(".", ",");
 }
 
+type FormType = UpdateAnuncioDTO;
+
 const schema = insertAnuncioSchema.extend({
-  fotos: z.array(z.instanceof(File)).min(3),
+  // fotos: z.array(z.instanceof(File)).min(3),
 });
 
 export default function EditarAnuncioPage() {
@@ -28,9 +33,12 @@ export default function EditarAnuncioPage() {
 
   const [showModal, setShowModal] = useState(false);
   const getAnuncioQuery = useGetAnuncio(idAnuncio);
+  const editAnuncioMutation = useEditAnuncio();
+
   const titulo = getAnuncioQuery.data?.data?.titulo;
 
-  const loading = getAnuncioQuery.isLoading;
+  const loadingAnuncio = getAnuncioQuery.isLoading;
+  const loading = editAnuncioMutation.isPending;
 
   useEffect(() => {
     if (!idAnuncio) return;
@@ -43,23 +51,42 @@ export default function EditarAnuncioPage() {
     },
   });
 
-  const { setValues } = formHook;
+  const {
+    setValues,
+    formState: { errors },
+  } = formHook;
 
-  const onFormSubmit = async (e: React.FormEvent) => {};
+  const onFormSubmit: SubmitHandler<FormType> = async (data: FormType) => {
+    console.log(data);
+
+    if (!idAnuncio) return;
+
+    try {
+      const response = await editAnuncioMutation.mutateAsync({
+        id: idAnuncio,
+        data,
+      });
+    } catch (error) {
+      toast("Erro ao salvar anúncio", { type: "error" });
+    }
+  };
 
   useEffect(() => {
     if (getAnuncioQuery.isFetching) return;
 
     if (getAnuncioQuery.error) {
     } else {
-      const data = getAnuncioQuery.data.data;
-      console.log(data);
+      const { fotos, ...others } = getAnuncioQuery.data.data;
 
-      setValues({ ...data });
+      const fotosToFiles = fotos.map((foto) => {
+        return foto;
+      });
+
+      setValues({ ...others, fotos: fotosToFiles });
     }
   }, [getAnuncioQuery.isFetching]);
 
-  if (loading) {
+  if (loadingAnuncio) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-gray-500 font-medium animate-pulse">
@@ -97,7 +124,6 @@ export default function EditarAnuncioPage() {
         formHook={formHook}
         onSubmit={onFormSubmit}
         loading={loading}
-        edit={true}
       />
 
       {showModal && (
