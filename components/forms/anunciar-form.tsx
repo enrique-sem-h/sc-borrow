@@ -1,6 +1,6 @@
 "use client";
 import { errors } from "formidable";
-import { UploadCloud, ImageIcon } from "lucide-react";
+import { UploadCloud, ImageIcon, CrossIcon, X } from "lucide-react";
 import { DOMAttributes, ReactNode, useRef } from "react";
 import { Control, Controller, UseFormReturn } from "react-hook-form";
 import { FieldError } from "../ui/field";
@@ -124,14 +124,34 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                   }
                 }
               }
+              function onRemoveImageBtnClick(index: number): void {
+                console.log("awdawd");
+
+                const allFotos = formHook.watch("fotos");
+                const newImages = [...allFotos];
+
+                newImages.splice(index, 1);
+
+                formHook.setValue("fotos", newImages);
+              }
+
               return (
                 <div
                   key={i}
-                  className="aspect-square bg-[#f8f9fa] rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden"
+                  className="aspect-square bg-[#f8f9fa] rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden relative  group transition-all duration-300"
                 >
                   {!url && <ImageIcon size={20} className="text-gray-300" />}
                   {url && (
-                    <img src={url} className="w-full h-full object-cover" />
+                    <>
+                      <img src={url} className="w-full h-full object-cover" />
+                      <button
+                        className="absolute top-[1px] right-[1px] group-hover:visible invisible cursor-pointer"
+                        type="button"
+                        onClick={() => onRemoveImageBtnClick(index)}
+                      >
+                        <X className="" color="red" />
+                      </button>
+                    </>
                   )}
                 </div>
               );
