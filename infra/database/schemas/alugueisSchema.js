@@ -21,10 +21,10 @@ export const alugueis = mysqlTable("alugueis", {
     () => anuncios.id,
     { onDelete: "set null" },
   ),
-  idLocador: varchar("id_usuario", { length: 36 })
+  idLocador: varchar("id_locador", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
-  idLocatario: varchar("id_usuario", { length: 36 })
+  idLocatario: varchar("id_locatario", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
 });

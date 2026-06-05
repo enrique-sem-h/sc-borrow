@@ -10,7 +10,6 @@ import { usuarios } from "./usuariosSchema";
 import {
   InferInsertModel,
   InferSelectModel,
-  defineRelations,
   relations,
 } from "drizzle-orm";
 
