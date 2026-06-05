@@ -50,9 +50,6 @@ export default function MeusAnunciosPage() {
   const pathname = usePathname();
   const auth = useAuth();
 
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const [modalType, setModalType] = useState<"none" | "confirm" | "success">(
     "none",
   );
@@ -61,35 +58,7 @@ export default function MeusAnunciosPage() {
 
   const anunciosQuery = useGetAnuncios();
   const anuncios = anunciosQuery.data?.data?.anuncios || [];
-
-  useEffect(() => {
-    async function carregarDados() {
-      try {
-        setLoading(true);
-
-        const resAnuncios = await fetch("/Meusanuncios/api");
-
-        if (resAnuncios.ok) {
-          const dadosAnuncios = await resAnuncios.json();
-        } else {
-          console.error("Falha ao responder a API de anúncios");
-        }
-
-        setUsuario({
-          id: "user-teste-123", // Trocar dps | teste rapido apenas
-          nome: "Fulano da Silvia",
-          rep: 5.0,
-          saldo: 0,
-        });
-      } catch (error) {
-        console.error("Erro na conexão com o front-end:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    carregarDados();
-  }, []);
+  const loading = anunciosQuery.isLoading;
 
   // --- ROTAS ---
   const menuItems = [
@@ -181,14 +150,14 @@ export default function MeusAnunciosPage() {
               <div className="w-full h-full bg-gray-300" />
             </div>
             <h2 className="text-xl font-bold flex items-center gap-1.5">
-              {usuario?.nome}
+              {auth?.user?.nome}
               <span className="inline-flex items-center justify-center bg-blue-600 text-white rounded-full w-4 h-4 text-[9px] font-extrabold">
                 ✓
               </span>
             </h2>
             <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
               <span className="text-yellow-500">★</span>
-              {usuario?.rep ? usuario.rep.toFixed(1) : "0.0"}{" "}
+              {auth?.user?.rep ? auth.user.rep.toFixed(1) : "0.0"}{" "}
               <span className="text-gray-300 font-light">(Reputação)</span>
             </p>
           </div>
