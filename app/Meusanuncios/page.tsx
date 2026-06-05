@@ -124,7 +124,7 @@ export default function MeusAnunciosPage() {
     auth?.logout();
     router.push("/");
   };
-
+  /*
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
@@ -134,7 +134,7 @@ export default function MeusAnunciosPage() {
       </div>
     );
   }
-
+  */
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
