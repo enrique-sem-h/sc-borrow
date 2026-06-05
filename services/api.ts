@@ -51,6 +51,11 @@ class ApiService {
 
       return response;
     },
+    getAll: async () => {
+      const response = await this.api.get("anuncio");
+
+      return response.data;
+    },
   };
 }
 

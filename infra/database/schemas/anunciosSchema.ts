@@ -7,7 +7,12 @@ import {
 } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
-import { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import {
+  InferInsertModel,
+  InferSelectModel,
+  defineRelations,
+  relations,
+} from "drizzle-orm";
 
 export const anuncios = mysqlTable("anuncios", {
   id: varchar("id", { length: 36 })
@@ -48,3 +53,14 @@ export const fotoAnuncios = mysqlTable("foto_anuncio", {
     .references(() => anuncios.id)
     .notNull(),
 });
+
+export const anunciosRelations = relations(anuncios, ({ many }) => ({
+  fotos: many(fotoAnuncios),
+}));
+
+export const fotoRelations = relations(fotoAnuncios, ({ one }) => ({
+  anuncio: one(anuncios, {
+    fields: [fotoAnuncios.anuncioId],
+    references: [anuncios.id],
+  }),
+}));

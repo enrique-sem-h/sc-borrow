@@ -16,7 +16,6 @@ class AnuncioService extends BaseService {
     userId: string,
   ): Promise<Anuncio> {
     const fotoAnuncioService = new FotoAnuncioService();
-    const anuncioId = randomUUID();
 
     const payload: AnuncioInsert = {
       ...body,
@@ -25,11 +24,10 @@ class AnuncioService extends BaseService {
 
     const fotos = body.fotos as formidable.File[];
 
-    body.id = anuncioId;
     const anuncio = await AnuncioRepository.create(payload);
 
     // upload das fotos
-    await fotoAnuncioService.bulkUpload(anuncioId, fotos);
+    await fotoAnuncioService.bulkUpload(anuncio.id, fotos);
     return anuncio;
   }
 

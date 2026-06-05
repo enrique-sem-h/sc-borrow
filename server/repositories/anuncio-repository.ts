@@ -1,5 +1,9 @@
 import { CreateAnuncioDTO, UpdateAnuncioDTO } from "../types";
-import { Anuncio, anuncios } from "@/infra/database/schemas/anunciosSchema";
+import {
+  Anuncio,
+  anuncios,
+  fotoAnuncios,
+} from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
 import { eq } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
@@ -8,10 +12,12 @@ class AnuncioRepository {
   static async getAll(userId: string): Promise<Anuncio[]> {
     // Chamar o Drizzle para criar anuncio
 
-    const results = await db
-      .select()
-      .from(anuncios)
-      .where(eq(anuncios.usuarioId, userId));
+    const results = await db.query.anuncios.findMany({
+      where(fields, operators) {
+        return operators.eq(fields.usuarioId, userId);
+      },
+      with: { fotos: true },
+    });
 
     return results;
   }
