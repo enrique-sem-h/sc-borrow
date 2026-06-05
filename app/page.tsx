@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import LoginModal from "@/components/ui/login-modal";
 import { Shrikhand } from "next/font/google";
@@ -12,15 +12,30 @@ const shrikhand = Shrikhand({
   display: "swap" 
 });  
 
+interface AnuncioCard {
+  id: string;
+  titulo: string;
+  valorDiario: number;
+  foto_principal: string | null;
+}
+
 export default function Home() {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-      const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [anunciosReais, setAnunciosReais] = useState<AnuncioCard[]>([]);
 
-      const onRegisterBtnClick = () => {
-        setIsLoginOpen(false)
-        setIsRegisterOpen(true)
-      }
+  const onRegisterBtnClick = () => {
+    setIsLoginOpen(false)
+    setIsRegisterOpen(true)
+  }
+
+  useEffect(() => {
+    fetch("/api/anuncios")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data) && data.length > 0) setAnunciosReais(data); })
+      .catch(() => {});
+  }, []);
 
   const categories = [
     {
@@ -128,11 +143,17 @@ export default function Home() {
           Próximo a você
         </h2>
 
-        <div className="grid grid-cols-4 gap-8">  
-
-          {products.map((product) => (
+        <div className="grid grid-cols-4 gap-8">
+          {(anunciosReais.length > 0 ? anunciosReais.map((a) => ({
+            id: a.id,
+            name: a.titulo,
+            price: `R$ ${a.valorDiario}/dia`,
+            image: a.foto_principal,
+            rating: "5.0",
+          })) : products.map((p) => ({ ...p, id: null }))).map((product) => (
             <div
-              key={product.name}
+              key={product.id ?? product.name}
+              onClick={() => product.id && router.push(`/detalhesanuncio/${product.id}`)}
               className="
                 bg-white
                 rounded-3xl
@@ -145,33 +166,22 @@ export default function Home() {
                 cursor-pointer
               "
             >
-
-              <img
-                src={product.image}
-                alt={product.name}
-                className="
-                  w-full
-                  h-[220px]
-                  object-cover
-                "
-              />
+              {product.image ? (
+                <img
+                  src={product.image.startsWith("http") ? product.image : `/${product.image}`}
+                  alt={product.name}
+                  className="w-full h-[220px] object-cover"
+                />
+              ) : (
+                <div className="w-full h-[220px] bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">📷</div>
+              )}
 
               <div className="p-5">
-
                 <div className="flex items-center justify-between mb-2">
-
-                  <h3 className="text-lg font-semibold">
-                    {product.name}
-                  </h3>
-
-                  <span className="text-sm text-green-600">
-                    ● {product.rating} ★
-                  </span>
+                  <h3 className="text-lg font-semibold">{product.name}</h3>
+                  <span className="text-sm text-green-600">● {product.rating} ★</span>
                 </div>
-
-                <p className="text-xl font-bold">
-                  {product.price}
-                </p>
+                <p className="text-xl font-bold">{product.price}</p>
               </div>
             </div>
           ))}
