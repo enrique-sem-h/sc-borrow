@@ -9,7 +9,7 @@ export const insertAnuncioSchema = createInsertSchema(anuncios, {
   titulo: (schema) => schema.trim().min(1),
   descricao: (schema) => schema.trim().min(1),
   valorDiario: z.coerce.number().positive().min(1),
-  caucao: z.coerce.number().positive().min(1),
+  caucao: z.coerce.number().positive(),
 }).omit({
   id: true,
   usuarioId: true,

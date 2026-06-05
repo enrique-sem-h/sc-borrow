@@ -1,6 +1,6 @@
-import AnuncioController from "../controllers/anuncio-controller";
+import AluguelController from "../controllers/aluguel-controller";
 
-const controller = new AnuncioController();
+const controller = new AluguelController();
 
 const anuncioHandlers = {
   create: controller.create.bind(controller),
