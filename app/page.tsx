@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import LoginModal from "@/components/ui/login-modal";
 import { Shrikhand } from "next/font/google";
 import RegisterModal from "@/components/ui/register-modal";
@@ -12,6 +13,7 @@ const shrikhand = Shrikhand({
 });  
 
 export default function Home() {
+  const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
       const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
@@ -88,6 +90,7 @@ export default function Home() {
           {categories.map((category) => (
             <div
               key={category.title}
+              onClick={() => router.push(`/busca?categoria=${encodeURIComponent(category.title)}`)}
               className="
                 bg-white
                 rounded-3xl

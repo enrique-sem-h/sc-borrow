@@ -20,6 +20,7 @@ export default function Header() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const auth = useAuth();
   const isAuth = auth?.isAuth ?? false;
@@ -66,12 +67,26 @@ export default function Header() {
               type="text"
               placeholder="Buscar"
               aria-label="Buscar itens"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent flex-1 outline-none text-lg placeholder:text-gray-500"
               onKeyDown={(e) => {
-                // TODO: Realizar filtro de busca
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  router.push(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
               }}
             />
-            <Search className="w-5 h-5 text-gray-500" aria-hidden="true" />
+            <button
+              type="button"
+              aria-label="Buscar"
+              onClick={() => {
+                if (searchQuery.trim()) {
+                  router.push(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+            >
+              <Search className="w-5 h-5 text-gray-500" aria-hidden="true" />
+            </button>
           </div>
 
           <div className="hidden md:flex items-center gap-2 md:gap-4 text-lg text-gray-700">
