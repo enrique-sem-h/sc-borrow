@@ -1,21 +1,23 @@
 "use client";
 
-// npx expo install firebase  | caso precisem
-
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Image as ImageIcon, Send, Search } from "lucide-react";
+import { ChevronLeft, Send, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+
+// npx expo install firebase  | se precisar
+
 import { dbFirebase } from "@/infra/firebase";
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, writeBatch, doc } from "firebase/firestore";
 
 interface Mensagem {
   id: string;
   texto: string;
   remetenteId: string;
   timestamp: string;
+  lida: boolean;
 }
 
 interface Conversa {
@@ -35,7 +37,6 @@ export default function ChatsPage() {
   const { user } = useAuth();
   const { chatCount } = useNotifications();
   const mensagensEndRef = useRef<HTMLDivElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const usuarioLogadoId = user?.id || "user-teste-123"; 
 
@@ -81,18 +82,39 @@ export default function ChatsPage() {
     const consultaFiltrada = query(caminhoColecao, orderBy("timestamp", "asc"));
 
     const unsubscribe = onSnapshot(consultaFiltrada, (snapshot) => {
-      const listaMensagens = snapshot.docs.map((doc) => {
-        const dados = doc.data();
+      const batch = writeBatch(dbFirebase);
+      let possuiMensagemNaoLidaMinha = false;
+
+      const listaMensagens = snapshot.docs.map((snapshotDoc) => {
+        const dados = snapshotDoc.data();
         let horaFormatada = "15:36"; 
         if (dados.timestamp) {
           horaFormatada = dados.timestamp.toDate().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
         }
-        return { id: doc.id, texto: dados.texto, remetenteId: dados.remetenteId, timestamp: horaFormatada } as Mensagem;
+
+        if (dados.remetenteId !== usuarioLogadoId && dados.lida === false) {
+          const mRef = doc(dbFirebase, "conversas", conversaAtiva.id, "mensagens", snapshotDoc.id);
+          batch.update(mRef, { lida: true });
+          possuiMensagemNaoLidaMinha = true;
+        }
+
+        return { 
+          id: snapshotDoc.id, 
+          texto: dados.texto, 
+          remetenteId: dados.remetenteId, 
+          timestamp: horaFormatada,
+          lida: dados.lida 
+        } as Mensagem;
       });
+
+      if (possuiMensagemNaoLidaMinha) {
+        batch.commit().catch(err => console.error("Erro ao atualizar status de lida:", err));
+      }
+
       setMensagens(listaMensagens);
     });
     return () => unsubscribe();
-  }, [conversaAtiva]);
+  }, [conversaAtiva, usuarioLogadoId]);
 
   const onEnviarMensagemSubmit = async (data: ChatFormValues) => {
     if (!conversaAtiva || !data.mensagemTexto.trim()) return;
@@ -103,6 +125,7 @@ export default function ChatsPage() {
         texto: textoParaEnviar,
         remetenteId: usuarioLogadoId,
         timestamp: serverTimestamp(),
+        lida: false, 
       });
     } catch (error) { console.error("Erro ao enviar:", error); }
   };

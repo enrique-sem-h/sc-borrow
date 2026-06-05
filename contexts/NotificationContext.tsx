@@ -1,10 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, collectionGroup } from "firebase/firestore";
 import { dbFirebase } from "@/infra/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { collectionGroup } from "firebase/firestore";
 
 interface NotificationContextType {
   chatCount: number;
@@ -28,11 +27,15 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     if (!user?.id) return;
 
     const qChats = query(
-      collectionGroup(dbFirebase, "mensagens")
+      collectionGroup(dbFirebase, "mensagens"),
+      where("lida", "==", false),
+      where("remetenteId", "!=", user.id)
     );
     
     const unsubChats = onSnapshot(qChats, (snapshot) => {
-      setChatCount(snapshot.size);
+      setChatCount(snapshot.size); 
+    }, (error) => {
+      console.error("Erro no Listener de Notificações (pode requerer criação de índice):", error);
     });
 
     const qAlugueis = query(collection(dbFirebase, "alugueis"), where("dono", "==", user.id), where("status", "==", "pendente"));
