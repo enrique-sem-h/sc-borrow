@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import { VisualizarAvaliarModal } from '@/components/ui/view-rate';
 
 interface AluguelHistorico {
   id: string;
@@ -10,21 +11,26 @@ interface AluguelHistorico {
   data_inicio: string;
   data_fim: string;
   foto_principal?: string | null;
+  nota: number;        
+  comentario: string;  
 }
 
+// decoracao por eqnt
 const MOCK_HISTORICO: AluguelHistorico[] = [
-  { id: '1', titulo: 'Barraca de camp',  data_inicio: '10', data_fim: '14 Abr', foto_principal: null },
-  { id: '2', titulo: 'Caixa de som',     data_inicio: '05', data_fim: '07 Abr', foto_principal: null },
-  { id: '3', titulo: 'Prancha de surf',  data_inicio: '12', data_fim: '14 Abr', foto_principal: null },
-  { id: '4', titulo: 'Barraca de camp',  data_inicio: '10', data_fim: '14 Abr', foto_principal: null },
-  { id: '5', titulo: 'Caixa de som',     data_inicio: '05', data_fim: '07 Abr', foto_principal: null },
-  { id: '6', titulo: 'Prancha de surf',  data_inicio: '12', data_fim: '14 Abr', foto_principal: null },
+  { id: '1', titulo: 'Barraca de camp',  data_inicio: '10', data_fim: '14 Abr', foto_principal: null, nota: 5, comentario: "Produto muito bom :D" },
+  { id: '2', titulo: 'Caixa de som',     data_inicio: '05', data_fim: '07 Abr', foto_principal: null, nota: 4, comentario: "Gostei bastante, som potente." },
+  { id: '3', titulo: 'Prancha de surf',  data_inicio: '12', data_fim: '14 Abr', foto_principal: null, nota: 3, comentario: "Estava um pouco gasta, mas atendeu." },
+  { id: '4', titulo: 'Barraca de camp',  data_inicio: '10', data_fim: '14 Abr', foto_principal: null, nota: 5, comentario: "Excelente!" },
+  { id: '5', titulo: 'Caixa de som',     data_inicio: '05', data_fim: '07 Abr', foto_principal: null, nota: 2, comentario: "A bateria descarregou rápido demais." },
+  { id: '6', titulo: 'Prancha de surf',  data_inicio: '12', data_fim: '14 Abr', foto_principal: null, nota: 4, comentario: "Altas ondas, recomendo." },
 ];
 
 export default function HistoricoAlugueisPage() {
   const router = useRouter();
   const [historico, setHistorico] = useState<AluguelHistorico[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemSelecionado, setItemSelecionado] = useState<AluguelHistorico | null>(null);
 
   useEffect(() => {
     async function carregarHistorico() {
@@ -46,6 +52,11 @@ export default function HistoricoAlugueisPage() {
     carregarHistorico();
   }, []);
 
+  const abrirModalAvaliacao = (item: AluguelHistorico) => {
+    setItemSelecionado(item);
+    setIsModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
@@ -66,7 +77,7 @@ export default function HistoricoAlugueisPage() {
             <ChevronLeft size={28} />
           </button>
 
-          <h1 className="text-3xl font-['Shrikhand'] tracking-tight bg-gray-100 px-8 py-3 rounded-full">
+          <h1 className="text-2xl font-serif font-bold text-gray-900 bg-gray-50 px-8 py-3 rounded-full border border-gray-100">
             Histórico de alugueis
           </h1>
         </div>
@@ -98,15 +109,30 @@ export default function HistoricoAlugueisPage() {
                       {item.data_inicio} - {item.data_fim}
                     </p>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-500 text-xs font-semibold shrink-0">
+                  
+                  <button 
+                    onClick={() => abrirModalAvaliacao(item)}
+                    className="px-3 py-1.5 rounded-full bg-gray-900 hover:bg-black text-white text-xs font-semibold shrink-0 transition-colors shadow-sm"
+                  >
                     Avaliado
-                  </span>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {itemSelecionado && (
+        <VisualizarAvaliarModal 
+          isOpen={isModalOpen}
+          onClose={() => { setIsModalOpen(false); setItemSelecionado(null); }}
+          itemNome={itemSelecionado.titulo}
+          periodoLocacao={`${itemSelecionado.data_inicio} - ${itemSelecionado.data_fim}`}
+          nota={itemSelecionado.nota}
+          comentario={itemSelecionado.comentario}
+        />
+      )}
     </main>
   );
 }

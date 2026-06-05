@@ -4,12 +4,18 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { useRouter } from "next/navigation"; 
+
+import { PagamentoSucessoModal } from "@/components/ui/payment-success"; 
 
 export default function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
+  
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -21,7 +27,7 @@ export default function CheckoutForm() {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {},
-      redirect: "if_required",
+      redirect: "if_required", 
     });
 
     if (error) {
@@ -30,35 +36,47 @@ export default function CheckoutForm() {
       } else {
         setMessage("Ocorreu um erro inesperado.");
       }
+      setIsLoading(false);
       return;
     }
 
-    if (paymentIntent.status === "succeeded") {
-      
+    if (paymentIntent && paymentIntent.status === "succeeded") {
+      setIsSuccessModalOpen(true); 
     }
 
     setIsLoading(false);
   };
 
+  const handleCloseModal = () => {
+    setIsSuccessModalOpen(false);
+    router.push("/meusalugueis"); 
+  };
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ maxWidth: "400px", margin: "0 auto" }}
-    >
-      {/* O Payment Element renderiza automaticamente campos de cartão, PIX, etc., baseado na sua conta Stripe */}
-      <PaymentElement />
-
-      <button
-        className="w-full py-4 bg-green-300 hover:bg-green-400 transition rounded-xl font-serif text-lg font-bold text-gray-800"
-        disabled={isLoading || !stripe || !elements}
-        style={{ marginTop: "20px" }}
+    <>
+      <form
+        onSubmit={handleSubmit}
+        style={{ maxWidth: "400px", margin: "0 auto" }}
       >
-        {isLoading ? "Processando..." : "Pagar Agora"}
-      </button>
+        <PaymentElement />
 
-      {message && (
-        <div style={{ color: "red", marginTop: "15px" }}>{message}</div>
-      )}
-    </form>
+        <button
+          className="w-full py-4 bg-green-300 hover:bg-green-400 transition rounded-xl font-serif text-lg font-bold text-gray-800"
+          disabled={isLoading || !stripe || !elements}
+          style={{ marginTop: "20px" }}
+        >
+          {isLoading ? "Processando..." : "Pagar Agora"}
+        </button>
+
+        {message && (
+          <div style={{ color: "red", marginTop: "15px" }}>{message}</div>
+        )}
+      </form>
+
+      <PagamentoSucessoModal 
+        isOpen={isSuccessModalOpen}
+        onClose={handleCloseModal}
+      />
+    </>
   );
 }
