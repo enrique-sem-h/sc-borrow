@@ -21,13 +21,9 @@ import { SuccessModal } from "@/components/ui/success-delete-modal";
 import { LogoutModal } from "@/components/ui/logout-modal";
 import { Anuncio } from "@/infra/database/schemas/anunciosSchema";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
-
-interface Usuario {
-  id: string;
-  nome: string;
-  rep: number;
-  saldo: number;
-}
+import { useDeleteAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
+import { toast } from "react-toastify";
+import { Spinner } from "@/components/ui/spinner";
 
 const MenuItem = ({ icon, label, active, onClick }: any) => (
   <button
@@ -57,6 +53,7 @@ export default function MeusAnunciosPage() {
   const [itemSelecionado, setItemSelecionado] = useState<Anuncio | null>(null);
 
   const anunciosQuery = useGetAnuncios();
+  const anuncioDeleteMutation = useDeleteAnuncio();
   const anuncios = anunciosQuery.data?.data?.anuncios || [];
   const loading = anunciosQuery.isLoading;
 
@@ -106,23 +103,21 @@ export default function MeusAnunciosPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!itemSelecionado) return;
+    if (!itemSelecionado) {
+      setModalType("none");
+      return;
+    }
 
     try {
-      const response = await fetch(
-        `/Meusanuncios/api?id=${itemSelecionado.id}`,
-        {
-          method: "DELETE",
-        },
+      const response = await anuncioDeleteMutation.mutateAsync(
+        itemSelecionado.id,
       );
-
-      if (response.ok) {
-        setModalType("success");
-      } else {
-        alert("Não foi possível excluir o anúncio do banco.");
-      }
+      setModalType("success");
     } catch (error) {
-      console.error("Erro ao deletar anúncio:", error);
+      toast("Não foi possível deletar o anúncio", {
+        type: "error",
+      });
+      setModalType("none");
     }
   };
 
@@ -193,12 +188,20 @@ export default function MeusAnunciosPage() {
           Meus anúncios ativos
         </h1>
 
-        {anuncios?.length === 0 ? (
+        {anunciosQuery.isLoading && (
+          <>
+            <div className="flex justify-center ">
+              <Spinner className="size-6" />
+            </div>
+          </>
+        )}
+
+        {!anuncios?.length && !anunciosQuery.isLoading ? (
           <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
             Você não possui nenhum anúncio ativo no momento.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
             {anuncios &&
               anuncios.map((anuncio) => {
                 const mainImage = anuncio.fotos.find((foto) => foto.principal);

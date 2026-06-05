@@ -56,6 +56,11 @@ class ApiService {
 
       return response.data;
     },
+    delete: async (id: string) => {
+      const response = await this.api.delete(`anuncio/${id}`);
+
+      return response.data;
+    },
   };
 }
 

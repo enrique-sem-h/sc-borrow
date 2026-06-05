@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e2e92edf-3186-47d4-88cd-bae72b57a7f8",
-  "prevId": "c9395232-2ed6-4d15-a199-74a1e6f51065",
+  "id": "2bfa2a79-23a4-4c26-abd4-8e68ce023d18",
+  "prevId": "e2e92edf-3186-47d4-88cd-bae72b57a7f8",
   "tables": {
     "alugueis": {
       "name": "alugueis",
@@ -35,8 +35,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "id_usuario": {
-          "name": "id_usuario",
+        "id_locador": {
+          "name": "id_locador",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id_locatario": {
+          "name": "id_locatario",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
@@ -58,12 +65,25 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "alugueis_id_usuario_usuarios_id_fk": {
-          "name": "alugueis_id_usuario_usuarios_id_fk",
+        "alugueis_id_locador_usuarios_id_fk": {
+          "name": "alugueis_id_locador_usuarios_id_fk",
           "tableFrom": "alugueis",
           "tableTo": "usuarios",
           "columnsFrom": [
-            "id_usuario"
+            "id_locador"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "alugueis_id_locatario_usuarios_id_fk": {
+          "name": "alugueis_id_locatario_usuarios_id_fk",
+          "tableFrom": "alugueis",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "id_locatario"
           ],
           "columnsTo": [
             "id"
@@ -215,8 +235,8 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -822,7 +842,9 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {}
+    "columns": {
+      "\"alugueis\".\"id_usuario\"": "\"alugueis\".\"id_locador\""
+    }
   },
   "internal": {
     "tables": {},
