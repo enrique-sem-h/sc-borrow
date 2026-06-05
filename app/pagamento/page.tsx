@@ -1,22 +1,46 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "@/components/forms/CheckoutForm";
+
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+);
 
 function PagamentoContent() {
   const router = useRouter();
   const params = useSearchParams();
+  const [clientSecret, setClientSecret] = useState("");
+
+  useEffect(() => {
+    fetch("api/checkout", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => setClientSecret(data.clientSecret))
+      .catch((error) =>
+        console.error("Erro ao criar intent de pagamento: ", error),
+      );
+  }, []);
+
+  const options = {
+    clientSecret,
+    appearance: {
+      theme: "stripe",
+    },
+  };
 
   if (!params) return null;
 
-  const titulo      = params.get("titulo") ?? "";
+  const titulo = params.get("titulo") ?? "";
   const valorDiario = parseFloat(params.get("valorDiario") ?? "0");
-  const totalDias   = parseInt(params.get("totalDias") ?? "0");
-  const caucao      = parseFloat(params.get("caucao") ?? "0");
-  const taxaServico = 12.00;
+  const totalDias = parseInt(params.get("totalDias") ?? "0");
+  const caucao = parseFloat(params.get("caucao") ?? "0");
+  const taxaServico = 12.0;
   const valorAluguel = valorDiario * totalDias;
-  const valorTotal   = valorAluguel + caucao + taxaServico;
+  const valorTotal = valorAluguel + caucao + taxaServico;
 
   const onConfirmar = async () => {
     // TODO: integrar Stripe aqui
@@ -26,7 +50,6 @@ function PagamentoContent() {
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
       <div className="max-w-5xl mx-auto px-8 py-10">
-
         <div className="flex items-center gap-3 mb-8">
           <button
             onClick={() => router.back()}
@@ -40,26 +63,28 @@ function PagamentoContent() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 items-start">
-
           {/* Lado esquerdo — área do Stripe */}
           <div className="flex-1 flex flex-col gap-6">
-            <div className="border border-gray-200 rounded-[20px] min-h-[320px] flex items-center justify-center text-gray-300 text-sm italic">
-              {/* TODO: integrar Stripe aqui */}
+            <div className="border border-gray-200 rounded-[20px] min-h-[320px] flex items-center justify-center text-gray-300 text-sm italic p-6">
+              {clientSecret ? (
+                <Elements stripe={stripePromise} options={options}>
+                  <CheckoutForm />
+                </Elements>
+              ) : (
+                <p style={{ textAlign: "center" }}>
+                  Carregando opções de pagamento...
+                </p>
+              )}
             </div>
-
-            <button
-              onClick={onConfirmar}
-              className="w-full py-4 bg-green-300 hover:bg-green-400 transition rounded-xl font-serif text-lg font-bold text-gray-800"
-            >
-              Confirmar Pedido
-            </button>
           </div>
 
           {/* Lado direito — resumo do pedido */}
           <div className="w-full md:w-80 border border-gray-200 rounded-[20px] p-6 shadow-sm shrink-0">
             <div className="space-y-3 mb-4">
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Valor (R$ {valorDiario.toFixed(2)} × {totalDias} dias)</span>
+                <span>
+                  Valor (R$ {valorDiario.toFixed(2)} × {totalDias} dias)
+                </span>
                 <span>R$ {valorAluguel.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
@@ -74,14 +99,15 @@ function PagamentoContent() {
 
             <div className="border-t border-gray-200 pt-4">
               <div className="flex justify-between items-center">
-                <span className="text-base font-bold text-gray-900">Total do Pedido:</span>
+                <span className="text-base font-bold text-gray-900">
+                  Total do Pedido:
+                </span>
                 <span className="text-xl font-bold text-gray-900">
                   R$ {valorTotal.toFixed(2)}
                 </span>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </main>

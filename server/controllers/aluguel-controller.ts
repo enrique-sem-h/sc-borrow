@@ -28,7 +28,7 @@ class AluguelController extends BaseController {
 
         const anuncio = await this.anuncioService.read(req.body.idAnuncio);
 
-        if (!anuncio) return fail("Erro ao consultar anuncio");
+        if (!anuncio) return fail("Erro: anuncio nao encontrado", 404);
 
         const locador = anuncio.usuarioId;
 
