@@ -42,7 +42,13 @@ function ConfirmarReservaContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ titulo, ...data, valorTotal }),
     });
-    router.push("/meusalugueis");
+    const query = new URLSearchParams({
+      titulo,
+      valorDiario: String(valorDiario),
+      totalDias:   String(totalDias),
+      caucao:      String(caucao),
+    });
+    router.push(`/pagamento?${query.toString()}`);
   };
 
   return (
