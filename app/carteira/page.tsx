@@ -7,6 +7,7 @@ import {
   HelpCircle, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { LogoutModal } from "@/components/ui/logout-modal";
 
 interface Transacao {
@@ -65,6 +66,7 @@ export default function CarteiraPage() {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
+  const { chatCount, aluguelCount, anuncioCount } = useNotifications();
   const user = auth?.user;
 
   const [saldo, setSaldo] = useState<number>(0);
@@ -92,12 +94,12 @@ export default function CarteiraPage() {
   }, []);
 
   const menuItems = [
-    { id: "dados",    label: "Meus dados",    icon: <User size={20} />,           path: "/meusdados",     badge: undefined },
-    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />,     path: "/Meusanuncios",  badge: 1 },
-    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />,            path: "/meusalugueis",  badge: 1 },
-    { id: "carteira", label: "Carteira",       icon: <DollarSign size={20} />,    path: "/carteira",      badge: undefined },
-    { id: "chats",    label: "Chats",          icon: <MessageCircle size={20} />, path: "/chats",         badge: 2 },
-    { id: "ajuda",    label: "Ajuda",          icon: <HelpCircle size={20} />,    path: "/ajuda",         badge: undefined },
+    { id: "dados",    label: "Meus dados",    icon: <User size={20} />,           path: "/meusdados" },
+    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />,     path: "/Meusanuncios",  badge: anuncioCount > 0 ? anuncioCount : undefined },
+    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />,            path: "/meusalugueis",  badge: aluguelCount > 0 ? aluguelCount : undefined },
+    { id: "carteira", label: "Carteira",       icon: <DollarSign size={20} />,    path: "/carteira" },
+    { id: "chats",    label: "Chats",          icon: <MessageCircle size={20} />, path: "/chats",         badge: chatCount > 0 ? chatCount : undefined },
+    { id: "ajuda",    label: "Ajuda",          icon: <HelpCircle size={20} />,    path: "/ajuda" },
   ];
 
   const handleLogout = () => {
@@ -107,7 +109,6 @@ export default function CarteiraPage() {
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
-
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
         <div>
           <div className="flex flex-col items-center mb-10">

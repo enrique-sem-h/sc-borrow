@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   User,
@@ -15,6 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 import { DeleteModal } from "@/components/ui/delete-modal";
 import { SuccessModal } from "@/components/ui/success-delete-modal";
@@ -25,10 +26,10 @@ import { useDeleteAnuncio } from "@/modules/react-query/mutations/anuncios-mutat
 import { toast } from "react-toastify";
 import { Spinner } from "@/components/ui/spinner";
 
-const MenuItem = ({ icon, label, active, onClick }: any) => (
+const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${
+    className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition text-sm ${
       active
         ? "bg-gray-100 font-bold text-black"
         : "hover:bg-gray-50 text-gray-500 font-medium"
@@ -36,8 +37,13 @@ const MenuItem = ({ icon, label, active, onClick }: any) => (
   >
     <div className="flex items-center gap-3">
       {icon}
-      <span className="text-sm">{label}</span>
+      <span>{label}</span>
     </div>
+    {badge ? (
+      <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+        {badge}
+      </span>
+    ) : null}
   </button>
 );
 
@@ -45,56 +51,24 @@ export default function MeusAnunciosPage() {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
+  const { chatCount, aluguelCount, anuncioCount } = useNotifications();
+  const user = auth?.user;
 
-  const [modalType, setModalType] = useState<"none" | "confirm" | "success">(
-    "none",
-  );
+  const [modalType, setModalType] = useState<"none" | "confirm" | "success">("none");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<Anuncio | null>(null);
 
   const anunciosQuery = useGetAnuncios();
   const anuncioDeleteMutation = useDeleteAnuncio();
   const anuncios = anunciosQuery.data?.data?.anuncios || [];
-  const loading = anunciosQuery.isLoading;
 
-  // --- ROTAS ---
   const menuItems = [
-    {
-      id: "dados",
-      label: "Meus dados",
-      icon: <User size={20} />,
-      path: "/meusdados",
-    },
-    {
-      id: "anuncios",
-      label: "Meus anúncios",
-      icon: <LayoutGrid size={20} />,
-      path: "/Meusanuncios",
-    },
-    {
-      id: "alugueis",
-      label: "Meus aluguéis",
-      icon: <Key size={20} />,
-      path: "/meusalugueis",
-    },
-    {
-      id: "carteira",
-      label: "Carteira",
-      icon: <DollarSign size={20} />,
-      path: "/carteira",
-    },
-    {
-      id: "chats",
-      label: "Chats",
-      icon: <MessageCircle size={20} />,
-      path: "/chats",
-    },
-    {
-      id: "ajuda",
-      label: "Ajuda",
-      icon: <HelpCircle size={20} />,
-      path: "/ajuda",
-    },
+    { id: "dados", label: "Meus dados", icon: <User size={20} />, path: "/meusdados" },
+    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />, path: "/Meusanuncios", badge: anuncioCount > 0 ? anuncioCount : undefined },
+    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />, path: "/meusalugueis", badge: aluguelCount > 0 ? aluguelCount : undefined },
+    { id: "carteira", label: "Carteira", icon: <DollarSign size={20} />, path: "/carteira" },
+    { id: "chats", label: "Chats", icon: <MessageCircle size={20} />, path: "/chats", badge: chatCount > 0 ? chatCount : undefined },
+    { id: "ajuda", label: "Ajuda", icon: <HelpCircle size={20} />, path: "/ajuda" },
   ];
 
   const handleOpenDeleteModal = (anuncio: Anuncio) => {
@@ -107,16 +81,11 @@ export default function MeusAnunciosPage() {
       setModalType("none");
       return;
     }
-
     try {
-      const response = await anuncioDeleteMutation.mutateAsync(
-        itemSelecionado.id,
-      );
+      await anuncioDeleteMutation.mutateAsync(itemSelecionado.id);
       setModalType("success");
     } catch (error) {
-      toast("Não foi possível deletar o anúncio", {
-        type: "error",
-      });
+      toast("Não foi possível deletar o anúncio", { type: "error" });
       setModalType("none");
     }
   };
@@ -125,17 +94,7 @@ export default function MeusAnunciosPage() {
     auth?.logout();
     router.push("/");
   };
-  /*
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
-        <p className="text-gray-500 font-medium animate-pulse">
-          Buscando ferramentas no banco...
-        </p>
-      </div>
-    );
-  }
-  */
+
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
@@ -145,14 +104,14 @@ export default function MeusAnunciosPage() {
               <div className="w-full h-full bg-gray-300" />
             </div>
             <h2 className="text-xl font-bold flex items-center gap-1.5">
-              {auth?.user?.nome}
+              {user?.nome ?? "Usuário"}
               <span className="inline-flex items-center justify-center bg-blue-600 text-white rounded-full w-4 h-4 text-[9px] font-extrabold">
                 ✓
               </span>
             </h2>
             <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
               <span className="text-yellow-500">★</span>
-              {auth?.user?.rep ? auth.user.rep.toFixed(1) : "0.0"}{" "}
+              {user?.rep ? user.rep.toFixed(1) : "0.0"}{" "}
               <span className="text-gray-300 font-light">(Reputação)</span>
             </p>
           </div>
@@ -163,10 +122,10 @@ export default function MeusAnunciosPage() {
                 key={item.id}
                 icon={item.icon}
                 label={item.label}
+                badge={item.badge}
                 active={
                   (pathname ?? "") === item.path ||
-                  ((pathname ?? "").startsWith("/Meusanuncios") &&
-                    item.id === "anuncios")
+                  ((pathname ?? "").startsWith("/Meusanuncios") && item.id === "anuncios")
                 }
                 onClick={() => router.push(item.path)}
               />
@@ -188,103 +147,47 @@ export default function MeusAnunciosPage() {
           Meus anúncios ativos
         </h1>
 
-        {anunciosQuery.isLoading && (
-          <>
-            <div className="flex justify-center ">
-              <Spinner className="size-6" />
-            </div>
-          </>
-        )}
-
-        {!anuncios?.length && !anunciosQuery.isLoading ? (
+        {anuncios?.length === 0 ? (
           <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
             Você não possui nenhum anúncio ativo no momento.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl">
-            {anuncios &&
-              anuncios.map((anuncio) => {
-                const mainImage = anuncio.fotos.find((foto) => foto.principal);
-                return (
-                  <div
-                    key={anuncio.id}
-                    className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group"
-                  >
-                    <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
-                      {mainImage ? (
-                        <img
-                          src={mainImage.url}
-                          alt={anuncio.titulo}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-xs font-medium">
-                          Sem imagem cadastrada
-                        </div>
-                      )}
-
-                      <div className="absolute top-3 right-3 flex gap-2">
-                        <button
-                          onClick={() =>
-                            router.push(`/Meusanuncios/${anuncio.id}/editar`)
-                          }
-                          className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition"
-                        >
-                          <Edit3 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleOpenDeleteModal(anuncio)}
-                          className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="px-1">
-                      <h3 className="text-[13px] font-bold text-gray-700 uppercase tracking-tight">
-                        {anuncio.titulo}
-                      </h3>
-                      <div className="flex justify-between items-end mt-1">
-                        <p className="font-extrabold text-lg text-gray-900">
-                          R$ {anuncio.valorDiario.toFixed(2).replace(".", ",")}
-                          /dia
-                        </p>
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                          <span className="text-[13px] font-bold">5.0</span>
-                          <Star
-                            size={14}
-                            className="fill-gray-900 text-gray-900"
-                          />
-                        </div>
-                      </div>
+            {anuncios.map((anuncio) => {
+              const mainImage = anuncio.fotos.find((foto) => foto.principal);
+              return (
+                <div key={anuncio.id} className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group">
+                  <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
+                    {mainImage ? (
+                      <img src={mainImage.url} alt={anuncio.titulo} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-gray-400 text-xs font-medium">Sem imagem</div>
+                    )}
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <button onClick={() => router.push(`/Meusanuncios/${anuncio.id}/editar`)} className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition">
+                        <Edit3 size={18} />
+                      </button>
+                      <button onClick={() => handleOpenDeleteModal(anuncio)} className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500">
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                  <div className="px-1">
+                    <h3 className="text-[13px] font-bold text-gray-700 uppercase tracking-tight">{anuncio.titulo}</h3>
+                    <div className="flex justify-between items-end mt-1">
+                      <p className="font-extrabold text-lg text-gray-900">R$ {anuncio.valorDiario.toFixed(2).replace(".", ",")} /dia</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
 
-      <DeleteModal
-        isOpen={modalType === "confirm"}
-        onClose={() => setModalType("none")}
-        onConfirm={handleConfirmDelete}
-        itemName={itemSelecionado?.titulo || ""}
-      />
-
-      <SuccessModal
-        isOpen={modalType === "success"}
-        onClose={() => setModalType("none")}
-        itemName={itemSelecionado?.titulo || ""}
-      />
-
-      <LogoutModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-      />
+      <DeleteModal isOpen={modalType === "confirm"} onClose={() => setModalType("none")} onConfirm={handleConfirmDelete} itemName={itemSelecionado?.titulo || ""} />
+      <SuccessModal isOpen={modalType === "success"} onClose={() => setModalType("none")} itemName={itemSelecionado?.titulo || ""} />
+      <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleLogout} />
     </main>
   );
 }

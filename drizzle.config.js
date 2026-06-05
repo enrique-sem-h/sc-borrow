@@ -17,7 +17,7 @@ export default defineConfig({
   dbCredentials: {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
-    password: process.env.DB_PASSWORD || "",
+    password: process.env.DB_PASSWORD || " ",
     user: process.env.DB_USER,
   },
 });
