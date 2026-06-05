@@ -73,21 +73,6 @@ class FotoAnuncioService {
     principal: boolean,
   ) {
     const fileUrl = await uploaderProvider.upload(file, "anuncios");
-    // upload para o Cloudinary
-    // const cloudinaryURL = await new Promise<string>((resolve, reject) => {
-    //   const uploadStream = cloudinary.uploader.upload_stream(
-    //     {
-    //       folder: `anuncios/${idAnuncio}`,
-    //     },
-    //     (error, result) => {
-    //       if (error || !result) {
-    //         reject(error);
-    //       }
-    //       resolve(result!.secure_url);
-    //     },
-    //   );
-    //   uploadStream.end(buffer);
-    // });
 
     const dto: CreateFotoAnuncioDTO = {
       anuncioId: idAnuncio,

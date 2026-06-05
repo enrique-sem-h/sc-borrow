@@ -50,11 +50,13 @@ class AnuncioRepository {
 
   static async read(id: string): Promise<Anuncio | undefined> {
     // Chamar o Drizzle para ler anuncio
-    const [anuncio] = await db
-      .select()
-      .from(anuncios)
-      .where(eq(anuncios.id, id))
-      .limit(1);
+    //
+    const anuncio = await db.query.anuncios.findFirst({
+      where(fields, operators) {
+        return operators.eq(fields.id, id);
+      },
+      with: { fotos: true },
+    });
 
     return anuncio;
   }

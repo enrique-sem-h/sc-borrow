@@ -7,8 +7,11 @@ import { useMutation } from "@tanstack/react-query";
 export function useAddAnuncio() {
   const mutation = useMutation({
     mutationFn: apiService.anuncios.insert,
-    onSuccess(data, variables, onMutateResult, context) {
-      queryClient.invalidateQueries({ queryKey: ["anuncios"] });
+    async onSuccess(data, variables, onMutateResult, context) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["anuncios"] }),
+        queryClient.invalidateQueries({ queryKey: ["anuncio"] }),
+      ]);
     },
   });
 
@@ -18,8 +21,11 @@ export function useAddAnuncio() {
 export function useDeleteAnuncio() {
   const mutation = useMutation({
     mutationFn: apiService.anuncios.delete,
-    onSuccess(data, variables, onMutateResult, context) {
-      queryClient.invalidateQueries({ queryKey: ["anuncios"] });
+    async onSuccess(data, variables, onMutateResult, context) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["anuncios"] }),
+        queryClient.invalidateQueries({ queryKey: ["anuncio", variables] }),
+      ]);
     },
   });
 

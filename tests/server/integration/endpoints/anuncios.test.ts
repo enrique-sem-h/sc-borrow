@@ -15,6 +15,7 @@ import {
   Anuncio,
   AnuncioInsert,
   anuncios,
+  fotoAnuncios,
 } from "@/infra/database/schemas/anunciosSchema";
 
 const userMock: UsuarioInsert = {
@@ -84,11 +85,13 @@ describe("Anuncio endpoints", async () => {
   afterEach(async () => {
     await db.delete(anuncios);
     await db.delete(usuarios);
+    await db.delete(fotoAnuncios);
   });
 
   beforeEach(async () => {
     await db.delete(anuncios);
     await db.delete(usuarios);
+    await db.delete(fotoAnuncios);
   });
   describe("Test /anuncio authentication", () => {
     test("if GET /anuncio returns 404 without authorization", async () => {
@@ -195,10 +198,12 @@ describe("Anuncio endpoints", async () => {
           const data = await res.json();
           const status = res.status;
           expect(status).toBe(200);
-          expect(res.data.anuncios.length).toBe(anuncios.length);
-          const anuncios = res.data.anuncios;
+          console.log(data);
 
-          for (const anuncio of anuncios) {
+          expect(data.data.anuncios.length).toBe(anuncios.length);
+          const anunciosData = data.data.anuncios;
+
+          for (const anuncio of anunciosData) {
             expect(anuncio.id).toBeDefined();
             expect(anuncio.titulo).toBeDefined();
             expect(anuncio.descricao).toBeDefined();
@@ -290,7 +295,6 @@ describe("Anuncio endpoints", async () => {
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg==";
       const buffer = Uint8Array.from(atob(pngBase64), (c) => c.charCodeAt(0));
       const blob = new Blob([buffer], { type: "image/png" });
-      const fotos = [atob(pngBase64)];
       const formData = new FormData();
 
       Object.entries(anuncioMock).forEach(([key, value]) =>

@@ -9,3 +9,13 @@ export function useGetAnuncios() {
 
   return query;
 }
+
+export function useGetAnuncio(id: string | undefined | null) {
+  const query = useQuery({
+    queryKey: ["anuncio", id],
+    queryFn: () => apiService.anuncios.get(id!),
+    enabled: !!id,
+  });
+
+  return query;
+}
