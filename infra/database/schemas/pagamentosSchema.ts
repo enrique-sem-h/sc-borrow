@@ -1,11 +1,4 @@
-import {
-  mysqlTable,
-  int,
-  varchar,
-  float,
-  boolean,
-  timestamp,
-} from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, float, timestamp } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { alugueis } from "./alugueisSchema";
 

@@ -1,11 +1,4 @@
-import {
-  mysqlTable,
-  int,
-  varchar,
-  float,
-  boolean,
-  timestamp,
-} from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
@@ -21,10 +14,10 @@ export const alugueis = mysqlTable("alugueis", {
     () => anuncios.id,
     { onDelete: "set null" },
   ),
-  idLocador: varchar("id_usuario", { length: 36 })
+  idLocador: varchar("id_locador", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
-  idLocatario: varchar("id_usuario", { length: 36 })
+  idLocatario: varchar("id_locatario", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
 });

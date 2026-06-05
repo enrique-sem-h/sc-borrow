@@ -1,10 +1,11 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiResponse } from "next";
 import BaseController from "./base-controller";
 import AluguelService from "../services/aluguel-service";
 import AnuncioService from "../services/anuncio-service";
 import { CreateAluguelDTO, NextAuthApiRequest } from "../types";
-import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import auth from "../middlewares/auth";
+import { validate } from "../middlewares/validate";
+import { insertAluguelSchema } from "@/modules/zod/schemas/alugueisSchemas";
 
 class AluguelController extends BaseController {
   private aluguelService = new AluguelService();
@@ -16,48 +17,36 @@ class AluguelController extends BaseController {
   }
 
   public async create(req: NextAuthApiRequest, res: NextApiResponse) {
-    this.handleRequest(req, res, async () => {
-      // Fazer a validação dos dados
-      const fail = (msg: string, status = 400) => {
-        res.status(status).json({ error: msg });
-      };
+    this.handleRequest(
+      req,
+      res,
+      validate({ body: insertAluguelSchema }),
+      async () => {
+        const fail = (msg: string, status = 400) => {
+          res.status(status).json({ error: msg });
+        };
 
-      if (!req.body.id) {
-        return fail("ID invalido");
-      }
+        const anuncio = await this.anuncioService.read(req.body.idAnuncio);
 
-      if (!req.body.dataInicio) {
-        return fail("Data de inicio invalida");
-      }
+        if (!anuncio) return fail("Erro ao consultar anuncio");
 
-      if (!req.body.dataFim) {
-        return fail("Data de encerramento invalida");
-      }
+        const locador = anuncio.usuarioId;
 
-      if (!req.body.idAnuncio) {
-        return fail("ID do anuncio invalido");
-      }
+        const aluguelDTO: CreateAluguelDTO = {
+          ...req.body,
+          idLocatario: req.userId,
+          idLocador: locador,
+        };
 
-      const anuncio = await this.anuncioService.read(req.body.idAnuncio);
+        const aluguel = await this.aluguelService.create(aluguelDTO);
 
-      if (!anuncio) return fail("Erro ao consultar anuncio");
+        if (aluguel) {
+          return res.status(201).json({ data: aluguel });
+        }
 
-      const locador = anuncio.usuarioId;
-
-      const aluguelDTO: CreateAluguelDTO = {
-        ...req.body,
-        idLocatario: req.userId,
-        idLocador: locador,
-      };
-
-      const aluguel = await this.aluguelService.create(aluguelDTO);
-
-      if (aluguel) {
-        return res.status(201).json({ data: aluguel });
-      }
-
-      fail("erro ao adicionar aluguel", 500);
-    });
+        fail("erro ao adicionar aluguel", 500);
+      },
+    );
   }
 
   public update(req: NextAuthApiRequest, res: NextApiResponse) {

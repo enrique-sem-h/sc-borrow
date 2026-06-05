@@ -56,8 +56,6 @@ class AnuncioController extends BaseController {
       parseForm,
       validate({ body: insertAnuncioSchema, files: FileValidationSchema }),
       async () => {
-        console.log(req.body);
-
         if (req.files!.fotos === undefined) {
           return res.status(500).json({ err: "Failed to fetch photos" });
         }

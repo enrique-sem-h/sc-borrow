@@ -10,6 +10,7 @@ import {
   HelpCircle, LogOut, Pencil, Eye, EyeOff,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import FormInput from "@/components/ui/form-input";
 import { LogoutModal } from "@/components/ui/logout-modal";
 
@@ -21,17 +22,24 @@ const meusDadosSchema = z.object({
 
 type MeusDadosForm = z.infer<typeof meusDadosSchema>;
 
-const MenuItem = ({ icon, label, active, onClick }: any) => (
+const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 p-3 rounded-xl cursor-pointer transition text-sm ${
+    className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition text-sm ${
       active
         ? "bg-gray-100 font-bold text-black"
         : "hover:bg-gray-50 text-gray-500 font-medium"
     }`}
   >
-    {icon}
-    <span>{label}</span>
+    <div className="flex items-center gap-3">
+      {icon}
+      <span>{label}</span>
+    </div>
+    {badge ? (
+      <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+        {badge}
+      </span>
+    ) : null}
   </button>
 );
 
@@ -39,12 +47,13 @@ export default function MeusDadosPage() {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
+  const { chatCount, aluguelCount, anuncioCount } = useNotifications();
   const user = auth?.user;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const { handleSubmit, control, formState: { errors } } = useForm<MeusDadosForm>({
+  const { handleSubmit, control } = useForm<MeusDadosForm>({
     resolver: zodResolver(meusDadosSchema),
     defaultValues: {
       nome:     user?.nome     ?? "",
@@ -55,11 +64,11 @@ export default function MeusDadosPage() {
 
   const menuItems = [
     { id: "dados",    label: "Meus dados",    icon: <User size={20} />,          path: "/meusdados" },
-    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />,    path: "/Meusanuncios" },
-    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />,           path: "/meusalugueis" },
+    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />,    path: "/Meusanuncios", badge: anuncioCount > 0 ? anuncioCount : undefined },
+    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />,           path: "/meusalugueis", badge: aluguelCount > 0 ? aluguelCount : undefined },
     { id: "carteira", label: "Carteira",       icon: <DollarSign size={20} />,   path: "/carteira" },
-    { id: "chats",    label: "Chats",          icon: <MessageCircle size={20} />, path: "/chats" },
-    { id: "ajuda",    label: "Ajuda",          icon: <HelpCircle size={20} />,   path: "/ajuda" },
+    { id: "chats",    label: "Chats",          icon: <MessageCircle size={20} />, path: "/chats", badge: chatCount > 0 ? chatCount : undefined },
+    { id: "ajuda",    label: "Ajuda",          icon: <HelpCircle size={20} />,    path: "/ajuda" },
   ];
 
   const handleLogout = () => {
@@ -81,7 +90,6 @@ export default function MeusDadosPage() {
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
-
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
         <div>
           <div className="flex flex-col items-center mb-10">
@@ -107,6 +115,7 @@ export default function MeusDadosPage() {
                 label={item.label}
                 active={(pathname ?? "") === item.path}
                 onClick={() => router.push(item.path)}
+                badge={item.badge}
               />
             ))}
           </nav>
@@ -126,7 +135,6 @@ export default function MeusDadosPage() {
         <div className="border-t border-gray-300 mb-8" />
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
           <div>
             <label className="block text-base font-bold text-gray-900 mb-2">Nome completo:</label>
             <Controller
@@ -134,11 +142,7 @@ export default function MeusDadosPage() {
               control={control}
               render={({ field, fieldState }) => (
                 <div className="relative">
-                  <FormInput
-                    placeholder="Nome completo"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
+                  <FormInput placeholder="Nome completo" error={fieldState.error?.message} {...field} />
                   <Pencil size={16} className="absolute right-4 top-3.5 text-gray-400 pointer-events-none" />
                 </div>
               )}
@@ -161,10 +165,7 @@ export default function MeusDadosPage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <button
-              type="button"
-              className="px-5 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 transition text-sm font-semibold text-gray-700 shrink-0"
-            >
+            <button type="button" className="px-5 py-3 rounded-xl bg-gray-200 hover:bg-gray-300 transition text-sm font-semibold text-gray-700 shrink-0">
               Alterar senha
             </button>
           </div>
@@ -172,20 +173,11 @@ export default function MeusDadosPage() {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-base font-bold text-gray-900 mb-2">CPF:</label>
-              <input
-                type="text"
-                value={user?.cpf ?? ""}
-                readOnly
-                className="w-full border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-500 bg-gray-50 border-gray-200"
-              />
+              <input type="text" value={user?.cpf ?? ""} readOnly className="w-full border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-500 bg-gray-50 border-gray-200" />
             </div>
-
             <div>
               <label className="block text-base font-bold text-gray-900 mb-2">Data de nascimento:</label>
-              <input
-                type="date"
-                className="w-full border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-500 bg-white border-gray-200 focus:border-gray-400 transition"
-              />
+              <input type="date" className="w-full border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-500 bg-white border-gray-200 focus:border-gray-400 transition" />
             </div>
           </div>
 
@@ -195,28 +187,15 @@ export default function MeusDadosPage() {
               <Controller
                 name="telefone"
                 control={control}
-                render={({ field, fieldState }) => (
-                  <FormInput
-                    placeholder="(61) 00000-0000"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                )}
+                render={({ field, fieldState }) => <FormInput placeholder="(61) 00000-0000" error={fieldState.error?.message} {...field} />}
               />
             </div>
-
             <div>
               <label className="block text-base font-bold text-gray-900 mb-2">E-mail:</label>
               <Controller
                 name="email"
                 control={control}
-                render={({ field, fieldState }) => (
-                  <FormInput
-                    placeholder="email@exemplo.com"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                )}
+                render={({ field, fieldState }) => <FormInput placeholder="email@exemplo.com" error={fieldState.error?.message} {...field} />}
               />
             </div>
           </div>
@@ -225,19 +204,13 @@ export default function MeusDadosPage() {
             <label className="block text-base font-bold text-gray-900 mb-2">Endereço:</label>
             <div className="flex gap-3 items-center border-2 border-gray-200 rounded-xl px-5 py-3 bg-white">
               <span className="flex-1 text-gray-600 text-sm">{enderecoFormatado}</span>
-              <button
-                type="button"
-                className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 transition text-sm font-semibold text-gray-700 shrink-0"
-              >
+              <button type="button" className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 transition text-sm font-semibold text-gray-700 shrink-0">
                 Alterar endereço
               </button>
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="w-full py-4 bg-gray-200 hover:bg-gray-300 transition rounded-2xl text-xl font-serif font-bold text-gray-800"
-          >
+          <button type="submit" className="w-full py-4 bg-gray-200 hover:bg-gray-300 transition rounded-2xl text-xl font-serif font-bold text-gray-800">
             Salvar alterações
           </button>
         </form>
