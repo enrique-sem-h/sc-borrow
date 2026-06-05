@@ -1,16 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  User, LayoutGrid, Key, DollarSign, MessageCircle,
-  HelpCircle, Edit3, Trash2, Star, LogOut
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+  User,
+  LayoutGrid,
+  Key,
+  DollarSign,
+  MessageCircle,
+  HelpCircle,
+  Edit3,
+  Trash2,
+  Star,
+  LogOut,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
-import { DeleteModal } from '@/components/ui/delete-modal';
-import { SuccessModal } from '@/components/ui/success-delete-modal';
-import { LogoutModal } from '@/components/ui/logout-modal';
+import { DeleteModal } from "@/components/ui/delete-modal";
+import { SuccessModal } from "@/components/ui/success-delete-modal";
+import { LogoutModal } from "@/components/ui/logout-modal";
+import { Anuncio } from "@/infra/database/schemas/anunciosSchema";
+import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
 
 interface Usuario {
   id: string;
@@ -19,24 +29,13 @@ interface Usuario {
   saldo: number;
 }
 
-interface Anuncio {
-  id: string;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  valor_diario: number;
-  caucao: number;
-  usuario_id: string;
-  foto_principal?: string | null;
-}
-
 const MenuItem = ({ icon, label, active, onClick }: any) => (
   <button
     onClick={onClick}
     className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${
-      active 
-        ? 'bg-gray-100 font-bold text-black' 
-        : 'hover:bg-gray-50 text-gray-500 font-medium'
+      active
+        ? "bg-gray-100 font-bold text-black"
+        : "hover:bg-gray-50 text-gray-500 font-medium"
     }`}
   >
     <div className="flex items-center gap-3">
@@ -52,23 +51,26 @@ export default function MeusAnunciosPage() {
   const auth = useAuth();
 
   const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [modalType, setModalType] = useState<'none' | 'confirm' | 'success'>('none');
+  const [modalType, setModalType] = useState<"none" | "confirm" | "success">(
+    "none",
+  );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [itemSelecionado, setItemSelecionado] = useState<Anuncio | null>(null);
+
+  const anunciosQuery = useGetAnuncios();
+  const anuncios = anunciosQuery.data?.data?.anuncios || [];
 
   useEffect(() => {
     async function carregarDados() {
       try {
         setLoading(true);
 
-        const resAnuncios = await fetch('/Meusanuncios/api');
-        
+        const resAnuncios = await fetch("/Meusanuncios/api");
+
         if (resAnuncios.ok) {
           const dadosAnuncios = await resAnuncios.json();
-          setAnuncios(dadosAnuncios);
         } else {
           console.error("Falha ao responder a API de anúncios");
         }
@@ -76,10 +78,9 @@ export default function MeusAnunciosPage() {
         setUsuario({
           id: "user-teste-123", // Trocar dps | teste rapido apenas
           nome: "Fulano da Silvia",
-          rep: 5.00,
-          saldo: 0
+          rep: 5.0,
+          saldo: 0,
         });
-
       } catch (error) {
         console.error("Erro na conexão com o front-end:", error);
       } finally {
@@ -92,30 +93,62 @@ export default function MeusAnunciosPage() {
 
   // --- ROTAS ---
   const menuItems = [
-    { id: 'dados', label: 'Meus dados', icon: <User size={20} />, path: '/meusdados' },
-    { id: 'anuncios', label: 'Meus anúncios', icon: <LayoutGrid size={20} />, path: '/Meusanuncios' },
-    { id: 'alugueis', label: 'Meus aluguéis', icon: <Key size={20} />, path: '/meusalugueis' },
-    { id: 'carteira', label: 'Carteira', icon: <DollarSign size={20} />, path: '/carteira' },
-    { id: 'chats', label: 'Chats', icon: <MessageCircle size={20} />, path: '/chats' },
-    { id: 'ajuda', label: 'Ajuda', icon: <HelpCircle size={20} />, path: '/ajuda' },
+    {
+      id: "dados",
+      label: "Meus dados",
+      icon: <User size={20} />,
+      path: "/meusdados",
+    },
+    {
+      id: "anuncios",
+      label: "Meus anúncios",
+      icon: <LayoutGrid size={20} />,
+      path: "/Meusanuncios",
+    },
+    {
+      id: "alugueis",
+      label: "Meus aluguéis",
+      icon: <Key size={20} />,
+      path: "/meusalugueis",
+    },
+    {
+      id: "carteira",
+      label: "Carteira",
+      icon: <DollarSign size={20} />,
+      path: "/carteira",
+    },
+    {
+      id: "chats",
+      label: "Chats",
+      icon: <MessageCircle size={20} />,
+      path: "/chats",
+    },
+    {
+      id: "ajuda",
+      label: "Ajuda",
+      icon: <HelpCircle size={20} />,
+      path: "/ajuda",
+    },
   ];
 
   const handleOpenDeleteModal = (anuncio: Anuncio) => {
     setItemSelecionado(anuncio);
-    setModalType('confirm');
+    setModalType("confirm");
   };
 
   const handleConfirmDelete = async () => {
     if (!itemSelecionado) return;
-  
+
     try {
-      const response = await fetch(`/Meusanuncios/api?id=${itemSelecionado.id}`, { 
-        method: 'DELETE' 
-      });
-      
+      const response = await fetch(
+        `/Meusanuncios/api?id=${itemSelecionado.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
       if (response.ok) {
-        setAnuncios(prev => prev.filter(item => item.id !== itemSelecionado.id));
-        setModalType('success');
+        setModalType("success");
       } else {
         alert("Não foi possível excluir o anúncio do banco.");
       }
@@ -126,20 +159,21 @@ export default function MeusAnunciosPage() {
 
   const handleLogout = () => {
     auth?.logout();
-    router.push('/');
+    router.push("/");
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fa]">
-        <p className="text-gray-500 font-medium animate-pulse">Buscando ferramentas no banco...</p>
+        <p className="text-gray-500 font-medium animate-pulse">
+          Buscando ferramentas no banco...
+        </p>
       </div>
     );
   }
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
-      
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
         <div>
           <div className="flex flex-col items-center mb-10">
@@ -153,8 +187,8 @@ export default function MeusAnunciosPage() {
               </span>
             </h2>
             <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
-              <span className="text-yellow-500">★</span> 
-              {usuario?.rep ? usuario.rep.toFixed(1) : "0.0"}{' '}
+              <span className="text-yellow-500">★</span>
+              {usuario?.rep ? usuario.rep.toFixed(1) : "0.0"}{" "}
               <span className="text-gray-300 font-light">(Reputação)</span>
             </p>
           </div>
@@ -165,14 +199,18 @@ export default function MeusAnunciosPage() {
                 key={item.id}
                 icon={item.icon}
                 label={item.label}
-                active={(pathname ?? '') === item.path || ((pathname ?? '').startsWith('/Meusanuncios') && item.id === 'anuncios')}
+                active={
+                  (pathname ?? "") === item.path ||
+                  ((pathname ?? "").startsWith("/Meusanuncios") &&
+                    item.id === "anuncios")
+                }
                 onClick={() => router.push(item.path)}
               />
             ))}
           </nav>
         </div>
 
-        <button 
+        <button
           onClick={() => setShowLogoutConfirm(true)}
           className="w-full flex items-center justify-center gap-2 p-3 mt-8 text-gray-500 hover:text-red-600 transition font-medium border-t border-gray-100"
         >
@@ -185,70 +223,88 @@ export default function MeusAnunciosPage() {
         <h1 className="text-4xl font-serif font-bold text-gray-900 mb-10">
           Meus anúncios ativos
         </h1>
-        
-        {anuncios.length === 0 ? (
+
+        {anuncios?.length === 0 ? (
           <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
             Você não possui nenhum anúncio ativo no momento.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-            {anuncios.map((anuncio) => (
-              <div key={anuncio.id} className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group">
-                
-                <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
-                  {anuncio.foto_principal ? (
-                    <img src={anuncio.foto_principal} alt={anuncio.titulo} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-gray-400 text-xs font-medium">Sem imagem cadastrada</div>
-                  )}
-                  
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <button
-                      onClick={() => router.push(`/Meusanuncios/${anuncio.id}/editar`)}
-                      className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition"
-                    >
-                      <Edit3 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleOpenDeleteModal(anuncio)}
-                      className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
+            {anuncios &&
+              anuncios.map((anuncio) => {
+                const mainImage = anuncio.fotos.find((foto) => foto.principal);
+                return (
+                  <div
+                    key={anuncio.id}
+                    className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group"
+                  >
+                    <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
+                      {mainImage ? (
+                        <img
+                          src={mainImage.url}
+                          alt={anuncio.titulo}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-xs font-medium">
+                          Sem imagem cadastrada
+                        </div>
+                      )}
 
-                <div className="px-1">
-                  <h3 className="text-[13px] font-bold text-gray-700 uppercase tracking-tight">
-                    {anuncio.titulo}
-                  </h3>
-                  <div className="flex justify-between items-end mt-1">
-                    <p className="font-extrabold text-lg text-gray-900">
-                      R$ {anuncio.valor_diario.toFixed(2).replace('.', ',')}/dia
-                    </p>
-                    <div className="flex items-center gap-1 mb-1">
-                      <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                      <span className="text-[13px] font-bold">5.0</span>
-                      <Star size={14} className="fill-gray-900 text-gray-900" />
+                      <div className="absolute top-3 right-3 flex gap-2">
+                        <button
+                          onClick={() =>
+                            router.push(`/Meusanuncios/${anuncio.id}/editar`)
+                          }
+                          className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition"
+                        >
+                          <Edit3 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenDeleteModal(anuncio)}
+                          className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="px-1">
+                      <h3 className="text-[13px] font-bold text-gray-700 uppercase tracking-tight">
+                        {anuncio.titulo}
+                      </h3>
+                      <div className="flex justify-between items-end mt-1">
+                        <p className="font-extrabold text-lg text-gray-900">
+                          R$ {anuncio.valorDiario.toFixed(2).replace(".", ",")}
+                          /dia
+                        </p>
+                        <div className="flex items-center gap-1 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                          <span className="text-[13px] font-bold">5.0</span>
+                          <Star
+                            size={14}
+                            className="fill-gray-900 text-gray-900"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
           </div>
         )}
       </section>
 
       <DeleteModal
-        isOpen={modalType === 'confirm'}
-        onClose={() => setModalType('none')}
-        onConfirm={handleConfirmDelete} 
+        isOpen={modalType === "confirm"}
+        onClose={() => setModalType("none")}
+        onConfirm={handleConfirmDelete}
         itemName={itemSelecionado?.titulo || ""}
       />
 
-      <SuccessModal 
-        isOpen={modalType === 'success'} 
-        onClose={() => setModalType('none')}
+      <SuccessModal
+        isOpen={modalType === "success"}
+        onClose={() => setModalType("none")}
         itemName={itemSelecionado?.titulo || ""}
       />
 
@@ -257,7 +313,6 @@ export default function MeusAnunciosPage() {
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={handleLogout}
       />
-
     </main>
   );
 }

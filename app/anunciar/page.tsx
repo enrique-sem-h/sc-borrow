@@ -9,6 +9,7 @@ import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { useAddAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
+import { CreateAnuncioDTO } from "@/server/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChevronLeft,
@@ -19,12 +20,14 @@ import {
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import z from "zod";
 
-type FormType = AnuncioInsert & {
-  fotos: Array<File>;
-};
+type FormType = CreateAnuncioDTO;
 
-const schema = insertAnuncioSchema;
+const schema = insertAnuncioSchema.extend({
+  fotos: z.array(z.instanceof(File)).min(3),
+});
 
 export default function CriarAnuncioPage() {
   const router = useRouter();
@@ -53,8 +56,13 @@ export default function CriarAnuncioPage() {
       const response = await addAnuncioMutation.mutateAsync(data);
 
       setShowModal(true);
-    } catch (error) {}
+    } catch (error) {
+      toast("Ocorreu um erro ao tentar criar anúncio", {
+        type: "error",
+      });
+    }
   };
+  console.log(errors);
 
   return (
     <main className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-[#1a1a1a]">

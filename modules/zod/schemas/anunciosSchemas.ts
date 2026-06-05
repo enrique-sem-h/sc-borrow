@@ -10,14 +10,10 @@ export const insertAnuncioSchema = createInsertSchema(anuncios, {
   descricao: (schema) => schema.trim().min(1),
   valorDiario: z.coerce.number().positive().min(1),
   caucao: z.coerce.number().positive().min(1),
-})
-  .extend({
-    fotos: z.array(z.instanceof(File)).min(3),
-  })
-  .omit({
-    id: true,
-    usuarioId: true,
-  });
+}).omit({
+  id: true,
+  usuarioId: true,
+});
 export const anuncioSchema = createSelectSchema(anuncios);
 
 const formidableFile = z.object({

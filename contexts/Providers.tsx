@@ -14,10 +14,7 @@ const queryClient = new QueryClient();
 const Providers: React.FC<ProvidersProps> = ({ className, children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastContainer />
-        {children}
-      </AuthProvider>
+      <AuthProvider>{children}</AuthProvider>
     </QueryClientProvider>
   );
 };
