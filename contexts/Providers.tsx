@@ -9,7 +9,7 @@ type ProvidersProps = {
   children: ReactNode;
 };
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 const Providers: React.FC<ProvidersProps> = ({ className, children }) => {
   return (
