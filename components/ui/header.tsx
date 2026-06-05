@@ -100,9 +100,7 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => {
-                /* TODO: ir para página "chat" */
-              }}
+              onClick={() => router.push("/chats")}
               aria-label="Chat"
               className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             >
@@ -176,9 +174,7 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => {
-                /* TODO: ir para página "chat" */
-              }}
+              onClick={() => router.push("/chats")}
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
             >
               <MessageCircle className="w-5 h-5" />
