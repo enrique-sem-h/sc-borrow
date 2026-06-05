@@ -23,6 +23,7 @@ import { Anuncio } from "@/infra/database/schemas/anunciosSchema";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
 import { useDeleteAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { toast } from "react-toastify";
+import { Spinner } from "@/components/ui/spinner";
 
 const MenuItem = ({ icon, label, active, onClick }: any) => (
   <button
@@ -187,7 +188,15 @@ export default function MeusAnunciosPage() {
           Meus anúncios ativos
         </h1>
 
-        {anuncios?.length === 0 ? (
+        {anunciosQuery.isLoading && (
+          <>
+            <div className="flex justify-center ">
+              <Spinner className="size-6" />
+            </div>
+          </>
+        )}
+
+        {!anuncios?.length && !anunciosQuery.isLoading ? (
           <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
             Você não possui nenhum anúncio ativo no momento.
           </div>
