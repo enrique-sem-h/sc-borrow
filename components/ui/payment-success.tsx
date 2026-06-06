@@ -15,7 +15,7 @@ export function PagamentoSucessoModal({ isOpen, onClose, valorTotal, itemNome }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl relative border border-gray-100 text-center animate-scale-up">
+      <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl relative border border-gray-100 text-center">
         
         <button 
           onClick={onClose} 
@@ -24,9 +24,11 @@ export function PagamentoSucessoModal({ isOpen, onClose, valorTotal, itemNome }:
           <X size={20} />
         </button>
 
-        <h1 className="text-2xl font-['Shrikhand'] tracking-tight mb-4">BORROW</h1>
+        <h1 className="text-2xl font-['Shrikhand'] font-bold tracking-tight text-black mb-4">
+          BORROW
+        </h1>
         
-        <div className="flex justify-center mb-4 text-emerald-500 animate-bounce-short">
+        <div className="flex justify-center mb-4 text-emerald-500">
           <CheckCircle2 size={56} strokeWidth={1.5} />
         </div>
 
@@ -35,13 +37,17 @@ export function PagamentoSucessoModal({ isOpen, onClose, valorTotal, itemNome }:
           Sua transação via Stripe foi processada e confirmada com sucesso.
         </p>
 
-        {(itemNome || valorTotal) && (
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100/80 text-left text-xs text-gray-600 space-y-1.5 mb-6 font-medium">
-            {itemNome && <p><span className="text-gray-400">Item:</span> {itemNome}</p>}
-            {valorTotal && <p><span className="text-gray-400">Valor Pago:</span> {valorTotal}</p>}
-            <p><span className="text-gray-400">Status:</span> Pago com sucesso</p>
-          </div>
-        )}
+        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100/80 text-left text-xs text-gray-600 space-y-1.5 mb-6 font-medium">
+          <p>
+            <span className="text-gray-400">Item:</span> {itemNome || "Item Locado"} {/*trocar dps*/}
+          </p>
+          <p>
+            <span className="text-gray-400">Valor Pago:</span> {valorTotal || "Processado"}
+          </p>
+          <p>
+            <span className="text-gray-400">Status:</span> Pago com sucesso
+          </p>
+        </div>
 
         <button
           onClick={onClose}
