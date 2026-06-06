@@ -36,6 +36,13 @@
       "when": 1780666744453,
       "tag": "0004_polite_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1780713720454,
+      "tag": "0005_polite_weapon_omega",
+      "breakpoints": true
     }
   ]
 }

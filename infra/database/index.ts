@@ -6,6 +6,11 @@ import {
   fotoAnuncios,
   fotoRelations,
 } from "./schemas/anunciosSchema";
+import {
+  alugueis,
+  alugueisRelations,
+  usuarioRelations,
+} from "./schemas/alugueisSchema";
 
 const config = {
   host: process.env.DB_HOST,
@@ -21,6 +26,9 @@ export const db = drizzle(poolConnection, {
     anunciosRelations,
     fotoAnuncios,
     fotoRelations,
+    alugueis,
+    usuarioRelations,
+    alugueisRelations,
   },
   mode: "default",
 });

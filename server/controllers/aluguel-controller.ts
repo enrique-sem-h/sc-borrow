@@ -7,6 +7,8 @@ import auth from "../middlewares/auth";
 import { validate } from "../middlewares/validate";
 import { insertAluguelSchema } from "@/modules/zod/schemas/alugueisSchemas";
 
+export type AluguelTipo = "locatario" | "locador";
+
 class AluguelController extends BaseController {
   private aluguelService = new AluguelService();
   private anuncioService = new AnuncioService();
@@ -88,7 +90,7 @@ class AluguelController extends BaseController {
   public async read(req: NextAuthApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {
       try {
-        const id = req.query.id as string;
+        const id = req.query.id;
 
         const aluguel = await this.aluguelService.read(id);
 
@@ -106,6 +108,25 @@ class AluguelController extends BaseController {
             .status(403)
             .send("You don't have permission to get this aluguel");
         }
+
+        res.send({
+          data: aluguel,
+        });
+      } catch (err) {
+        console.error("erro: ", err);
+
+        return res.status(500).json({ err });
+      }
+    });
+  }
+
+  public async getAll(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const tipo = req.query.tipo as AluguelTipo | undefined;
+        const userId = req.userId;
+
+        const aluguel = await this.aluguelService.getAll(userId, tipo);
 
         res.send({
           data: aluguel,

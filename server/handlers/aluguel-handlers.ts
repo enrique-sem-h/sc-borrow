@@ -7,6 +7,7 @@ const anuncioHandlers = {
   read: controller.read.bind(controller),
   delete: controller.delete.bind(controller),
   update: controller.update.bind(controller),
+  getAll: controller.getAll.bind(controller),
 };
 
 export default anuncioHandlers;

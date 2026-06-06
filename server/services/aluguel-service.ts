@@ -1,3 +1,4 @@
+import { AluguelTipo } from "../controllers/aluguel-controller";
 import AluguelRepository from "../repositories/aluguel-repository";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import BaseService from "./base-service";
@@ -15,6 +16,9 @@ class AluguelService extends BaseService {
     return AluguelRepository.read(id);
   }
 
+  public getAll(userId: string, type: AluguelTipo | undefined) {
+    return AluguelRepository.getByUser(userId, type);
+  }
   public delete(id: string) {
     const anuncio = AluguelRepository.read(id);
 

@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  User, LayoutGrid, Key, DollarSign, MessageCircle, HelpCircle, LogOut
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { LogoutModal } from '@/components/ui/logout-modal';
-import { AvaliarModal } from '@/components/ui/rate-modal';
+  User,
+  LayoutGrid,
+  Key,
+  DollarSign,
+  MessageCircle,
+  HelpCircle,
+  LogOut,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { LogoutModal } from "@/components/ui/logout-modal";
+import { AvaliarModal } from "@/components/ui/rate-modal";
+import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
+import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 
 interface Aluguel {
   id: string;
@@ -16,7 +24,7 @@ interface Aluguel {
   data_inicio: string;
   data_fim: string;
   valor_total: number;
-  status: 'ativo' | 'em_andamento' | 'concluido';
+  status: "ativo" | "em_andamento" | "concluido";
   foto_principal?: string | null;
   notificacoes?: number;
 }
@@ -26,8 +34,8 @@ const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
     onClick={onClick}
     className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition text-sm ${
       active
-        ? 'bg-gray-100 font-bold text-black'
-        : 'hover:bg-gray-50 text-gray-500 font-medium'
+        ? "bg-gray-100 font-bold text-black"
+        : "hover:bg-gray-50 text-gray-500 font-medium"
     }`}
   >
     <div className="flex items-center gap-3">
@@ -42,8 +50,14 @@ const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   </button>
 );
 
-const StatusBadge = ({ status, onAvaliar }: { status: Aluguel['status']; onAvaliar?: () => void }) => {
-  if (status === 'ativo') {
+const StatusBadge = ({
+  status,
+  onAvaliar,
+}: {
+  status: Aluguel["status"];
+  onAvaliar?: () => void;
+}) => {
+  if (status === "ativo") {
     return (
       <span className="flex items-center gap-1.5 text-green-600 text-xs font-semibold">
         <span className="w-2 h-2 rounded-full bg-green-500" />
@@ -51,7 +65,7 @@ const StatusBadge = ({ status, onAvaliar }: { status: Aluguel['status']; onAvali
       </span>
     );
   }
-  if (status === 'em_andamento') {
+  if (status === "em_andamento") {
     return (
       <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
         Em andamento
@@ -79,22 +93,59 @@ export default function MeusAlugueisPage() {
   const auth = useAuth();
   const { chatCount, aluguelCount, anuncioCount } = useNotifications();
   const user = auth?.user;
+  const alugueis = useGetAlugueis("locador");
+  console.log(alugueis.data);
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [aluguelParaAvaliar, setAluguelParaAvaliar] = useState<Aluguel | null>(null);
+  const [aluguelParaAvaliar, setAluguelParaAvaliar] = useState<Aluguel | null>(
+    null,
+  );
 
   const menuItems = [
-    { id: 'dados',     label: 'Meus dados',    icon: <User size={20} />,        path: '/meusdados' },
-    { id: 'anuncios',  label: 'Meus anúncios', icon: <LayoutGrid size={20} />,  path: '/Meusanuncios', badge: anuncioCount > 0 ? anuncioCount : undefined },
-    { id: 'alugueis',  label: 'Meus aluguéis', icon: <Key size={20} />,         path: '/meusalugueis', badge: aluguelCount > 0 ? aluguelCount : undefined },
-    { id: 'carteira',  label: 'Carteira',       icon: <DollarSign size={20} />,  path: '/carteira' },
-    { id: 'chats',     label: 'Chats',          icon: <MessageCircle size={20} />, path: '/chats', badge: chatCount > 0 ? chatCount : undefined },
-    { id: 'ajuda',     label: 'Ajuda',          icon: <HelpCircle size={20} />,  path: '/ajuda' },
+    {
+      id: "dados",
+      label: "Meus dados",
+      icon: <User size={20} />,
+      path: "/meusdados",
+    },
+    {
+      id: "anuncios",
+      label: "Meus anúncios",
+      icon: <LayoutGrid size={20} />,
+      path: "/Meusanuncios",
+      badge: anuncioCount > 0 ? anuncioCount : undefined,
+    },
+    {
+      id: "alugueis",
+      label: "Meus aluguéis",
+      icon: <Key size={20} />,
+      path: "/meusalugueis",
+      badge: aluguelCount > 0 ? aluguelCount : undefined,
+    },
+    {
+      id: "carteira",
+      label: "Carteira",
+      icon: <DollarSign size={20} />,
+      path: "/carteira",
+    },
+    {
+      id: "chats",
+      label: "Chats",
+      icon: <MessageCircle size={20} />,
+      path: "/chats",
+      badge: chatCount > 0 ? chatCount : undefined,
+    },
+    {
+      id: "ajuda",
+      label: "Ajuda",
+      icon: <HelpCircle size={20} />,
+      path: "/ajuda",
+    },
   ];
 
   const handleLogout = () => {
     auth?.logout();
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -113,7 +164,7 @@ export default function MeusAlugueisPage() {
             </h2>
             <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
               <span className="text-yellow-500">★</span>
-              {user?.rep ? user.rep.toFixed(1) : '0.0'}{' '}
+              {user?.rep ? user.rep.toFixed(1) : "0.0"}{" "}
               <span className="text-gray-300 font-light">(Reputação)</span>
             </p>
           </div>
@@ -124,7 +175,7 @@ export default function MeusAlugueisPage() {
                 key={item.id}
                 icon={item.icon}
                 label={item.label}
-                active={(pathname ?? '') === item.path}
+                active={(pathname ?? "") === item.path}
                 onClick={() => router.push(item.path)}
                 badge={item.badge}
               />
@@ -143,9 +194,11 @@ export default function MeusAlugueisPage() {
 
       <section className="flex-1">
         <div className="flex items-center justify-between mb-10">
-          <h1 className="text-4xl font-serif font-bold text-gray-900">Meus aluguéis</h1>
+          <h1 className="text-4xl font-serif font-bold text-gray-900">
+            Meus aluguéis
+          </h1>
           <button
-            onClick={() => router.push('/meusalugueis/historico')}
+            onClick={() => router.push("/meusalugueis/historico")}
             className="px-5 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
           >
             Histórico
@@ -162,13 +215,18 @@ export default function MeusAlugueisPage() {
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={handleLogout}
       />
-      
+
       <AvaliarModal
         isOpen={!!aluguelParaAvaliar}
         onClose={() => setAluguelParaAvaliar(null)}
-        itemNome={aluguelParaAvaliar?.titulo ?? ''}
-        periodoLocacao={aluguelParaAvaliar ? `${aluguelParaAvaliar.data_inicio} - ${aluguelParaAvaliar.data_fim}` : ''}
+        itemNome={aluguelParaAvaliar?.titulo ?? ""}
+        periodoLocacao={
+          aluguelParaAvaliar
+            ? `${aluguelParaAvaliar.data_inicio} - ${aluguelParaAvaliar.data_fim}`
+            : ""
+        }
       />
     </main>
   );
 }
+

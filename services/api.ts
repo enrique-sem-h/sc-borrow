@@ -3,6 +3,7 @@ import {
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
+import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
@@ -29,6 +30,15 @@ class ApiService {
   public setToken(token: string) {
     this.api.defaults.headers.Authorization = `Bearer ${token}`;
   }
+
+  public alugueis = {
+    getAll: async (type?: AluguelTipo) => {
+      const query = !type ? "" : `tipo=${type}`;
+      const response = await this.api.get(`aluguel?${query}`);
+
+      return response.data;
+    },
+  };
 
   public anuncios = {
     insert: async (data: CreateAnuncioDTO) => {
@@ -67,8 +77,6 @@ class ApiService {
       return response.data;
     },
     edit: async (id: string, newData: UpdateAnuncioDTO) => {
-      console.log("new data", newData);
-
       const response = await this.api.put(`anuncio/${id}`, newData);
 
       return response.data;

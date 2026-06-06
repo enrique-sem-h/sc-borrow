@@ -6,4 +6,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "POST") {
     return aluguelHandlers.create(req as NextAuthApiRequest, res);
   }
+  if (req.method === "GET") {
+    return aluguelHandlers.getAll(req as NextAuthApiRequest, res);
+  }
 }

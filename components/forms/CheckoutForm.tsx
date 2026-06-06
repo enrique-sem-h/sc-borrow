@@ -4,15 +4,15 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
-import { PagamentoSucessoModal } from "@/components/ui/payment-success"; 
+import { PagamentoSucessoModal } from "@/components/ui/payment-success";
 
 export default function CheckoutForm() {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
-  
+
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -24,10 +24,14 @@ export default function CheckoutForm() {
 
     setIsLoading(true);
 
+    await stripe.con;
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
-      confirmParams: {},
-      redirect: "if_required", 
+      confirmParams: {
+        payment_method_data: {},
+      },
+
+      redirect: "if_required",
     });
 
     if (error) {
@@ -41,7 +45,7 @@ export default function CheckoutForm() {
     }
 
     if (paymentIntent && paymentIntent.status === "succeeded") {
-      setIsSuccessModalOpen(true); 
+      setIsSuccessModalOpen(true);
     }
 
     setIsLoading(false);
@@ -49,7 +53,7 @@ export default function CheckoutForm() {
 
   const handleCloseModal = () => {
     setIsSuccessModalOpen(false);
-    router.push("/meusalugueis"); 
+    router.push("/meusalugueis");
   };
 
   return (
@@ -73,10 +77,11 @@ export default function CheckoutForm() {
         )}
       </form>
 
-      <PagamentoSucessoModal 
+      <PagamentoSucessoModal
         isOpen={isSuccessModalOpen}
         onClose={handleCloseModal}
       />
     </>
   );
 }
+
