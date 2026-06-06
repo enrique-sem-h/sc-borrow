@@ -91,7 +91,14 @@ export default function Header() {
 
           <div className="hidden md:flex items-center gap-2 md:gap-4 text-lg text-gray-700">
             <button
-              onClick={() => router.push("/Meusanuncios")}
+              onClick={() => {
+                if (isAuth) {
+                  router.push("/Meusanuncios");
+                } else {
+                  toast("Logue-se para ver seus anúncios!");
+                  setIsLoginOpen(true);
+                }
+              }}
               aria-label="Meus anúncios"
               className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
             >
@@ -166,7 +173,15 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4">
             <button
-              onClick={() => navigate("/Meusanuncios")}
+              onClick={() => {
+                if (isAuth) {
+                  navigate("/Meusanuncios");
+                } else {
+                  setIsMenuOpen(false);
+                  toast("Logue-se para ver seus anúncios!");
+                  setIsLoginOpen(true);
+                }
+              }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
             >
               <ClipboardList className="w-5 h-5" />
