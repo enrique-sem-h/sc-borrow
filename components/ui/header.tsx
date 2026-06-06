@@ -207,7 +207,15 @@ export default function Header() {
             </button>
 
             <button
-              onClick={() => navigate("/anunciar")}
+              onClick={() => {
+                if (isAuth) {
+                  navigate("/anunciar");
+                } else {
+                  setIsMenuOpen(false);
+                  toast("Logue-se para poder anunciar!");
+                  setIsLoginOpen(true);
+                }
+              }}
               className="px-4 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition text-gray-700"
             >
               Anunciar
