@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import {
   PaymentElement,
@@ -13,9 +15,10 @@ export default function CheckoutForm() {
   const elements = useElements();
   const router = useRouter();
 
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalStatus, setModalStatus] = useState<"success" | "error">("success");
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -24,36 +27,37 @@ export default function CheckoutForm() {
 
     setIsLoading(true);
 
-    await stripe.con;
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         payment_method_data: {},
       },
-
       redirect: "if_required",
     });
 
     if (error) {
-      if (error.type === "card_error" || error.type === "validation_error") {
-        setMessage(error.message!);
-      } else {
-        setMessage("Ocorreu um erro inesperado.");
-      }
+      setModalStatus("error");
+      setIsModalOpen(true);
       setIsLoading(false);
       return;
     }
 
     if (paymentIntent && paymentIntent.status === "succeeded") {
-      setIsSuccessModalOpen(true);
+      setModalStatus("success");
+      setIsModalOpen(true);
+    } else {
+      setModalStatus("error");
+      setIsModalOpen(true);
     }
 
     setIsLoading(false);
   };
 
   const handleCloseModal = () => {
-    setIsSuccessModalOpen(false);
-    router.push("/meusalugueis");
+    setIsModalOpen(false);
+    if (modalStatus === "success") {
+      router.push("/meusalugueis");
+    }
   };
 
   return (
@@ -71,17 +75,15 @@ export default function CheckoutForm() {
         >
           {isLoading ? "Processando..." : "Pagar Agora"}
         </button>
-
-        {message && (
-          <div style={{ color: "red", marginTop: "15px" }}>{message}</div>
-        )}
       </form>
 
       <PagamentoSucessoModal
-        isOpen={isSuccessModalOpen}
+        isOpen={isModalOpen}
         onClose={handleCloseModal}
+        status={modalStatus}
+        itemNome="Barraca de camp" // mudar dps
+        valorTotal="R$ 1.080,00"  
       />
     </>
   );
 }
-

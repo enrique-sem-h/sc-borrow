@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LoginModal from "@/components/ui/login-modal";
 import RegisterModal from "./register-modal";
+import { NotificationsDropdown } from "@/components/ui/notification"; 
 import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,6 +21,7 @@ export default function Header() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState("");
 
   const auth = useAuth();
@@ -53,7 +55,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4">
+      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4 relative">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
@@ -115,15 +117,22 @@ export default function Header() {
               <span className="hidden lg:inline">Chat</span>
             </button>
 
-            <button
-              onClick={() => {
-                /* TODO: abrir as "notificações" */
-              }}
-              aria-label="Notificações"
-              className="p-2 rounded-lg hover:bg-gray-100 transition"
-            >
-              <Bell className="w-5 h-5" aria-hidden="true" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                aria-label="Notificações"
+                className={`p-2 rounded-lg transition ${
+                  isNotificationsOpen ? "bg-gray-100 text-black" : "hover:bg-gray-100"
+                }`}
+              >
+                <Bell className="w-5 h-5" aria-hidden="true" />
+              </button>
+
+              <NotificationsDropdown
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+              />
+            </div>
 
             <button
               onClick={() => {
@@ -196,15 +205,24 @@ export default function Header() {
               Chat
             </button>
 
-            <button
-              onClick={() => {
-                /* TODO: abrir as "notificações" */
-              }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
-            >
-              <Bell className="w-5 h-5" />
-              Notificações
-            </button>
+            <div className="relative w-full">
+              <button
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                className="flex items-center justify-between w-full px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5" />
+                  Notificações
+                </div>
+              </button>
+
+              <div className="absolute right-0 left-0 md:left-auto px-2 md:px-0">
+                <NotificationsDropdown
+                  isOpen={isNotificationsOpen}
+                  onClose={() => setIsNotificationsOpen(false)}
+                />
+              </div>
+            </div>
 
             <button
               onClick={() => {
