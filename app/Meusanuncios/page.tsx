@@ -11,7 +11,6 @@ import {
   HelpCircle,
   Edit3,
   Trash2,
-  Star,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +23,6 @@ import { Anuncio } from "@/infra/database/schemas/anunciosSchema";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
 import { useDeleteAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { toast } from "react-toastify";
-import { Spinner } from "@/components/ui/spinner";
 
 const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   <button
@@ -71,9 +69,15 @@ export default function MeusAnunciosPage() {
     { id: "ajuda", label: "Ajuda", icon: <HelpCircle size={20} />, path: "/ajuda" },
   ];
 
-  const handleOpenDeleteModal = (anuncio: Anuncio) => {
+  const handleOpenDeleteModal = (anuncio: Anuncio, e: React.MouseEvent) => {
+    e.stopPropagation(); 
     setItemSelecionado(anuncio);
     setModalType("confirm");
+  };
+
+  const handleGoToEdit = (anuncioId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    router.push(`/Meusanuncios/${anuncioId}/editar`);
   };
 
   const handleConfirmDelete = async () => {
@@ -156,18 +160,28 @@ export default function MeusAnunciosPage() {
             {anuncios.map((anuncio) => {
               const mainImage = anuncio.fotos.find((foto) => foto.principal);
               return (
-                <div key={anuncio.id} className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group">
+                <div 
+                  key={anuncio.id} 
+                  onClick={() => router.push("/aluguel/andamento-locador")}
+                  className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group cursor-pointer hover:shadow-md transition-all duration-200"
+                >
                   <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
                     {mainImage ? (
                       <img src={mainImage.url} alt={anuncio.titulo} className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-gray-400 text-xs font-medium">Sem imagem</div>
                     )}
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <button onClick={() => router.push(`/Meusanuncios/${anuncio.id}/editar`)} className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition">
+                    <div className="absolute top-3 right-3 flex gap-2 z-10">
+                      <button 
+                        onClick={(e) => handleGoToEdit(anuncio.id, e)} 
+                        className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition"
+                      >
                         <Edit3 size={18} />
                       </button>
-                      <button onClick={() => handleOpenDeleteModal(anuncio)} className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500">
+                      <button 
+                        onClick={(e) => handleOpenDeleteModal(anuncio, e)} 
+                        className="bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition hover:text-red-500"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
