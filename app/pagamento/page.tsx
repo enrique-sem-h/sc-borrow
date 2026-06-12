@@ -19,6 +19,8 @@ function PagamentoContent() {
   const [clientSecret, setClientSecret] = useState("");
 
   useEffect(() => {
+    console.log("aaa");
+
     fetch("api/checkout", { method: "POST" })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))

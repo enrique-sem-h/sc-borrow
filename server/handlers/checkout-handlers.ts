@@ -3,7 +3,8 @@ import CheckoutController from "../controllers/checkout-controller";
 const controller = new CheckoutController();
 
 const checkoutHandlers = {
-  create: controller.create.bind(controller),
+  createIntent: controller.createIntent.bind(controller),
+  stripeResponse: controller.createIntent.bind(controller),
 };
 
 export default checkoutHandlers;
