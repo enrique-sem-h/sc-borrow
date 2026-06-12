@@ -1,6 +1,6 @@
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import { db } from "@/infra/database/index";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
@@ -99,6 +99,22 @@ class AluguelRepository {
     });
 
     return alugueis;
+  }
+
+  static async findConflictAnuncio(idAnuncio: string, dataInicio: Date, dataFim: Date) {
+    const [aluguel] = await db
+    .select()
+    .from(alugueis)
+    .where(
+      and(
+        eq(alugueis.idAnuncio, idAnuncio),
+        lte(alugueis.dataInicio, dataFim),
+        gte(alugueis.dataFim, dataInicio),
+      ),
+    )
+    .limit(1)
+
+    return aluguel
   }
 }
 
