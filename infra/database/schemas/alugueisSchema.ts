@@ -21,6 +21,17 @@ export const alugueis = mysqlTable("alugueis", {
   idLocatario: varchar("id_locatario", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
+  status: varchar("status", {
+    length: 50,
+    enum: [
+      "WAITING_FOR_PAYMANT",
+      "CANCELLED",
+      "WAITING_FOR_DISPATCH",
+      "WAITING_FOR_DELIVERY",
+      "ITEM_IN_HAND",
+      "COMPLETED",
+    ],
+  }),
 });
 
 export const usuarioRelations = relations(usuarios, (r) => ({
