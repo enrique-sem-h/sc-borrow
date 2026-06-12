@@ -1,4 +1,4 @@
-import { alugueis } from "@/infra/database/schemas/alugueisSchema";
+import { alugueis, AluguelType } from "@/infra/database/schemas/alugueisSchema";
 import { db } from "@/infra/database/index";
 import { eq } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
@@ -21,7 +21,10 @@ class AluguelRepository {
     return aluguel;
   }
 
-  static async update(id: string, body: UpdateAluguelDTO): Promise<Aluguel> {
+  static async update(
+    id: string,
+    body: Partial<AluguelType>,
+  ): Promise<Aluguel> {
     // Chamar o Drizzle para editar anuncio
     //
     await db.update(alugueis).set(body).where(eq(alugueis.id, id));
@@ -36,11 +39,11 @@ class AluguelRepository {
 
   static async read(id: string): Promise<Aluguel | undefined> {
     // Chamar o Drizzle para ler anuncio
-    const [aluguel] = await db
-      .select()
-      .from(alugueis)
-      .where(eq(alugueis.id, id))
-      .limit(1);
+    const aluguel = await db.query.alugueis.findFirst({
+      where(fields, operators) {
+        return operators.eq(fields.id, id);
+      },
+    });
 
     return aluguel;
   }

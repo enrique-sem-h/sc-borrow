@@ -2,7 +2,16 @@ import { mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
-import { relations } from "drizzle-orm";
+import { InferSelectModel, relations } from "drizzle-orm";
+
+export enum AluguelStatus {
+  WAITING_FOR_PAYMANT,
+  CANCELLED,
+  WAITING_FOR_DISPATCH,
+  WAITING_FOR_DELIVERY,
+  ITEM_IN_HAND,
+  COMPLETED,
+}
 
 export const alugueis = mysqlTable("alugueis", {
   id: varchar("id", { length: 36 })
