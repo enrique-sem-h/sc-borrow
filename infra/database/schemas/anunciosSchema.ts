@@ -18,11 +18,10 @@ export const anuncios = mysqlTable("anuncios", {
   categoria: varchar("categoria", {
     length: 255,
     enum: [
-      "Moda e Acessórios",
-      "Eletrônicos",
-      "Beleza e Cuidados",
-      "Casa e decoração",
-      "Animais e Acessórios",
+      "Ferramentas",
+      "Camping",
+      "Equipamentos de festa",
+      "Lazer",
     ],
   }).notNull(),
   valorDiario: float("valor_diario").notNull(),

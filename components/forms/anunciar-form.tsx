@@ -206,19 +206,10 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                           {...field}
                         >
                           <option value="">Selecione...</option>
-                          <option value="Moda e Acessórios">
-                            Moda e Acessórios
-                          </option>
-                          <option value="Eletrônicos">Eletrônicos</option>
-                          <option value="Beleza e Cuidados">
-                            Beleza e Cuidados
-                          </option>
-                          <option value="Casa e decoração">
-                            Casa e decoração
-                          </option>
-                          <option value="Animais e Acessórios">
-                            Animais e Acessórios
-                          </option>
+                          <option value="Ferramentas">Ferramentas</option>
+                          <option value="Camping">Camping</option>
+                          <option value="Equipamentos de festa">Equipamentos de festa</option>
+                          <option value="Lazer">Lazer</option>
                         </SelectFormInput>
                       );
                     }}

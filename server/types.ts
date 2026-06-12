@@ -10,11 +10,10 @@ export type CreateAnuncioDTO = {
   titulo: string;
   descricao: string;
   categoria:
-    | "Moda e Acessórios"
-    | "Eletrônicos"
-    | "Beleza e Cuidados"
-    | "Casa e decoração"
-    | "Animais e Acessórios";
+    | "Ferramentas"
+    | "Camping"
+    | "Equipamentos de festa"
+    | "Lazer";
   valorDiario: number;
   caucao: number;
   fotos: File[] | formidable.File[];

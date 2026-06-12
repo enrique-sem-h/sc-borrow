@@ -7,7 +7,7 @@ import { Star, Image as ImageIcon } from "lucide-react";
 const CATEGORIAS = ["Ferramentas", "Camping", "Equipamentos de festa", "Lazer"];
 
 interface Anuncio {
-  id: number;
+  id: string;
   titulo: string;
   valor_diario: number;
   categoria: string;
@@ -15,21 +15,6 @@ interface Anuncio {
   disponivel: boolean;
   foto: string | null;
 }
-
-const MOCK_ANUNCIOS: Anuncio[] = [
-  { id: 1, titulo: "Furadeira Tramontina", valor_diario: 35, categoria: "Ferramentas", avaliacao: 5.0, disponivel: true, foto: null },
-  { id: 2, titulo: "Serra Circular Makita", valor_diario: 55, categoria: "Ferramentas", avaliacao: 4.5, disponivel: true, foto: null },
-  { id: 3, titulo: "Nível a Laser Bosch", valor_diario: 40, categoria: "Ferramentas", avaliacao: 4.8, disponivel: false, foto: null },
-  { id: 4, titulo: "Barraca 4 Pessoas Coleman", valor_diario: 60, categoria: "Camping", avaliacao: 5.0, disponivel: true, foto: null },
-  { id: 5, titulo: "Colchão Inflável Camping", valor_diario: 25, categoria: "Camping", avaliacao: 4.8, disponivel: true, foto: null },
-  { id: 6, titulo: "Fogareiro e Botijão", valor_diario: 30, categoria: "Camping", avaliacao: 4.3, disponivel: true, foto: null },
-  { id: 7, titulo: "Som e Iluminação para Festa", valor_diario: 180, categoria: "Equipamentos de festa", avaliacao: 4.7, disponivel: true, foto: null },
-  { id: 8, titulo: "Mesa e Cadeiras para Evento", valor_diario: 120, categoria: "Equipamentos de festa", avaliacao: 4.2, disponivel: false, foto: null },
-  { id: 9, titulo: "Máquina de Pipoca", valor_diario: 50, categoria: "Equipamentos de festa", avaliacao: 5.0, disponivel: true, foto: null },
-  { id: 10, titulo: "Stand Up Paddle", valor_diario: 50, categoria: "Lazer", avaliacao: 5.0, disponivel: true, foto: null },
-  { id: 11, titulo: "Bicicleta Mountain Bike", valor_diario: 45, categoria: "Lazer", avaliacao: 4.6, disponivel: true, foto: null },
-  { id: 12, titulo: "Caiaque Inflável", valor_diario: 80, categoria: "Lazer", avaliacao: 4.9, disponivel: false, foto: null },
-];
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState(0);
@@ -117,7 +102,7 @@ function BuscaContent() {
 
   const [todosAnuncios, setTodosAnuncios] = useState<Anuncio[]>([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState(categoriaParam);
-  const [precoMax, setPrecoMax] = useState(105000);
+  const [precoMax, setPrecoMax] = useState(10000);
   const [avaliacaoMin, setAvaliacaoMin] = useState(0);
   const [disponibilidade, setDisponibilidade] = useState(false);
   const [ordenar, setOrdenar] = useState("recomendados");
@@ -131,12 +116,10 @@ function BuscaContent() {
         const res = await fetch(`/busca/api?${qs.toString()}`);
         if (res.ok) {
           const data = await res.json();
-          setTodosAnuncios(data.length ? data : MOCK_ANUNCIOS);
-        } else {
-          setTodosAnuncios(MOCK_ANUNCIOS);
+          setTodosAnuncios(data);
         }
       } catch {
-        setTodosAnuncios(MOCK_ANUNCIOS);
+        setTodosAnuncios([]);
       }
     }
     carregar();
@@ -184,7 +167,13 @@ function BuscaContent() {
                 <button
                   key={cat}
                   type="button"
-                  onClick={() => setCategoriaAtiva(categoriaAtiva === cat ? "" : cat)}
+                  onClick={() => {
+                    const nova = categoriaAtiva === cat ? "" : cat;
+                    const qs = new URLSearchParams();
+                    if (queryParam) qs.set("q", queryParam);
+                    if (nova) qs.set("categoria", nova);
+                    router.push(`/busca?${qs.toString()}`);
+                  }}
                   className={`text-left text-sm px-3 py-1.5 rounded-xl transition font-medium ${
                     categoriaAtiva === cat
                       ? "bg-gray-200 text-gray-900 font-bold"
@@ -203,7 +192,7 @@ function BuscaContent() {
             <input
               type="range"
               min={10}
-              max={105000}
+              max={10000}
               step={10}
               value={precoMax}
               onChange={(e) => setPrecoMax(Number(e.target.value))}
