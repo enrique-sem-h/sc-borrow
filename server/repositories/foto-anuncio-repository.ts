@@ -17,6 +17,16 @@ class FotoAnuncioRepository {
       .where(eq(fotoAnuncios.anuncioId, anuncioId))
       .orderBy(fotoAnuncios.ordem);
   }
+
+  static async deleteByAnuncioId(anuncioId: string) {
+    await db.delete(fotoAnuncios)
+    .where(eq(fotoAnuncios.anuncioId, anuncioId))
+  } 
+
+  static async deleteById(id: string) {
+    await db.delete(fotoAnuncios)
+    .where(eq(fotoAnuncios.id, id))
+  }
 }
 
 export default FotoAnuncioRepository;

@@ -92,6 +92,18 @@ class FotoAnuncioService {
       }),
     );
   }
+
+  public async replaceAll(idAnuncio: string, files: formidable.File[]) {
+    await fotoAnuncioRepository.deleteByAnuncioId(idAnuncio);
+
+    await this.bulkUpload(idAnuncio, files);
+  }
+
+  public async deleteMany(ids: string[]) {
+    for (const id of ids) {
+      await fotoAnuncioRepository.deleteById(id);
+    }
+  }
 }
 
 export default FotoAnuncioService;
