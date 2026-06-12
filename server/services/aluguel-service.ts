@@ -9,7 +9,7 @@ import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
 
-class NotFoundError extends Error {
+export class NotFoundError extends Error {
   constructor(message: string) {
     super();
     this.name = "NotFoundError";
