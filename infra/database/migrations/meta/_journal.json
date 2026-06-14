@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1779469559458,
+      "tag": "0000_luxuriant_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779493100432,
+      "tag": "0001_modern_excalibur",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1780079853757,
+      "tag": "0002_normal_revanche",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1780675275141,
+      "tag": "0003_misty_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1780666744453,
+      "tag": "0004_polite_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1780713720454,
+      "tag": "0005_polite_weapon_omega",
+      "breakpoints": true
+    }
+  ]
+}
