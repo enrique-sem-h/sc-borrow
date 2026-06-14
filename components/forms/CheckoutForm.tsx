@@ -15,15 +15,21 @@ interface CheckoutFormProps {
   valorTotal: string;
 }
 
-export default function CheckoutForm({ itemNome, valorTotal }: CheckoutFormProps) {
+export default function CheckoutForm({
+  itemNome,
+  valorTotal,
+}: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const expectedPaymentStatus = ["succeeded", "processing"];
 
   const [isLoading, setIsLoading] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalStatus, setModalStatus] = useState<"success" | "error">("success");
+  const [modalStatus, setModalStatus] = useState<"success" | "error">(
+    "success",
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -47,7 +53,7 @@ export default function CheckoutForm({ itemNome, valorTotal }: CheckoutFormProps
       return;
     }
 
-    if (paymentIntent && paymentIntent.status === "succeeded") {
+    if (paymentIntent && expectedPaymentStatus.includes(paymentIntent.status)) {
       setModalStatus("success");
       setIsModalOpen(true);
     } else {

@@ -8,8 +8,6 @@ import { AluguelTipo } from "../controllers/aluguel-controller";
 
 class AluguelRepository {
   static async create(body: CreateAluguelDTO): Promise<Aluguel> {
-    // Chamar o Drizzle para criar anuncio
-
     const [result] = await db.insert(alugueis).values(body).$returningId();
     const id = result.id;
 
@@ -22,8 +20,6 @@ class AluguelRepository {
   }
 
   static async update(id: string, body: UpdateAluguelDTO): Promise<Aluguel> {
-    // Chamar o Drizzle para editar anuncio
-    //
     await db.update(alugueis).set(body).where(eq(alugueis.id, id));
 
     const [result] = await db
@@ -35,7 +31,6 @@ class AluguelRepository {
   }
 
   static async read(id: string): Promise<Aluguel | undefined> {
-    // Chamar o Drizzle para ler anuncio
     const [aluguel] = await db
       .select()
       .from(alugueis)
@@ -48,7 +43,6 @@ class AluguelRepository {
   static async getAlugueisComoLocatarioByUser(
     userId: string,
   ): Promise<Aluguel[] | undefined> {
-    // Chamar o Drizzle para ler anuncio
     const alugueis = db.query.alugueis.findMany({
       where(fields, operators) {
         return operators.eq(fields.idLocatario, userId);
@@ -61,7 +55,6 @@ class AluguelRepository {
   static async getAlugueisComoLocadorByUser(
     userId: string,
   ): Promise<Aluguel[] | undefined> {
-    // Chamar o Drizzle para ler anuncio
     const alugueis = db.query.alugueis.findMany({
       where(fields, operators) {
         return operators.eq(fields.idLocador, userId);
@@ -72,7 +65,6 @@ class AluguelRepository {
   }
 
   static async delete(id: string): Promise<void> {
-    // Chamar o Drizzle para deletar anuncio
     await db.delete(alugueis).where(eq(alugueis.id, id));
   }
 

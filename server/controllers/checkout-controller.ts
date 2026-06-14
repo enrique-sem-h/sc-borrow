@@ -7,6 +7,7 @@ import { validate } from "../middlewares/validate";
 import { pagamentoSchema } from "@/modules/zod/schemas/pagamentoSchema";
 import AluguelService from "../services/aluguel-service";
 import { CreateAluguelDTO } from "../types";
+import { buffer } from "stream/consumers";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -52,9 +53,13 @@ class CheckoutController extends BaseController {
     );
   }
 
-  public async stripeResponse(req: any, res: NextApiResponse) {
-    const rawBody = req.text();
-    const signature = req.headers.get("stripe-signature");
+  public async stripeResponse(req: NextApiRequest, res: NextApiResponse) {
+    const rawBody = await buffer(req);
+    const signature = req.headers["stripe-signature"];
+
+    if (!signature) {
+      return res.status(401).json({ error: "invalid signature" });
+    }
 
     let event: Stripe.Event;
 
@@ -76,7 +81,7 @@ class CheckoutController extends BaseController {
       aluguelDTO.dataFim = new Date(data.dataFim);
       aluguelDTO.dataInicio = new Date(data.dataInicio);
       aluguelDTO.idAnuncio = data.idAnuncio;
-      aluguelDTO.idLocador = data.idLocador;
+      aluguelDTO.idLocador = data.userId;
       aluguelDTO.idLocatario = data.idLocatario;
 
       const aluguel = await this.aluguelService.create(aluguelDTO);

@@ -33,6 +33,7 @@
     "formidable": "^3.5.4",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.11.0",
+    "micro": "^10.0.1",
     "mysql2": "^3.22.3",
     "next": "16.2.4",
     "radix-ui": "^1.4.3",

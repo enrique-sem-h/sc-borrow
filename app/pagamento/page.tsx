@@ -18,35 +18,35 @@ function PagamentoContent() {
   const params = useSearchParams();
   const [clientSecret, setClientSecret] = useState("");
 
-  const idAnuncio   = params?.get("idAnuncio") ?? "";
+  const idAnuncio = params?.get("idAnuncio") ?? "";
   const idLocatario = params?.get("idLocatario") ?? "";
-  const titulo      = params?.get("titulo") ?? "";
-  const dataInicio  = params?.get("dataInicio") ?? "";
-  const dataFim     = params?.get("dataFim") ?? "";
+  const titulo = params?.get("titulo") ?? "";
+  const dataInicio = params?.get("dataInicio") ?? "";
+  const dataFim = params?.get("dataFim") ?? "";
   const valorDiario = parseFloat(params?.get("valorDiario") ?? "0");
-  const totalDias   = parseInt(params?.get("totalDias") ?? "0");
-  const caucao      = parseFloat(params?.get("caucao") ?? "0");
+  const totalDias = parseInt(params?.get("totalDias") ?? "0");
+  const caucao = parseFloat(params?.get("caucao") ?? "0");
   const taxaServico = 12.0;
   const valorAluguel = valorDiario * totalDias;
-  const valorTotal  = valorAluguel + caucao + taxaServico;
+  const valorTotal = valorAluguel + caucao + taxaServico;
 
   useEffect(() => {
     if (!idAnuncio || !idLocatario || !dataInicio || !dataFim) return;
 
     const token = localStorage.getItem("token") ?? "";
 
-    fetch("/api/checkout/stripe-webhook", {
+    fetch("/api/checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        valor:       Math.round(valorTotal * 100),
+        valor: Math.round(valorTotal * 100),
         idAnuncio,
         idLocatario,
-        dataInicio:  new Date(dataInicio).toISOString(),
-        dataFim:     new Date(dataFim).toISOString(),
+        dataInicio: new Date(dataInicio).toISOString(),
+        dataFim: new Date(dataFim).toISOString(),
       }),
     })
       .then((res) => res.json())
