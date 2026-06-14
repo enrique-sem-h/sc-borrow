@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -50,6 +51,7 @@ export default function DetalhesAnuncioPage() {
   const router = useRouter();
   const params = useParams();
   const idAnuncio = String(params?.id ?? "");
+  const { user } = useAuth();
 
   const [anuncio, setAnuncio] = useState<AnuncioDetalhes>(MOCK_ANUNCIO);
 
@@ -103,6 +105,8 @@ export default function DetalhesAnuncioPage() {
 
   const onSolicitarReserva = (data: ReservaFormValues) => {
     const query = new URLSearchParams({
+      idAnuncio:   idAnuncio,
+      idLocatario: user?.id ?? "",
       titulo:      anuncio.titulo,
       foto:        anuncio.foto_principal ?? "",
       dataInicio:  data.dataInicio,

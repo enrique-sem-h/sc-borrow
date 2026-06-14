@@ -77,8 +77,8 @@ class AnuncioController extends BaseController {
     );
   }
 
-  public update(req: NextAuthApiRequest, res: NextApiResponse) {
-    this.handleRequest(req, res, async () => {
+  public update(req: NextAuthApiRequest & NextFormApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, parseForm, async () => {
       try {
         const id = req.query.id as string;
 
@@ -97,13 +97,23 @@ class AnuncioController extends BaseController {
             .send("User doesn't have permission to edit this anuncio");
         }
 
-        const updated = await this.anuncioService.update(id, newData);
+        const fotos = req.files?.fotos
+        ? req.files.fotos.flat().filter(Boolean)
+        : undefined;
+
+        const fotosParaDeletar = req.body.fotosParaDeletar
+        ? JSON.parse(req.body.fotosParaDeletar)
+        : [];
+
+        delete newData.fotosParaDeletar;
+
+        const updated = await this.anuncioService.update(id, newData, fotos, fotosParaDeletar);
 
         res.send({
           data: { ...updated },
         });
       } catch (err) {
-        console.error(error);
+        console.error(err);
         return res.status(500).json("Erro interno");
       }
     });

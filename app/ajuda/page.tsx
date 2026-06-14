@@ -4,11 +4,44 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   User, LayoutGrid, Key, DollarSign, MessageCircle,
-  HelpCircle, LogOut,
+  HelpCircle, LogOut, ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { LogoutModal } from "@/components/ui/logout-modal";
+
+const faqs = [
+  {
+    question: "Como fazer um bom anúncio?",
+    answer:
+      "Capriche nas fotos: use boa iluminação e mostre o item de vários ângulos. Descreva o estado de conservação com honestidade, informe as dimensões quando relevante e defina um preço justo consultando itens semelhantes na plataforma. Quanto mais completo o anúncio, maior a chance de aluguel.",
+  },
+  {
+    question: "Como evitar fraudes na hora de alugar um item?",
+    answer:
+      "Sempre realize a negociação e o pagamento dentro da plataforma. Nunca transfira dinheiro diretamente para o locador antes de confirmar o aluguel pelo sistema. Verifique o perfil e as avaliações do usuário antes de fechar negócio e prefira combinações em locais públicos para a entrega.",
+  },
+  {
+    question: "Quais são as melhores formas de combinar uma retirada?",
+    answer:
+      "Use o chat interno da plataforma para alinhar dia, horário e local. Prefira locais públicos e movimentados como shopping centers, estações de metrô ou agências dos Correios. Confirme os detalhes pelo menos 24 horas antes para evitar imprevistos.",
+  },
+  {
+    question: "Como posso testar o produto em locais públicos?",
+    answer:
+      "Na entrega, peça ao locador para demonstrar o funcionamento do item na hora. Verifique visualmente por danos, riscos ou peças faltando e teste as funcionalidades principais antes de assinar o checklist de recebimento. Caso haja divergência em relação ao anúncio, você pode cancelar o aluguel sem custo.",
+  },
+  {
+    question: "O que acontece se o item for devolvido com danos?",
+    answer:
+      "Ao devolver o item, ambas as partes preenchem o checklist de devolução. Caso seja identificado um dano causado durante o aluguel, o locatário é responsável pelo ressarcimento combinado entre as partes. Recomendamos registrar o estado do item com fotos tanto na entrega quanto na devolução.",
+  },
+  {
+    question: "Como funciona o cancelamento de um aluguel?",
+    answer:
+      "Você pode cancelar um aluguel antes do início do período combinado sem nenhum custo. Após o início do aluguel, o cancelamento pode estar sujeito a taxas dependendo do tempo decorrido. Para cancelar, acesse 'Meus aluguéis', selecione o aluguel desejado e clique em 'Cancelar aluguel'.",
+  },
+];
 
 const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   <button
@@ -31,16 +64,31 @@ const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   </button>
 );
 
-const Campo = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <label className="block text-base font-bold text-gray-900 mb-2">{label}</label>
-    <div className="w-full border-2 rounded-xl px-5 py-3 text-lg text-gray-600 bg-gray-50 border-gray-200">
-      {value || "—"}
-    </div>
-  </div>
-);
+const FaqItem = ({ question, answer }: { question: string; answer: string }) => {
+  const [open, setOpen] = useState(false);
 
-export default function MeusDadosPage() {
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 bg-gray-100 hover:bg-gray-200 transition text-left text-sm font-medium text-gray-800"
+      >
+        <span>{question}</span>
+        <ChevronDown
+          size={18}
+          className={`shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="px-5 py-4 text-sm text-gray-600 leading-relaxed bg-white">
+          {answer}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function AjudaPage() {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
@@ -62,7 +110,6 @@ export default function MeusDadosPage() {
     auth?.logout();
     router.push("/");
   };
-
 
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
@@ -107,34 +154,16 @@ export default function MeusDadosPage() {
       </aside>
 
       <section className="flex-1 max-w-3xl">
-        <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">Meus dados</h1>
+        <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">
+          Atendimento ao cliente
+        </h1>
         <div className="border-t border-gray-300 mb-8" />
 
-        <div className="space-y-6">
-          <Campo label="Nome completo:" value={user?.nome ?? ""} />
-
-          <div className="grid grid-cols-2 gap-6">
-            <Campo label="CPF:" value={user?.cpf ?? ""} />
-            <Campo label="E-mail:" value={user?.email ?? ""} />
-          </div>
-
-          <Campo label="Celular:" value={user?.telefone ?? ""} />
-
-          <div>
-            <label className="block text-base font-bold text-gray-900 mb-2">Endereço:</label>
-            <div className="grid grid-cols-2 gap-4">
-              <Campo label="CEP:" value={user?.cep ?? ""} />
-              <Campo label="UF:" value={user?.uf ?? ""} />
-              <div className="col-span-2">
-                <Campo label="Logradouro:" value={user?.logradouro ?? ""} />
-              </div>
-              <div className="col-span-2">
-                <Campo label="Bairro:" value={user?.bairro ?? ""} />
-              </div>
-              <Campo label="Número:" value={user?.numero ? String(user.numero) : ""} />
-              <Campo label="Complemento:" value={user?.complemento ?? ""} />
-            </div>
-          </div>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">FAQ</h2>
+        <div className="space-y-3">
+          {faqs.map((faq) => (
+            <FaqItem key={faq.question} question={faq.question} answer={faq.answer} />
+          ))}
         </div>
       </section>
 

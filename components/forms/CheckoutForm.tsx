@@ -10,15 +10,26 @@ import { useRouter } from "next/navigation";
 
 import { PagamentoSucessoModal } from "@/components/ui/payment-success";
 
-export default function CheckoutForm() {
+interface CheckoutFormProps {
+  itemNome: string;
+  valorTotal: string;
+}
+
+export default function CheckoutForm({
+  itemNome,
+  valorTotal,
+}: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const expectedPaymentStatus = ["succeeded", "processing"];
 
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalStatus, setModalStatus] = useState<"success" | "error">("success");
+  const [modalStatus, setModalStatus] = useState<"success" | "error">(
+    "success",
+  );
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -42,7 +53,7 @@ export default function CheckoutForm() {
       return;
     }
 
-    if (paymentIntent && paymentIntent.status === "succeeded") {
+    if (paymentIntent && expectedPaymentStatus.includes(paymentIntent.status)) {
       setModalStatus("success");
       setIsModalOpen(true);
     } else {
@@ -81,8 +92,8 @@ export default function CheckoutForm() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         status={modalStatus}
-        itemNome="Barraca de camp" // mudar dps
-        valorTotal="R$ 1.080,00"  
+        itemNome={itemNome}
+        valorTotal={valorTotal}
       />
     </>
   );

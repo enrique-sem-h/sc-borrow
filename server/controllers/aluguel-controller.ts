@@ -39,14 +39,20 @@ class AluguelController extends BaseController {
           idLocatario: req.userId,
           idLocador: locador,
         };
+        try {
+          const aluguel = await this.aluguelService.create(aluguelDTO);
 
-        const aluguel = await this.aluguelService.create(aluguelDTO);
+          if (aluguel) {
+            return res.status(201).json({ data: aluguel });
+          }
 
-        if (aluguel) {
-          return res.status(201).json({ data: aluguel });
+          return fail("erro ao adicionar aluguel", 500);
+
+        }catch(err) {
+            return res.status(400).json({
+            error: err instanceof Error ? err.message : "Erro ao criar aluguel",
+          });
         }
-
-        fail("erro ao adicionar aluguel", 500);
       },
     );
   }

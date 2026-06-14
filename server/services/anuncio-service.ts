@@ -31,8 +31,20 @@ class AnuncioService extends BaseService {
     return anuncio;
   }
 
-  public async update(id: string, body: UpdateAnuncioDTO) {
-    return AnuncioRepository.update(id, body);
+  public async update(id: string, body: UpdateAnuncioDTO, fotos?: formidable.File[], fotosParaDeletar? : string[]) {
+    const fotoAnuncioService = new FotoAnuncioService();
+
+    if(fotosParaDeletar && fotosParaDeletar.length > 0) {
+      await fotoAnuncioService.deleteMany(fotosParaDeletar);
+    }
+
+    const anuncio = await AnuncioRepository.update(id, body);
+    
+    if(fotos && fotos.length > 0) {
+      await fotoAnuncioService.bulkUpload(id, fotos)
+    }
+
+    return anuncio
   }
 
   public read(id: string) {

@@ -19,6 +19,20 @@ export class NotFoundError extends Error {
 
 class AluguelService extends BaseService {
   public async create(body: CreateAluguelDTO): Promise<Aluguel> {
+
+    if(!body.idAnuncio) {
+      throw new Error("Anúncio inválido.");
+    }
+    
+    const conflito = await AluguelRepository.findConflictAnuncio(
+      body.idAnuncio,
+      body.dataInicio,
+      body.dataFim
+    );
+
+    if (conflito) {
+      throw new Error("Este anúncio já está alugado nesse período.");
+    }
     return await AluguelRepository.create(body);
   }
 

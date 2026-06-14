@@ -20,6 +20,8 @@ function ConfirmarReservaContent() {
 
   if (!params) return null;
 
+  const idAnuncio   = params.get("idAnuncio") ?? "";
+  const idLocatario = params.get("idLocatario") ?? "";
   const titulo      = params.get("titulo") ?? "";
   const foto        = params.get("foto") ?? null;
   const dataInicio  = params.get("dataInicio") ?? "";
@@ -40,10 +42,14 @@ function ConfirmarReservaContent() {
     await fetch("/confirmarreserva/api", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titulo, ...data, valorTotal }),
+      body: JSON.stringify({ idAnuncio, idLocatario, titulo, ...data, valorTotal }),
     });
     const query = new URLSearchParams({
+      idAnuncio,
+      idLocatario,
       titulo,
+      dataInicio:  data.dataInicio,
+      dataFim:     data.dataFim,
       valorDiario: String(valorDiario),
       totalDias:   String(totalDias),
       caucao:      String(caucao),

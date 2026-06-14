@@ -18,14 +18,43 @@ function PagamentoContent() {
   const params = useSearchParams();
   const [clientSecret, setClientSecret] = useState("");
 
+  const idAnuncio = params?.get("idAnuncio") ?? "";
+  const idLocatario = params?.get("idLocatario") ?? "";
+  const titulo = params?.get("titulo") ?? "";
+  const dataInicio = params?.get("dataInicio") ?? "";
+  const dataFim = params?.get("dataFim") ?? "";
+  const valorDiario = parseFloat(params?.get("valorDiario") ?? "0");
+  const totalDias = parseInt(params?.get("totalDias") ?? "0");
+  const caucao = parseFloat(params?.get("caucao") ?? "0");
+  const taxaServico = 12.0;
+  const valorAluguel = valorDiario * totalDias;
+  const valorTotal = valorAluguel + caucao + taxaServico;
+
   useEffect(() => {
-    fetch("api/checkout", { method: "POST" })
+    if (!idAnuncio || !idLocatario || !dataInicio || !dataFim) return;
+
+    const token = localStorage.getItem("token") ?? "";
+
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        valor: Math.round(valorTotal * 100),
+        idAnuncio,
+        idLocatario,
+        dataInicio: new Date(dataInicio).toISOString(),
+        dataFim: new Date(dataFim).toISOString(),
+      }),
+    })
       .then((res) => res.json())
       .then((data) => setClientSecret(data.clientSecret))
       .catch((error) =>
         console.error("Erro ao criar intent de pagamento: ", error),
       );
-  }, []);
+  }, [idAnuncio, idLocatario, dataInicio, dataFim, valorTotal]);
 
   const options = {
     clientSecret,
@@ -35,14 +64,6 @@ function PagamentoContent() {
   };
 
   if (!params) return null;
-
-  const titulo = params.get("titulo") ?? "";
-  const valorDiario = parseFloat(params.get("valorDiario") ?? "0");
-  const totalDias = parseInt(params.get("totalDias") ?? "0");
-  const caucao = parseFloat(params.get("caucao") ?? "0");
-  const taxaServico = 12.0;
-  const valorAluguel = valorDiario * totalDias;
-  const valorTotal = valorAluguel + caucao + taxaServico;
 
   const onConfirmar = async () => {
     // TODO: integrar Stripe aqui
@@ -70,7 +91,10 @@ function PagamentoContent() {
             <div className="border border-gray-200 rounded-[20px] min-h-[320px] flex items-center justify-center text-gray-300 text-sm italic p-6">
               {clientSecret ? (
                 <Elements stripe={stripePromise} options={options}>
-                  <CheckoutForm />
+                  <CheckoutForm
+                    itemNome={titulo}
+                    valorTotal={`R$ ${valorTotal.toFixed(2).replace(".", ",")}`}
+                  />
                 </Elements>
               ) : (
                 <p style={{ textAlign: "center" }}>
