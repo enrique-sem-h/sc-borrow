@@ -65,11 +65,6 @@ function PagamentoContent() {
 
   if (!params) return null;
 
-  const onConfirmar = async () => {
-    // TODO: integrar Stripe aqui
-    router.push("/meusalugueis");
-  };
-
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
       <div className="max-w-5xl mx-auto px-8 py-10">
