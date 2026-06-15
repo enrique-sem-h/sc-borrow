@@ -258,8 +258,8 @@ export default function MeusAlugueisPage() {
                     <div className="px-1">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-bold text-gray-900 text-sm">
-                            {aluguel.titulo}
+                          <h3 className="font-bold text-gray-900 text-xl">
+                            {aluguel.anuncio.titulo}
                           </h3>
                           <p className="text-gray-500 text-xs mt-0.5">
                             {new Date(aluguel.dataInicio).toLocaleDateString()}{" "}
