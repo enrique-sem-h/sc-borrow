@@ -1,4 +1,7 @@
-import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
+import {
+  Anuncio,
+  AnuncioInsert,
+} from "@/infra/database/schemas/anunciosSchema";
 import {
   UsuarioInsert,
   UsuarioLogin,
@@ -65,7 +68,11 @@ class ApiService {
 
       return response;
     },
-    getAll: async () => {
+    getAll: async (): Promise<{
+      data: {
+        anuncios: Anuncio[];
+      };
+    }> => {
       const response = await this.api.get("anuncio");
 
       return response.data;
