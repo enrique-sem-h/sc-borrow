@@ -3,6 +3,7 @@ import { LogoutModal } from "@/components/ui/logout-modal";
 import { AvaliarModal } from "@/components/ui/rate-modal";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/contexts/ProtectedRoute";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
@@ -108,57 +109,59 @@ const DasboardLayout: React.FC<DasboardLayoutProps> = ({ children }) => {
     },
   ];
   return (
-    <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
-      <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
-        <div>
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 overflow-hidden flex items-center justify-center">
-              <div className="w-full h-full bg-gray-300" />
+    <ProtectedRoute>
+      <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
+        <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
+          <div>
+            <div className="flex flex-col items-center mb-10">
+              <div className="w-32 h-32 bg-gray-200 rounded-full mb-4 overflow-hidden flex items-center justify-center">
+                <div className="w-full h-full bg-gray-300" />
+              </div>
+              <h2 className="text-xl font-bold flex items-center gap-1.5">
+                {user?.nome ?? "Usuário"}
+                <span className="inline-flex items-center justify-center bg-blue-600 text-white rounded-full w-4 h-4 text-[9px] font-extrabold">
+                  ✓
+                </span>
+              </h2>
+              <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
+                <span className="text-yellow-500">★</span>
+                {user?.rep ? user.rep.toFixed(1) : "0.0"}{" "}
+                <span className="text-gray-300 font-light">(Reputação)</span>
+              </p>
             </div>
-            <h2 className="text-xl font-bold flex items-center gap-1.5">
-              {user?.nome ?? "Usuário"}
-              <span className="inline-flex items-center justify-center bg-blue-600 text-white rounded-full w-4 h-4 text-[9px] font-extrabold">
-                ✓
-              </span>
-            </h2>
-            <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
-              <span className="text-yellow-500">★</span>
-              {user?.rep ? user.rep.toFixed(1) : "0.0"}{" "}
-              <span className="text-gray-300 font-light">(Reputação)</span>
-            </p>
+
+            <nav className="w-full space-y-1">
+              {menuItems.map((item) => (
+                <MenuItem
+                  key={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  active={(pathname ?? "") === item.path}
+                  onClick={() => router.push(item.path)}
+                  badge={item.badge}
+                />
+              ))}
+            </nav>
           </div>
 
-          <nav className="w-full space-y-1">
-            {menuItems.map((item) => (
-              <MenuItem
-                key={item.id}
-                icon={item.icon}
-                label={item.label}
-                active={(pathname ?? "") === item.path}
-                onClick={() => router.push(item.path)}
-                badge={item.badge}
-              />
-            ))}
-          </nav>
-        </div>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center justify-center gap-2 p-3 mt-8 text-gray-500 hover:text-red-600 transition font-medium border-t border-gray-100"
+          >
+            <LogOut size={18} />
+            <span>Sair</span>
+          </button>
+        </aside>
 
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 mt-8 text-gray-500 hover:text-red-600 transition font-medium border-t border-gray-100"
-        >
-          <LogOut size={18} />
-          <span>Sair</span>
-        </button>
-      </aside>
+        <section className="flex-1">{children}</section>
 
-      <section className="flex-1">{children}</section>
-
-      <LogoutModal
-        isOpen={showLogoutConfirm}
-        onClose={() => setShowLogoutConfirm(false)}
-        onConfirm={handleLogout}
-      />
-    </main>
+        <LogoutModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogout}
+        />
+      </main>
+    </ProtectedRoute>
   );
 };
 
