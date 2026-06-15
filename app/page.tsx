@@ -170,11 +170,7 @@ export default function Home() {
             >
               {product.image ? (
                 <img
-                  src={
-                    product.image.startsWith("http")
-                      ? product.image
-                      : `/${product.image}`
-                  }
+                  src={product.image}
                   alt={product.name}
                   className="w-full h-[220px] object-cover"
                 />
