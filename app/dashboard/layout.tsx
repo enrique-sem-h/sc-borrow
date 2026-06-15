@@ -48,7 +48,7 @@ const DasboardLayout: React.FC<DasboardLayoutProps> = ({ children }) => {
   const alugueisQuery = useGetAlugueis("locatario");
   const anunciosQuery = useGetAnuncios();
   const alugueis = alugueisQuery.data?.data;
-  const anuncios = anunciosQuery.data?.data.anuncios;
+  const anuncios = anunciosQuery.data?.data?.anuncios;
   const aluguelCount = alugueis?.length || 0;
   const anuncioCount = anuncios?.length || 0;
   const chatCount = 0;
@@ -86,6 +86,7 @@ const DasboardLayout: React.FC<DasboardLayoutProps> = ({ children }) => {
       path: "/dashboard/meus-alugueis",
       badge: aluguelCount > 0 ? aluguelCount : undefined,
     },
+    ,
     {
       id: "carteira",
       label: "Carteira",

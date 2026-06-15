@@ -1,9 +1,13 @@
 "use client";
 import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
+import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel } from "@/server/types";
+import { Star } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 type MeusAlugueisPageProps = {
   className?: string;
@@ -69,16 +73,34 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = ({
   children,
 }) => {
   const router = useRouter();
-  const alugueisQuery = useGetAlugueis("locatario");
+  const [tipo, setTipo] = useState<AluguelTipo>("locatario");
+  const alugueisQuery = useGetAlugueis(tipo);
   const alugueis = alugueisQuery.data?.data;
   const loading = alugueisQuery.isLoading;
+
+  const onTipoChange = (value: string) => {
+    setTipo(value as AluguelTipo);
+  };
 
   return (
     <>
       <div className="flex items-center justify-between mb-10">
-        <h1 className="text-4xl font-serif font-bold text-gray-900">
-          Meus aluguéis
-        </h1>
+        <div className="flex gap-4 items-center">
+          <h1 className="text-4xl font-serif font-bold text-gray-900">
+            Meus aluguéis
+          </h1>
+
+          <ToggleGroup
+            variant="outline"
+            type="single"
+            value={tipo}
+            onValueChange={onTipoChange}
+            defaultValue="locador"
+          >
+            <ToggleGroupItem value="locador">Como locador</ToggleGroupItem>
+            <ToggleGroupItem value="locatario">Como locatário</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         <button
           onClick={() => router.push("/meusalugueis/historico")}
           className="px-5 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
@@ -86,7 +108,6 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = ({
           Histórico
         </button>
       </div>
-
       {loading && (
         <div className="flex justify-center items-center">
           <Spinner className="size-4" />
@@ -100,58 +121,59 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = ({
               Você não possui nenhum aluguel no momento.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-              {alugueis?.map((aluguel) => (
-                <div
-                  key={aluguel.id}
-                  className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100"
-                >
-                  <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
-                    {aluguel.anuncio.fotos.find((foto) => foto.principal) ? (
-                      <img
-                        src={
-                          aluguel.anuncio.fotos.find((foto) => foto.principal)
-                            .url
-                        }
-                        alt={aluguel.titulo}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-gray-400 text-xs font-medium">
-                        Sem imagem
+            <div className="flex flex-col gap-3">
+              {alugueis.map((aluguel, index) => {
+                return (
+                  <Link
+                    key={index}
+                    href={`/dashboard/meus-alugueis/${aluguel.id}`}
+                  >
+                    <div className="flex  flex-row   shadow-sm border border-gray-100 rounded-2xl p-4 bg-white justify-between">
+                      <div className="flex gap-2 items-center object-cover">
+                        <img
+                          className="rounded w-[128px] h-[128px]"
+                          src={
+                            aluguel.anuncio.fotos.find((foto) => foto.principal)
+                              ?.url || null
+                          }
+                        />
+                        <div>
+                          <div className="flex flex-col gap-1">
+                            <h2 className="font-bold">
+                              {aluguel.anuncio.titulo}
+                            </h2>
+                            <span className="font-bold">
+                              R${" "}
+                              {aluguel.anuncio.valorDiario
+                                .toFixed(2)
+                                .replace(".", ",")}
+                              /dia - Total R$
+                              {aluguel.valorTotal.toFixed(2).replace(".", ",")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    {aluguel.notificacoes && aluguel.notificacoes > 0 ? (
-                      <span className="absolute top-3 right-3 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
-                        {aluguel.notificacoes}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="px-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-xl">
-                          {aluguel.anuncio.titulo}
-                        </h3>
-                        <p className="text-gray-500 text-xs mt-0.5">
-                          {new Date(aluguel.dataInicio).toLocaleDateString()} -{" "}
-                          {new Date(aluguel.dataFim).toLocaleDateString()}
-                        </p>
+                      <div className="flex gap-2 items-center flex-col">
+                        <div className="flex gap-2">
+                          {tipo === "locador" && (
+                            <span>Locatário: {aluguel.locatario.nome}</span>
+                          )}
+                          {tipo === "locatario" && (
+                            <span>Locador: {aluguel.locador.nome}</span>
+                          )}
+                          <span>
+                            5.0
+                            <span className="ml-1 text-yellow-500">★</span>
+                          </span>
+                        </div>
+                        <div>
+                          <StatusBadge status={aluguel.status} />
+                        </div>
                       </div>
-                      <p className="font-bold text-gray-900 text-lg">
-                        R$ {aluguel.valorTotal.toFixed(2).replace(".", ",")}
-                      </p>
                     </div>
-                    <div className="flex justify-end mt-2">
-                      <StatusBadge
-                        status={aluguel.status}
-                        onAvaliar={() => setAluguelParaAvaliar(aluguel)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </>
