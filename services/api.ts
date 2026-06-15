@@ -1,5 +1,9 @@
-import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 import {
+  Anuncio,
+  AnuncioInsert,
+} from "@/infra/database/schemas/anunciosSchema";
+import {
+  Usuario,
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
@@ -35,7 +39,11 @@ class ApiService {
     getAll: async (
       type?: AluguelTipo,
     ): Promise<{
-      data: Aluguel[];
+      data: (Aluguel & {
+        anuncio: Anuncio;
+        locador: Usuario;
+        locatario: Usuario;
+      })[];
     }> => {
       const query = !type ? "" : `tipo=${type}`;
       const response = await this.api.get(`aluguel?${query}`);
@@ -65,7 +73,11 @@ class ApiService {
 
       return response;
     },
-    getAll: async () => {
+    getAll: async (): Promise<{
+      data: {
+        anuncios: Anuncio[];
+      };
+    }> => {
       const response = await this.api.get("anuncio");
 
       return response.data;

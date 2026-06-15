@@ -74,6 +74,8 @@ class AluguelRepository {
   ): Promise<Aluguel[] | undefined> {
     const alugueis = db.query.alugueis.findMany({
       with: {
+        locador: true,
+        locatario: true,
         anuncio: {
           with: {
             fotos: true,

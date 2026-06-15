@@ -5,7 +5,7 @@ import { id } from "date-fns/locale";
 
 export function useGetAlugueis(type?: AluguelTipo) {
   const query = useQuery({
-    queryKey: ["anuncio", id],
+    queryKey: ["anuncio", type],
     queryFn: () => apiService.alugueis.getAll(type),
   });
 

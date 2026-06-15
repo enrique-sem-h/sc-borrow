@@ -53,7 +53,7 @@ class LocalFileUploaderProvider implements IFileUploaderProvider {
       relativePath = relativePath.split(path.win32.sep).join(path.posix.sep);
     }
 
-    return relativePath;
+    return `/${relativePath}`;
   }
 }
 
