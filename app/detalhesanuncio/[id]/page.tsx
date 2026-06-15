@@ -18,6 +18,8 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import "react-day-picker/dist/style.css";
+import { useGetAnuncio } from "@/modules/react-query/queries/anuncios-queries";
+import { Spinner } from "@/components/ui/spinner";
 
 const reservaSchema = z
   .object({
@@ -47,35 +49,18 @@ interface AnuncioDetalhes {
   foto_principal: string | null;
 }
 
-const MOCK_ANUNCIO: AnuncioDetalhes = {
-  id: "",
-  titulo: "Furadeira de Impacto 1/2 Pol. 600W 220V Tramontina PRO-424100-F6",
-  descricao:
-    "Ideal para perfurações em concreto, alvenaria e madeira. Alta performance, empunhadura ergonômica, acompanha chave de mandril e manual técnico.",
-  categoria: "Ferramentas",
-  valorDiario: 35.0,
-  caucao: 100.0,
-  foto_principal: null,
-};
-
 export default function DetalhesAnuncioPage() {
   const router = useRouter();
   const params = useParams();
   const idAnuncio = String(params?.id ?? "");
   const { user } = useAuth();
+  const anuncioQuery = useGetAnuncio(idAnuncio);
+  const anuncio = anuncioQuery.data?.data;
+  const loading = anuncioQuery.isLoading;
+  console.log(anuncio);
 
-  const [anuncio, setAnuncio] = useState<AnuncioDetalhes>(MOCK_ANUNCIO);
-
-  useEffect(() => {
-    if (!idAnuncio) return;
-    fetch(`/detalhesanuncio/${idAnuncio}/api`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.titulo) setAnuncio(data);
-      })
-      .catch(() => {});
-  }, [idAnuncio]);
-
+  const fotoPricipal =
+    anuncio?.fotos?.find((foto) => foto.principal)?.url ?? "";
   const {
     handleSubmit,
     control,
@@ -130,16 +115,24 @@ export default function DetalhesAnuncioPage() {
     const query = new URLSearchParams({
       idAnuncio: idAnuncio,
       idLocatario: user?.id ?? "",
-      titulo: anuncio.titulo,
-      foto: anuncio.foto_principal ?? "",
+      titulo: anuncio?.titulo ?? "",
+      foto: fotoPricipal,
       dataInicio: data.dataInicio,
       dataFim: data.dataFim,
-      valorDiario: String(anuncio.valorDiario),
-      caucao: String(anuncio.caucao),
+      valorDiario: String(anuncio?.valorDiario),
+      caucao: String(anuncio?.caucao),
       totalDias: String(totalDias),
     });
     router.push(`/confirmarreserva?${query.toString()}`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-1 w-full h-full justify-center items-center">
+        <Spinner className="size-10" />
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
@@ -156,10 +149,10 @@ export default function DetalhesAnuncioPage() {
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
           <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {anuncio.foto_principal ? (
+            {fotoPricipal ? (
               <img
-                src={anuncio.foto_principal}
-                alt={anuncio.titulo}
+                src={fotoPricipal}
+                alt={anuncio?.titulo}
                 className="max-h-full object-contain"
               />
             ) : (
@@ -172,10 +165,10 @@ export default function DetalhesAnuncioPage() {
 
           <div>
             <h1 className="text-3xl font-serif font-bold text-gray-900 leading-tight">
-              {anuncio.titulo}
+              {anuncio?.titulo}
             </h1>
             <p className="text-gray-400 text-sm mt-3 leading-relaxed">
-              {anuncio.descricao}
+              {anuncio?.descricao}
             </p>
           </div>
 
@@ -185,14 +178,14 @@ export default function DetalhesAnuncioPage() {
             <div className="w-14 h-14 bg-gray-200 rounded-full flex-shrink-0" />
             <div>
               <h3 className="text-base font-bold flex items-center gap-1.5 text-gray-900">
-                Proprietário
+                {anuncio?.descricao}
                 <CheckCircle
                   size={16}
                   className="text-blue-500 fill-blue-500 text-white"
                 />
               </h3>
               <p className="text-gray-400 text-xs flex items-center gap-1 mt-1 font-medium">
-                <MapPin size={14} /> {anuncio.categoria}
+                <MapPin size={14} /> {anuncio?.categoria}
               </p>
             </div>
           </div>
@@ -201,7 +194,7 @@ export default function DetalhesAnuncioPage() {
         <aside className="w-full lg:w-[420px] bg-white border border-gray-100 rounded-[32px] p-8 shadow-xl shadow-gray-100/70 shrink-0">
           <div className="mb-6">
             <span className="text-3xl font-serif font-extrabold text-gray-900">
-              R$ {anuncio.valorDiario}
+              R$ {anuncio?.valorDiario}
             </span>
             <span className="text-gray-400 text-base font-normal">/dia</span>
           </div>
@@ -263,7 +256,7 @@ export default function DetalhesAnuncioPage() {
                 onSelect={handleCalendarSelect}
                 locale={ptBR}
                 modifiersClassNames={{
-                  selected: "bg-blue-600 text-white rounded-md",
+                  selected: "bg-blue-600 text-white ",
                   range_start: "rounded-l-full bg-blue-600",
                   range_end: "rounded-r-full bg-blue-600",
                   range_middle: "bg-blue-50 text-blue-600",
@@ -275,7 +268,7 @@ export default function DetalhesAnuncioPage() {
               <div className="space-y-2 border-t border-gray-100 pt-4 text-sm text-gray-500">
                 <div className="flex justify-between">
                   <span>
-                    R$ {anuncio.valorDiario.toFixed(2)} x {totalDias} dias
+                    R$ {anuncio?.valorDiario.toFixed(2)} x {totalDias} dias
                   </span>
                   <span className="font-medium text-gray-800">
                     R$ {valorAluguel.toFixed(2).replace(".", ",")}
