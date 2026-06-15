@@ -70,6 +70,8 @@ class CheckoutController extends BaseController {
         endpointSecret!,
       );
     } catch (error) {
+      console.log(`Webhook Error: ${error}`);
+
       return res.status(500).json({ error: `Webhook Error: ${error}` });
     }
 
@@ -77,12 +79,14 @@ class CheckoutController extends BaseController {
       const intent = event.data.object;
       const data = intent.metadata;
 
-      const aluguelDTO = {} as CreateAluguelDTO;
-      aluguelDTO.dataFim = new Date(data.dataFim);
-      aluguelDTO.dataInicio = new Date(data.dataInicio);
-      aluguelDTO.idAnuncio = data.idAnuncio;
-      aluguelDTO.idLocador = data.userId;
-      aluguelDTO.idLocatario = data.idLocatario;
+      const aluguelDTO = {
+        dataFim: new Date(data.dataFim),
+        dataInicio: new Date(data.dataInicio),
+        idAnuncio: data.idAnuncio,
+        idLocador: data.userId,
+        idLocatario: data.idLocatario,
+        valorTotal: intent.amount / 100,
+      } as CreateAluguelDTO;
 
       const aluguel = await this.aluguelService.create(aluguelDTO);
 

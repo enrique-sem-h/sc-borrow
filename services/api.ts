@@ -4,7 +4,7 @@ import {
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
-import { CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
+import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
 class ApiService {
@@ -32,7 +32,11 @@ class ApiService {
   }
 
   public alugueis = {
-    getAll: async (type?: AluguelTipo) => {
+    getAll: async (
+      type?: AluguelTipo,
+    ): Promise<{
+      data: Aluguel[];
+    }> => {
       const query = !type ? "" : `tipo=${type}`;
       const response = await this.api.get(`aluguel?${query}`);
 

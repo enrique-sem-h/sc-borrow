@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, timestamp, float } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
@@ -30,6 +30,7 @@ export const alugueis = mysqlTable("alugueis", {
   idLocatario: varchar("id_locatario", { length: 36 })
     .references(() => usuarios.id, { onDelete: "restrict" })
     .notNull(),
+  valorTotal: float("valor_total").notNull(),
   status: varchar("status", {
     length: 50,
     enum: [
@@ -40,7 +41,7 @@ export const alugueis = mysqlTable("alugueis", {
       "ITEM_IN_HAND",
       "COMPLETED",
     ],
-  }),
+  }).default("WAITING_FOR_DISPATCH"),
 });
 
 export const usuarioRelations = relations(usuarios, (r) => ({

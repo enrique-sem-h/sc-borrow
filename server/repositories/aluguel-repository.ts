@@ -3,6 +3,7 @@ import { db } from "@/infra/database/index";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import { AluguelTipo } from "../controllers/aluguel-controller";
+import { fotoAnuncios } from "@/infra/database/schemas/anunciosSchema";
 
 class AluguelRepository {
   static async create(body: CreateAluguelDTO): Promise<Aluguel> {
@@ -72,6 +73,13 @@ class AluguelRepository {
     type: AluguelTipo | undefined,
   ): Promise<Aluguel[] | undefined> {
     const alugueis = db.query.alugueis.findMany({
+      with: {
+        anuncio: {
+          with: {
+            fotos: true,
+          },
+        },
+      },
       where(fields, operators) {
         if (!type) {
           return operators.or(
