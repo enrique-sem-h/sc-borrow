@@ -57,6 +57,8 @@ export default function DetalhesAnuncioPage() {
   const anuncioQuery = useGetAnuncio(idAnuncio);
   const anuncio = anuncioQuery.data?.data;
   const loading = anuncioQuery.isLoading;
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
   console.log(anuncio);
 
   const fotoPricipal =
@@ -104,9 +106,10 @@ export default function DetalhesAnuncioPage() {
     const inicio = new Date(dataInicioW);
     const fim = new Date(dataFimW);
     const diffTime = fim.getTime() - inicio.getTime();
+
     if (diffTime >= 0) {
       totalDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      valorAluguel = anuncio.valorDiario * totalDias;
+      valorAluguel = anuncio?.valorDiario * totalDias;
       valorTotal = valorAluguel + taxaServico;
     }
   }
@@ -255,6 +258,9 @@ export default function DetalhesAnuncioPage() {
                 selected={obterRangeDoForm()}
                 onSelect={handleCalendarSelect}
                 locale={ptBR}
+                disabled={{
+                  before: tomorrowDate,
+                }}
                 modifiersClassNames={{
                   selected: "bg-blue-600 text-white ",
                   range_start: "rounded-l-full bg-blue-600",
