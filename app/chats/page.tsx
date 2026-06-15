@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { ChevronLeft, Send, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -32,13 +32,15 @@ type ChatFormValues = {
   buscaConversa: string;
 };
 
-export default function ChatsPage() {
+function ChatsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id");
   const { user } = useAuth();
   const { chatCount } = useNotifications();
   const mensagensEndRef = useRef<HTMLDivElement | null>(null);
 
-  const usuarioLogadoId = user?.id || "user-teste-123"; 
+  const usuarioLogadoId = user?.id || "user-teste-123";
 
   const [conversas, setConversas] = useState<Conversa[]>([]);
   const [conversaAtiva, setConversaAtiva] = useState<Conversa | null>(null);
@@ -71,10 +73,17 @@ export default function ChatsPage() {
         } as Conversa;
       });
       setConversas(listaSalas);
-      if (listaSalas.length > 0 && !conversaAtiva) setConversaAtiva(listaSalas[0]);
+      if (!conversaAtiva) {
+        if (idParam) {
+          const target = listaSalas.find((c) => c.id === idParam);
+          if (target) setConversaAtiva(target);
+        } else if (listaSalas.length > 0) {
+          setConversaAtiva(listaSalas[0]);
+        }
+      }
     });
     return () => unsubscribe();
-  }, [conversaAtiva]);
+  }, [conversaAtiva, idParam]);
 
   useEffect(() => {
     if (!conversaAtiva) return;
@@ -210,5 +219,13 @@ export default function ChatsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function ChatsPage() {
+  return (
+    <Suspense>
+      <ChatsContent />
+    </Suspense>
   );
 }
