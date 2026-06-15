@@ -1,6 +1,6 @@
 import { NextApiResponse } from "next";
 import BaseController from "./base-controller";
-import AluguelService from "../services/aluguel-service";
+import AluguelService, { NotFoundError } from "../services/aluguel-service";
 import AnuncioService from "../services/anuncio-service";
 import { CreateAluguelDTO, NextAuthApiRequest } from "../types";
 import auth from "../middlewares/auth";
@@ -174,6 +174,69 @@ class AluguelController extends BaseController {
         console.error("erro: ", err);
 
         return res.status(500).json({ err });
+      }
+    });
+  }
+
+  public async confirmReceived(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.confirmReceived(id as string, caller);
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
+      }
+    });
+  }
+
+  public async dispatch(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.dispatch(id as string, caller);
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
+      }
+    });
+  }
+
+  public async cancel(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.cancel(id as string, caller);
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
       }
     });
   }
