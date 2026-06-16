@@ -29,6 +29,7 @@ interface Mensagem {
 
 interface Conversa {
   id: string;
+  idAluguel: string;
   nomeLocador: string;
   nomeLocatario: string;
   idLocador: string;
@@ -88,6 +89,7 @@ function DashboardChatContent() {
         const dados = d.data();
         return {
           id: d.id,
+          idAluguel: dados.idAluguel || "",
           nomeLocador: dados.nomeLocador || "Proprietário",
           nomeLocatario: dados.nomeLocatario || "Locatário",
           idLocador: dados.idLocador || "",
@@ -101,8 +103,12 @@ function DashboardChatContent() {
       setConversas(lista);
 
       const idParam = params?.get("id");
+      const aluguelIdParam = params?.get("aluguelId");
       if (idParam) {
         const alvo = lista.find((c) => c.id === idParam);
+        if (alvo) setConversaAtiva(alvo);
+      } else if (aluguelIdParam) {
+        const alvo = lista.find((c) => c.idAluguel === aluguelIdParam);
         if (alvo) setConversaAtiva(alvo);
       }
     });

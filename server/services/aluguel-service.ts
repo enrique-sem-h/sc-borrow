@@ -97,9 +97,20 @@ class AluguelService extends BaseService {
     await this.changeStatus(aluguel, "WAITING_FOR_DELIVERY");
   }
 
-  public async cancel(aluguel: Aluguel) {
+  public async cancel(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
     if (aluguel.status === "CANCELLED") {
       throw new Error("Aluguel is already cancelled");
+    }
+
+    const aluguelUsers = [aluguel.idLocatario, aluguel.idLocador];
+    if (!aluguelUsers.includes(caller)) {
+      throw new Error("You don't have permission to cancel this aluguel");
     }
 
     return await AluguelRepository.update(aluguel.id, {
@@ -149,9 +160,8 @@ class AluguelService extends BaseService {
 
     if (!isInDataRange) {
       await this.changeStatus(aluguel, "CANCELLED");
+      throw new Error(`Aluguel is not in data range`);
     }
-
-    throw new Error(`Aluguel is not in data range`);
   }
 
   private ensureNotInStatus(
