@@ -5,8 +5,9 @@ import {
   fotoAnuncios,
 } from "@/infra/database/schemas/anunciosSchema";
 import { db } from "@/infra/database/index";
-import { eq } from "drizzle-orm";
+import { eq, ne, and } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
+import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 
 class AnuncioRepository {
   static async getAll(userId: string): Promise<Anuncio[]> {
@@ -58,7 +59,27 @@ class AnuncioRepository {
       with: { fotos: true },
     });
 
-    return anuncio;
+    if(!anuncio) {
+      return undefined;
+    }
+
+    const datasBloqueadas = await db
+    .select({
+      dataInicio: alugueis.dataInicio,
+      dataFim: alugueis.dataFim,
+    })
+    .from(alugueis)
+    .where(
+      and(
+        eq(alugueis.idAnuncio, id),
+        ne(alugueis.status, "CANCELLED"),
+      ),
+    );
+
+    return {
+      ...anuncio,
+      datasBloqueadas,
+    };
   }
 
   static async delete(id: string): Promise<void> {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/infra/database";
 import { anuncios, fotoAnuncios } from "@/infra/database/schemas/anunciosSchema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
+import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 
 export async function GET(
   _request: Request,
@@ -36,7 +37,23 @@ export async function GET(
       return NextResponse.json({ error: "Anúncio não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(anuncio);
+    const datasBloqueadas = await db
+    .select({
+      dataInicio: alugueis.dataInicio,
+      dataFim: alugueis.dataFim,
+    })
+    .from(alugueis)
+    .where(
+      and(
+        eq(alugueis.idAnuncio, id),
+        ne(alugueis.status, "CANCELLED"),
+      ),
+    );
+
+    return NextResponse.json({
+      ...anuncio,
+      datasBloqueadas,
+    });
   } catch (error) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

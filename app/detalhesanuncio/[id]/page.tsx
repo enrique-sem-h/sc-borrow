@@ -47,6 +47,10 @@ interface AnuncioDetalhes {
   valorDiario: number;
   caucao: number;
   foto_principal: string | null;
+  datasBloqueadas?: {
+    dataInicio: string;
+    dataFim: string;
+  }[];
 }
 
 export default function DetalhesAnuncioPage() {
@@ -76,6 +80,11 @@ export default function DetalhesAnuncioPage() {
 
   const dataInicioW = watch("dataInicio");
   const dataFimW = watch("dataFim");
+
+  const datasBloqueadas = anuncio?.datasBloqueadas?.map((periodo) => ({
+    from: parseISO(periodo.dataInicio.slice(0, 10)),
+    to: parseISO(periodo.dataFim.slice(0, 10)),
+  })) ?? [];
 
   const obterRangeDoForm = (): DateRange | undefined => {
     const inicio = dataInicioW ? parseISO(dataInicioW) : undefined;
@@ -154,7 +163,11 @@ export default function DetalhesAnuncioPage() {
           <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
             {fotoPricipal ? (
               <img
-                src={fotoPricipal}
+                src={
+                  fotoPricipal.startsWith("http")
+                  ? fotoPricipal
+                  : `/${fotoPricipal}`
+                }
                 alt={anuncio?.titulo}
                 className="max-h-full object-contain"
               />
@@ -258,9 +271,12 @@ export default function DetalhesAnuncioPage() {
                 selected={obterRangeDoForm()}
                 onSelect={handleCalendarSelect}
                 locale={ptBR}
-                disabled={{
-                  before: tomorrowDate,
-                }}
+                disabled={[
+                  {
+                    before: tomorrowDate,
+                  },
+                  ...datasBloqueadas,
+                ]}
                 modifiersClassNames={{
                   selected: "bg-blue-600 text-white ",
                   range_start: "rounded-l-full bg-blue-600",
