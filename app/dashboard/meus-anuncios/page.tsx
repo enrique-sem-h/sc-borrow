@@ -3,7 +3,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useDeleteAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
 import { Edit3, Trash2 } from "lucide-react";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
 type DashboardMeusAnunciosPageProps = {
@@ -15,13 +15,23 @@ const DashboardMeusAnunciosPage: React.FC<DashboardMeusAnunciosPageProps> = ({
   className,
   children,
 }) => {
+  const router = useRouter();
   const anunciosQuery = useGetAnuncios();
   const anuncioDeleteMutation = useDeleteAnuncio();
   const anuncios = anunciosQuery.data?.data.anuncios || [];
-
-  console.log(anuncios);
-
   const loading = anunciosQuery.isLoading;
+
+  const handleGoToEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/Meusanuncios/${id}/editar`);
+  };
+
+  const handleOpenDeleteModal = (anuncio: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm(`Tem certeza que deseja excluir "${anuncio.titulo}"?`)) {
+      anuncioDeleteMutation.mutate(anuncio.id);
+    }
+  };
 
   return (
     <>

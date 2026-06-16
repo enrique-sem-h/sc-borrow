@@ -17,6 +17,7 @@ function PagamentoContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [clientSecret, setClientSecret] = useState("");
+  const [erroDatas, setErroDatas] = useState<string | null>(null);
 
   const idAnuncio = params?.get("idAnuncio") ?? "";
   const idLocatario = params?.get("idLocatario") ?? "";
@@ -50,7 +51,13 @@ function PagamentoContent() {
       }),
     })
       .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret))
+      .then((data) => {
+        if (data.error) {
+          setErroDatas(data.error);
+        } else {
+          setClientSecret(data.clientSecret);
+        }
+      })
       .catch((error) =>
         console.error("Erro ao criar intent de pagamento: ", error),
       );
@@ -84,7 +91,17 @@ function PagamentoContent() {
           {/* Lado esquerdo — área do Stripe */}
           <div className="flex-1 flex flex-col gap-6">
             <div className="border border-gray-200 rounded-[20px] min-h-[320px] flex items-center justify-center text-gray-300 text-sm italic p-6">
-              {clientSecret ? (
+              {erroDatas ? (
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <p className="text-red-500 font-semibold">{erroDatas}</p>
+                  <button
+                    onClick={() => router.back()}
+                    className="px-6 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
+                  >
+                    Voltar e escolher outras datas
+                  </button>
+                </div>
+              ) : clientSecret ? (
                 <Elements stripe={stripePromise} options={options}>
                   <CheckoutForm
                     itemNome={titulo}

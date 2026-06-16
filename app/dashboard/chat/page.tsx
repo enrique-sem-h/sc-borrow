@@ -1,6 +1,5 @@
 "use client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotifications } from "@/contexts/NotificationContext";
 import { dbFirebase } from "@/infra/firebase";
 import {
   collection,
@@ -11,17 +10,14 @@ import {
   doc,
   addDoc,
   serverTimestamp,
+  where,
+  updateDoc,
+  increment,
 } from "firebase/firestore";
 import { ChevronLeft, Search, Send } from "lucide-react";
-import { useRouter } from "next/navigation";
-import router from "next/router";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-
-type DashboardChatPageProps = {
-  className?: string;
-  children: ReactNode;
-};
 
 interface Mensagem {
   id: string;
@@ -33,9 +29,14 @@ interface Mensagem {
 
 interface Conversa {
   id: string;
-  nomeUsuario: string;
+  nomeLocador: string;
+  nomeLocatario: string;
+  idLocador: string;
+  idLocatario: string;
   itemAcordo: string;
   periodoAcordo: string;
+  ultimaMensagem: string;
+  naoLidas: Record<string, number>;
 }
 
 type ChatFormValues = {
@@ -43,15 +44,13 @@ type ChatFormValues = {
   buscaConversa: string;
 };
 
-const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
-  className,
-  children,
-}) => {
+function DashboardChatContent() {
   const { user } = useAuth();
-  const { chatCount } = useNotifications();
+  const router = useRouter();
+  const params = useSearchParams();
   const mensagensEndRef = useRef<HTMLDivElement | null>(null);
 
-  const usuarioLogadoId = user?.id || "user-teste-123";
+  const usuarioLogadoId = user?.id || "";
 
   const [conversas, setConversas] = useState<Conversa[]>([]);
   const [conversaAtiva, setConversaAtiva] = useState<Conversa | null>(null);
@@ -62,34 +61,69 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
   });
 
   const termoBusca = watch("buscaConversa");
-  const conversasFiltradas = conversas.filter(
-    (c) =>
-      c.nomeUsuario.toLowerCase().includes(termoBusca.toLowerCase()) ||
-      c.itemAcordo.toLowerCase().includes(termoBusca.toLowerCase()),
-  );
+  const conversasFiltradas = conversas.filter((c) => {
+    const nomeOutro =
+      c.idLocador === usuarioLogadoId ? c.nomeLocatario : c.nomeLocador;
+    return (
+      nomeOutro.toLowerCase().includes(termoBusca.toLowerCase()) ||
+      c.itemAcordo.toLowerCase().includes(termoBusca.toLowerCase())
+    );
+  });
 
   useEffect(() => {
     mensagensEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
 
   useEffect(() => {
-    const caminhoConversas = collection(dbFirebase, "conversas");
-    const unsubscribe = onSnapshot(caminhoConversas, (snapshot) => {
-      const listaSalas = snapshot.docs.map((doc) => {
-        const dados = doc.data();
+    if (!usuarioLogadoId) return;
+
+    const conversasRef = collection(dbFirebase, "conversas");
+    const q = query(
+      conversasRef,
+      where("participantes", "array-contains", usuarioLogadoId),
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lista = snapshot.docs.map((d) => {
+        const dados = d.data();
         return {
-          id: doc.id,
-          nomeUsuario: dados.nomeUsuario || "Usuário",
+          id: d.id,
+          nomeLocador: dados.nomeLocador || "Proprietário",
+          nomeLocatario: dados.nomeLocatario || "Locatário",
+          idLocador: dados.idLocador || "",
+          idLocatario: dados.idLocatario || "",
           itemAcordo: dados.itemAcordo || "Produto",
-          periodoAcordo: dados.periodoAcordo || "Período",
+          periodoAcordo: dados.periodoAcordo || "",
+          ultimaMensagem: dados.ultimaMensagem || "",
+          naoLidas: dados.naoLidas || {},
         } as Conversa;
       });
-      setConversas(listaSalas);
-      if (listaSalas.length > 0 && !conversaAtiva)
-        setConversaAtiva(listaSalas[0]);
+      setConversas(lista);
+
+      const idParam = params?.get("id");
+      if (idParam) {
+        const alvo = lista.find((c) => c.id === idParam);
+        if (alvo) setConversaAtiva(alvo);
+      }
     });
+
     return () => unsubscribe();
-  }, [conversaAtiva]);
+  }, [usuarioLogadoId, params]);
+
+  const abrirConversa = async (c: Conversa) => {
+    setConversaAtiva(c);
+    if (!usuarioLogadoId) return;
+    const naoLidasCount = c.naoLidas?.[usuarioLogadoId] || 0;
+    if (naoLidasCount > 0) {
+      try {
+        await updateDoc(doc(dbFirebase, "conversas", c.id), {
+          [`naoLidas.${usuarioLogadoId}`]: 0,
+        });
+      } catch (err) {
+        console.error("Erro ao resetar naoLidas:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!conversaAtiva) return;
@@ -103,11 +137,11 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
 
     const unsubscribe = onSnapshot(consultaFiltrada, (snapshot) => {
       const batch = writeBatch(dbFirebase);
-      let possuiMensagemNaoLidaMinha = false;
+      let possuiNaoLida = false;
 
-      const listaMensagens = snapshot.docs.map((snapshotDoc) => {
+      const lista = snapshot.docs.map((snapshotDoc) => {
         const dados = snapshotDoc.data();
-        let horaFormatada = "15:36";
+        let horaFormatada = "";
         if (dados.timestamp) {
           horaFormatada = dados.timestamp.toDate().toLocaleTimeString("pt-BR", {
             hour: "2-digit",
@@ -124,7 +158,7 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
             snapshotDoc.id,
           );
           batch.update(mRef, { lida: true });
-          possuiMensagemNaoLidaMinha = true;
+          possuiNaoLida = true;
         }
 
         return {
@@ -136,23 +170,29 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
         } as Mensagem;
       });
 
-      if (possuiMensagemNaoLidaMinha) {
-        batch
-          .commit()
-          .catch((err) =>
-            console.error("Erro ao atualizar status de lida:", err),
-          );
+      if (possuiNaoLida) {
+        batch.commit().catch((err) =>
+          console.error("Erro ao marcar mensagens como lidas:", err),
+        );
       }
 
-      setMensagens(listaMensagens);
+      setMensagens(lista);
     });
     return () => unsubscribe();
   }, [conversaAtiva, usuarioLogadoId]);
 
   const onEnviarMensagemSubmit = async (data: ChatFormValues) => {
-    if (!conversaAtiva || !data.mensagemTexto.trim()) return;
-    const textoParaEnviar = data.mensagemTexto;
+    if (!conversaAtiva || !data.mensagemTexto.trim() || !usuarioLogadoId)
+      return;
+
+    const textoParaEnviar = data.mensagemTexto.trim();
     reset({ ...data, mensagemTexto: "" });
+
+    const outroUserId =
+      conversaAtiva.idLocador === usuarioLogadoId
+        ? conversaAtiva.idLocatario
+        : conversaAtiva.idLocador;
+
     try {
       await addDoc(
         collection(dbFirebase, "conversas", conversaAtiva.id, "mensagens"),
@@ -163,10 +203,17 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
           lida: false,
         },
       );
+
+      await updateDoc(doc(dbFirebase, "conversas", conversaAtiva.id), {
+        ultimaMensagem: textoParaEnviar,
+        ultimaMensagemAt: serverTimestamp(),
+        [`naoLidas.${outroUserId}`]: increment(1),
+      });
     } catch (error) {
-      console.error("Erro ao enviar:", error);
+      console.error("Erro ao enviar mensagem:", error);
     }
   };
+
   return (
     <div className="w-full h-[calc(100vh-80px)] flex bg-white font-sans text-[#1a1a1a] min-h-0">
       <aside className="w-80 border-r border-gray-100 flex flex-col justify-between p-6 shrink-0 h-full">
@@ -177,23 +224,37 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
           >
             <ChevronLeft size={18} /> Voltar
           </button>
-          {conversasFiltradas.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setConversaAtiva(c)}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                conversaAtiva?.id === c.id
-                  ? "bg-gray-100 font-bold"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              <div className="w-10 h-10 bg-gray-200 rounded-full shrink-0" />
-              <div className="truncate text-left">
-                <p className="text-sm text-gray-900">{c.nomeUsuario}</p>
-                <p className="text-xs text-gray-400 truncate">{c.itemAcordo}</p>
-              </div>
-            </button>
-          ))}
+          {conversasFiltradas.map((c) => {
+            const nomeOutro =
+              c.idLocador === usuarioLogadoId ? c.nomeLocatario : c.nomeLocador;
+            const badge = c.naoLidas?.[usuarioLogadoId] || 0;
+            return (
+              <button
+                key={c.id}
+                onClick={() => abrirConversa(c)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                  conversaAtiva?.id === c.id
+                    ? "bg-gray-100 font-bold"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
+                </div>
+                <div className="truncate text-left flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 truncate">{nomeOutro}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {c.ultimaMensagem || c.itemAcordo}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
         </div>
         <div className="relative mt-4 pt-2 border-t border-gray-100">
           <Search
@@ -220,9 +281,16 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
           <>
             <div className="px-8 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
               <div className="w-10 h-10 bg-gray-200 rounded-full" />
-              <span className="font-bold text-gray-900">
-                {conversaAtiva.nomeUsuario}
-              </span>
+              <div>
+                <span className="font-bold text-gray-900 block">
+                  {conversaAtiva.idLocador === usuarioLogadoId
+                    ? conversaAtiva.nomeLocatario
+                    : conversaAtiva.nomeLocador}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {conversaAtiva.periodoAcordo}
+                </span>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-4">
               <p className="text-center text-xs text-gray-300 font-semibold py-2">
@@ -245,9 +313,11 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
                         {m.texto}
                       </div>
                     </div>
-                    <span className="text-[10px] text-gray-300 font-bold mt-1 px-9">
-                      {m.timestamp}
-                    </span>
+                    {m.timestamp && (
+                      <span className="text-[10px] text-gray-300 font-bold mt-1 px-9">
+                        {m.timestamp}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -285,6 +355,12 @@ const DashboardChatPage: React.FC<DashboardChatPageProps> = ({
       </section>
     </div>
   );
-};
+}
 
-export default DashboardChatPage;
+export default function DashboardChatPage() {
+  return (
+    <Suspense>
+      <DashboardChatContent />
+    </Suspense>
+  );
+}
