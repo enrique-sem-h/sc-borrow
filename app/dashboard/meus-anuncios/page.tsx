@@ -53,7 +53,7 @@ const DashboardMeusAnunciosPage: React.FC<DashboardMeusAnunciosPageProps> = ({
               return (
                 <div
                   key={anuncio.id}
-                  onClick={() => router.push("/aluguel/andamento-locador")}
+                  onClick={() => router.push(`/detalhesanuncio/${anuncio.id}`)}
                   className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100 relative group cursor-pointer hover:shadow-md transition-all duration-200"
                 >
                   <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">

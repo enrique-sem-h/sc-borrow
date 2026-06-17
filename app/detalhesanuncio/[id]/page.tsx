@@ -201,7 +201,7 @@ export default function DetalhesAnuncioPage() {
                 />
               </h3>
               <p className="text-gray-400 text-xs flex items-center gap-1 mt-1 font-medium">
-                <MapPin size={14} /> {anuncio?.categoria}
+                <MapPin size={14} /> DF
               </p>
             </div>
           </div>
