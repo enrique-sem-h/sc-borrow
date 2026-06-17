@@ -18,6 +18,7 @@ import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import "react-day-picker/dist/style.css";
+import { useGetAnuncio } from "@/modules/react-query/queries/anuncios-queries";
 
 const reservaSchema = z
   .object({
@@ -63,18 +64,10 @@ export default function DetalhesAnuncioPage() {
   const params = useParams();
   const idAnuncio = String(params?.id ?? "");
   const { user } = useAuth();
-
-  const [anuncio, setAnuncio] = useState<AnuncioDetalhes>(MOCK_ANUNCIO);
-
-  useEffect(() => {
-    if (!idAnuncio) return;
-    fetch(`/detalhesanuncio/${idAnuncio}/api`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && data.titulo) setAnuncio(data);
-      })
-      .catch(() => {});
-  }, [idAnuncio]);
+  const anunciosQuery = useGetAnuncio(idAnuncio);
+  const anuncio = anunciosQuery.data?.data;
+  const loading = anunciosQuery.isLoading;
+  const fotoPrincipal = anuncio?.fotos.find((foto) => foto.principal);
 
   const {
     handleSubmit,
@@ -86,6 +79,14 @@ export default function DetalhesAnuncioPage() {
     resolver: zodResolver(reservaSchema),
     defaultValues: { dataInicio: "", dataFim: "" },
   });
+
+  if (loading) {
+    return null;
+  }
+
+  if (!anuncio) {
+    return router.back();
+  }
 
   const dataInicioW = watch("dataInicio");
   const dataFimW = watch("dataFim");
@@ -162,13 +163,9 @@ export default function DetalhesAnuncioPage() {
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
           <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {anuncio.foto_principal ? (
+            {fotoPrincipal ? (
               <img
-                src={
-                  fotoPricipal.startsWith("http")
-                    ? fotoPricipal
-                    : `/${fotoPricipal}`
-                }
+                src={fotoPrincipal.url}
                 alt={anuncio?.titulo}
                 className="max-h-full object-contain"
               />
