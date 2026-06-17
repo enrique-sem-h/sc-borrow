@@ -26,6 +26,16 @@ class UserRepository {
 
     return newUser[0];
   }
+
+  static async read(id: string) {
+    const user = await db.query.usuarios.findFirst({
+      where(fields, operators) {
+        return operators.eq(fields.id, id);
+      },
+    });
+
+    return user;
+  }
 }
 
 export default UserRepository;

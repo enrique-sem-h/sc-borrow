@@ -13,21 +13,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { dbFirebase } from "@/infra/firebase";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { LogoutModal } from "@/components/ui/logout-modal";
 import { AvaliarModal } from "@/components/ui/rate-modal";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
-
-interface Aluguel {
-  id: string;
-  titulo: string;
-  data_inicio: string;
-  data_fim: string;
-  valor_total: number;
-  status: "ativo" | "em_andamento" | "concluido";
-  foto_principal?: string | null;
-  notificacoes?: number;
-}
+import { Spinner } from "@/components/ui/spinner";
+import { Aluguel } from "@/server/types";
 
 const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
   <button
@@ -57,34 +50,51 @@ const StatusBadge = ({
   status: Aluguel["status"];
   onAvaliar?: () => void;
 }) => {
-  if (status === "ativo") {
+  if (status === "CANCELLED") {
+    return (
+      <span className="flex items-center gap-1.5 text-red-600 text-xs font-semibold">
+        <span className="w-2 h-2 rounded-full bg-red-500" />
+        Cancelado
+      </span>
+    );
+  }
+  if (status === "WAITING_FOR_DISPATCH") {
     return (
       <span className="flex items-center gap-1.5 text-green-600 text-xs font-semibold">
         <span className="w-2 h-2 rounded-full bg-green-500" />
-        Ativo
+        Esperando entrega
       </span>
     );
   }
-  if (status === "em_andamento") {
+  if (status === "WAITING_FOR_DELIVERY") {
     return (
       <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-        Em andamento
+        Em rota
       </span>
     );
   }
-  return (
-    <div className="flex items-center gap-2">
-      <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-        Concluído
+  if (status === "ITEM_IN_HAND") {
+    return (
+      <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+        Objeto em mãos
       </span>
-      <button
-        onClick={onAvaliar}
-        className="px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-300 transition"
-      >
-        Avaliar
-      </button>
-    </div>
-  );
+    );
+  }
+  if (status === "COMPLETED") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+          Concluído
+        </span>
+        <button
+          onClick={onAvaliar}
+          className="px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-300 transition"
+        >
+          Avaliar
+        </button>
+      </div>
+    );
+  }
 };
 
 export default function MeusAlugueisPage() {
@@ -93,8 +103,9 @@ export default function MeusAlugueisPage() {
   const auth = useAuth();
   const { chatCount, aluguelCount, anuncioCount } = useNotifications();
   const user = auth?.user;
-  const alugueis = useGetAlugueis("locador");
-  console.log(alugueis.data);
+  const alugueisQuery = useGetAlugueis("locatario");
+  const loading = alugueisQuery.isLoading;
+  const alugueis = alugueisQuery.data?.data;
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [aluguelParaAvaliar, setAluguelParaAvaliar] = useState<Aluguel | null>(
@@ -146,6 +157,37 @@ export default function MeusAlugueisPage() {
   const handleLogout = () => {
     auth?.logout();
     router.push("/");
+  };
+
+  const abrirChat = async (aluguel: any) => {
+    try {
+      const conversasRef = collection(dbFirebase, "conversas");
+      const q = query(conversasRef, where("idAluguel", "==", aluguel.id));
+      const snapshot = await getDocs(q);
+
+      let chatId: string;
+
+      if (!snapshot.empty) {
+        chatId = snapshot.docs[0].id;
+      } else {
+        const periodo = `${new Date(aluguel.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguel.dataFim).toLocaleDateString("pt-BR")}`;
+        const docRef = await addDoc(conversasRef, {
+          idAluguel: aluguel.id,
+          idAnuncio: aluguel.idAnuncio,
+          idLocador: aluguel.idLocador,
+          idLocatario: aluguel.idLocatario,
+          itemAcordo: aluguel.anuncio?.titulo || aluguel.titulo || "Produto",
+          periodoAcordo: periodo,
+          nomeUsuario: "Proprietário",
+          criadoEm: serverTimestamp(),
+        });
+        chatId = docRef.id;
+      }
+
+      router.push(`/chats?id=${chatId}`);
+    } catch (error) {
+      console.error("Erro ao abrir chat:", error);
+    }
   };
 
   return (
@@ -205,9 +247,81 @@ export default function MeusAlugueisPage() {
           </button>
         </div>
 
-        <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
-          Você não possui nenhum aluguel no momento.
-        </div>
+        {loading && (
+          <div className="flex justify-center items-center">
+            <Spinner className="size-4" />
+          </div>
+        )}
+
+        {!loading && (
+          <>
+            {!alugueis?.length ? (
+              <div className="bg-white p-8 rounded-[28px] border text-center text-gray-400">
+                Você não possui nenhum aluguel no momento.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                {alugueis?.map((aluguel) => (
+                  <div
+                    key={aluguel.id}
+                    className="bg-white p-4 rounded-[28px] shadow-sm border border-gray-100"
+                  >
+                    <div className="bg-[#e9ecef] rounded-2xl h-48 mb-4 relative overflow-hidden flex items-center justify-center">
+                      {aluguel.anuncio.fotos.find((foto) => foto.principal) ? (
+                        <img
+                          src={
+                            aluguel.anuncio.fotos.find((foto) => foto.principal)
+                              .url
+                          }
+                          alt={aluguel.titulo}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-xs font-medium">
+                          Sem imagem
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); abrirChat(aluguel); }}
+                        className="absolute top-3 left-3 bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition z-10"
+                      >
+                        <MessageCircle size={18} />
+                      </button>
+                      {aluguel.notificacoes && aluguel.notificacoes > 0 ? (
+                        <span className="absolute top-3 right-3 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                          {aluguel.notificacoes}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="px-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-gray-900 text-xl">
+                            {aluguel.anuncio.titulo}
+                          </h3>
+                          <p className="text-gray-500 text-xs mt-0.5">
+                            {new Date(aluguel.dataInicio).toLocaleDateString()}{" "}
+                            - {new Date(aluguel.dataFim).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <p className="font-bold text-gray-900 text-lg">
+                          R$ {aluguel.valorTotal.toFixed(2).replace(".", ",")}
+                        </p>
+                      </div>
+                      <div className="flex justify-end mt-2">
+                        <StatusBadge
+                          status={aluguel.status}
+                          onAvaliar={() => setAluguelParaAvaliar(aluguel)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       <LogoutModal
@@ -229,4 +343,3 @@ export default function MeusAlugueisPage() {
     </main>
   );
 }
-

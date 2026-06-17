@@ -1,0 +1,1 @@
+ALTER TABLE `alugueis` ADD `status` varchar(50) DEFAULT 'WAITING_FOR_DISPATCH';

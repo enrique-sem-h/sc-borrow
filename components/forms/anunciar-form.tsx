@@ -9,6 +9,19 @@ import FormInput, {
   TextAreaFormInput,
 } from "../ui/form-input";
 
+const formatCurrency = (value: number | undefined): string => {
+  if (!value) return "";
+  return value.toFixed(2).replace(".", ",");
+};
+
+const parseCurrency = (
+  e: React.ChangeEvent<HTMLInputElement>,
+  onChange: (value: number) => void
+) => {
+  const digits = e.target.value.replace(/\D/g, "");
+  onChange(digits ? parseInt(digits, 10) / 100 : 0);
+};
+
 function Label({
   text,
   required,
@@ -32,8 +45,8 @@ function Label({
 }
 
 type AnunciarFormProps = {
-  onSubmit: (data) => void;
-  formHook: UseFormReturn;
+  onSubmit: (data: any) => void;
+  formHook: UseFormReturn<any>;
   loading: boolean;
   edit?: boolean;
 };
@@ -119,7 +132,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                 } else {
                   url = file.url;
 
-                  if (!url?.includes("http")) {
+                  if (!url?.startsWith("http") && !url?.startsWith("/")) {
                     url = `/${url}`;
                   }
                 }
@@ -164,7 +177,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
           >
             Adicionar fotos
           </button>
-          <FieldError>{errors.fotos && errors.fotos?.message}</FieldError>
+          <FieldError>{errors.fotos && (errors.fotos?.message as string)}</FieldError>
         </section>
 
         <section className="flex-[2.5] bg-[#fcfcfc] rounded-[48px] border border-gray-100 shadow-2xl shadow-gray-200/40 flex flex-col min-h-0 self-start max-h-[82vh]">
@@ -245,17 +258,17 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                   <Controller
                     name="valorDiario"
                     control={control}
-                    render={({ field, fieldState }) => {
-                      return (
-                        <FormInput
-                          placeholder="0,00"
-                          error={fieldState.error?.message}
-                          {...field}
-                          type="number"
-                          min={0}
-                        />
-                      );
-                    }}
+                    render={({ field, fieldState }) => (
+                      <FormInput
+                        placeholder="0,00"
+                        error={fieldState.error?.message}
+                        value={formatCurrency(field.value)}
+                        onChange={(e) => parseCurrency(e, field.onChange)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    )}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs italic font-sans">
                     / dia *
@@ -268,17 +281,17 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                 <Controller
                   name="caucao"
                   control={control}
-                  render={({ field, fieldState }) => {
-                    return (
-                      <FormInput
-                        placeholder="0,00"
-                        error={fieldState.error?.message}
-                        {...field}
-                        type="number"
-                        min={0}
-                      />
-                    );
-                  }}
+                  render={({ field, fieldState }) => (
+                    <FormInput
+                      placeholder="0,00"
+                      error={fieldState.error?.message}
+                      value={formatCurrency(field.value)}
+                      onChange={(e) => parseCurrency(e, field.onChange)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
+                  )}
                 />
               </div>
             </div>

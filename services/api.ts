@@ -1,11 +1,32 @@
-import { AnuncioInsert } from "@/infra/database/schemas/anunciosSchema";
 import {
+  Anuncio,
+  AnuncioInsert,
+} from "@/infra/database/schemas/anunciosSchema";
+import {
+  Usuario,
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
-import { CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
+import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
+
+
+type AnuncioDetalhado = Anuncio & {
+  fotos: {
+    id: string;
+    url: string;
+    ordem: number;
+    principal: boolean;
+    anuncioId: string;
+  }[];
+
+  datasBloqueadas?: {
+    dataInicio: string;
+    dataFim: string;
+  }[];
+};
+
 
 class ApiService {
   private api = axios.create({
@@ -32,7 +53,15 @@ class ApiService {
   }
 
   public alugueis = {
-    getAll: async (type?: AluguelTipo) => {
+    getAll: async (
+      type?: AluguelTipo,
+    ): Promise<{
+      data: (Aluguel & {
+        anuncio: Anuncio;
+        locador: Usuario;
+        locatario: Usuario;
+      })[];
+    }> => {
       const query = !type ? "" : `tipo=${type}`;
       const response = await this.api.get(`aluguel?${query}`);
 
@@ -61,12 +90,20 @@ class ApiService {
 
       return response;
     },
-    getAll: async () => {
+    getAll: async (): Promise<{
+      data: {
+        anuncios: Anuncio[];
+      };
+    }> => {
       const response = await this.api.get("anuncio");
 
       return response.data;
     },
-    get: async (id: string) => {
+    get: async (
+      id: string,
+    ): Promise<{
+      data: AnuncioDetalhado;
+    }> => {
       const response = await this.api.get(`anuncio/${id}`);
 
       return response.data;
@@ -76,8 +113,27 @@ class ApiService {
 
       return response.data;
     },
-    edit: async (id: string, newData: UpdateAnuncioDTO) => {
-      const response = await this.api.put(`anuncio/${id}`, newData);
+    edit: async (id: string, newData: any) => {
+      const formData = new FormData();
+      const { fotos, ...restData } = newData;
+
+      for (const [key, value] of Object.entries(restData)) {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      }
+
+      if (Array.isArray(fotos)) {
+        fotos.forEach((foto) => {
+          if (foto instanceof File) {
+            formData.append("fotos", foto, foto.name);
+          }
+        });
+      }
+
+      const response = await this.api.put(`anuncio/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       return response.data;
     },

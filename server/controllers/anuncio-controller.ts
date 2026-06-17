@@ -134,13 +134,6 @@ class AnuncioController extends BaseController {
           return;
         }
 
-        const anuncioUserId = anuncio.usuarioId;
-        if (anuncioUserId !== req.userId) {
-          return res
-            .status(403)
-            .send("You don't have permission to get this anuncio");
-        }
-
         res.send({
           data: anuncio,
         });

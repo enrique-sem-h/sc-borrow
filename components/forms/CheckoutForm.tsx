@@ -67,7 +67,7 @@ export default function CheckoutForm({
   const handleCloseModal = () => {
     setIsModalOpen(false);
     if (modalStatus === "success") {
-      router.push("/meusalugueis");
+      router.push("/dashboard/meus-alugueis");
     }
   };
 

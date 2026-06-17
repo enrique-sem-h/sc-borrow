@@ -9,11 +9,7 @@ type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type CreateAnuncioDTO = {
   titulo: string;
   descricao: string;
-  categoria:
-    | "Ferramentas"
-    | "Camping"
-    | "Equipamentos de festa"
-    | "Lazer";
+  categoria: "Ferramentas" | "Camping" | "Equipamentos de festa" | "Lazer";
   valorDiario: number;
   caucao: number;
   fotos: File[] | formidable.File[];

@@ -6,11 +6,11 @@ import LoginModal from "@/components/ui/login-modal";
 import { Shrikhand } from "next/font/google";
 import RegisterModal from "@/components/ui/register-modal";
 
-const shrikhand = Shrikhand({ 
-  weight: "400", 
-  subsets: ["latin"], 
-  display: "swap" 
-});  
+const shrikhand = Shrikhand({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 interface AnuncioCard {
   id: string;
@@ -26,14 +26,16 @@ export default function Home() {
   const [anunciosReais, setAnunciosReais] = useState<AnuncioCard[]>([]);
 
   const onRegisterBtnClick = () => {
-    setIsLoginOpen(false)
-    setIsRegisterOpen(true)
-  }
+    setIsLoginOpen(false);
+    setIsRegisterOpen(true);
+  };
 
   useEffect(() => {
     fetch("/api/anuncios")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data) && data.length > 0) setAnunciosReais(data); })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setAnunciosReais(data);
+      })
       .catch(() => {});
   }, []);
 
@@ -89,23 +91,24 @@ export default function Home() {
         "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
       rating: "5.0",
     },
-  ];   
+  ];
 
   return (
     <main className="min-h-screen bg-[#f5f5f5]">
-
       <section className="px-10 py-12">
-
         <h2 className="text-5xl font-bold text-center mb-16">
           Tudo o que você precisa, emprestado!
         </h2>
 
         <div className="grid grid-cols-4 gap-8 mb-16">
-
           {categories.map((category) => (
             <div
               key={category.title}
-              onClick={() => router.push(`/busca?categoria=${encodeURIComponent(category.title)}`)}
+              onClick={() =>
+                router.push(
+                  `/busca?categoria=${encodeURIComponent(category.title)}`,
+                )
+              }
               className="
                 bg-white
                 rounded-3xl
@@ -118,7 +121,6 @@ export default function Home() {
                 cursor-pointer
               "
             >
-
               <img
                 src={category.image}
                 alt={category.title}
@@ -130,30 +132,30 @@ export default function Home() {
               />
 
               <div className="p-5">
-
-                <h3 className="text-3xl font-bold">
-                  {category.title}
-                </h3>
+                <h3 className="text-3xl font-bold">{category.title}</h3>
               </div>
             </div>
           ))}
         </div>
 
-        <h2 className="text-4xl font-bold mb-8">
-          Próximo a você
-        </h2>
+        <h2 className="text-4xl font-bold mb-8">Próximo a você</h2>
 
         <div className="grid grid-cols-4 gap-8">
-          {(anunciosReais.length > 0 ? anunciosReais.map((a) => ({
-            id: a.id,
-            name: a.titulo,
-            price: `R$ ${a.valorDiario}/dia`,
-            image: a.foto_principal,
-            rating: "5.0",
-          })) : products.map((p) => ({ ...p, id: null }))).map((product) => (
+          {(anunciosReais.length > 0
+            ? anunciosReais.map((a) => ({
+                id: a.id,
+                name: a.titulo,
+                price: `R$ ${a.valorDiario}/dia`,
+                image: a.foto_principal,
+                rating: "5.0",
+              }))
+            : products.map((p) => ({ ...p, id: null }))
+          ).map((product) => (
             <div
               key={product.id ?? product.name}
-              onClick={() => product.id && router.push(`/detalhesanuncio/${product.id}`)}
+              onClick={() =>
+                product.id && router.push(`/detalhesanuncio/${product.id}`)
+              }
               className="
                 bg-white
                 rounded-3xl
@@ -168,18 +170,22 @@ export default function Home() {
             >
               {product.image ? (
                 <img
-                  src={product.image.startsWith("http") ? product.image : `/${product.image}`}
+                  src={product.image}
                   alt={product.name}
                   className="w-full h-[220px] object-cover"
                 />
               ) : (
-                <div className="w-full h-[220px] bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">📷</div>
+                <div className="w-full h-[220px] bg-gray-100 flex items-center justify-center text-gray-300 text-4xl">
+                  📷
+                </div>
               )}
 
               <div className="p-5">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold">{product.name}</h3>
-                  <span className="text-sm text-green-600">● {product.rating} ★</span>
+                  <span className="text-sm text-green-600">
+                    ● {product.rating} ★
+                  </span>
                 </div>
                 <p className="text-xl font-bold">{product.price}</p>
               </div>
@@ -187,7 +193,6 @@ export default function Home() {
           ))}
         </div>
       </section>
-
     </main>
   );
 }

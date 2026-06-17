@@ -11,6 +11,7 @@ import {
   alugueisRelations,
   usuarioRelations,
 } from "./schemas/alugueisSchema";
+import { usuarios } from "./schemas/usuariosSchema";
 
 const config = {
   host: process.env.DB_HOST,
@@ -22,6 +23,7 @@ const config = {
 const poolConnection = mysql.createPool(config);
 export const db = drizzle(poolConnection, {
   schema: {
+    usuarios,
     anuncios,
     anunciosRelations,
     fotoAnuncios,

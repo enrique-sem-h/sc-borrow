@@ -43,13 +43,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <Providers>
-        <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col">
+        <Providers>
           <ToastContainer />
           <Header />
           {children}
-        </body>
-      </Providers>
+        </Providers>
+      </body>
     </html>
   );
 }

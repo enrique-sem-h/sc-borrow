@@ -1,10 +1,9 @@
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import { db } from "@/infra/database/index";
 import { and, eq, gte, lte } from "drizzle-orm";
-import { usuarios } from "@/infra/database/schemas/usuariosSchema";
-import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import { AluguelTipo } from "../controllers/aluguel-controller";
+import { fotoAnuncios } from "@/infra/database/schemas/anunciosSchema";
 
 class AluguelRepository {
   static async create(body: CreateAluguelDTO): Promise<Aluguel> {
@@ -30,14 +29,19 @@ class AluguelRepository {
     return result;
   }
 
-  static async read(id: string): Promise<Aluguel | undefined> {
-    const [aluguel] = await db
-      .select()
-      .from(alugueis)
-      .where(eq(alugueis.id, id))
-      .limit(1);
-
-    return aluguel;
+  static async read(id: string) {
+    return db.query.alugueis.findFirst({
+      with: {
+        locador: true,
+        locatario: true,
+        anuncio: {
+          with: { fotos: true },
+        },
+      },
+      where(fields, operators) {
+        return operators.eq(fields.id, id);
+      },
+    });
   }
 
   static async getAlugueisComoLocatarioByUser(
@@ -73,6 +77,15 @@ class AluguelRepository {
     type: AluguelTipo | undefined,
   ): Promise<Aluguel[] | undefined> {
     const alugueis = db.query.alugueis.findMany({
+      with: {
+        locador: true,
+        locatario: true,
+        anuncio: {
+          with: {
+            fotos: true,
+          },
+        },
+      },
       where(fields, operators) {
         if (!type) {
           return operators.or(
@@ -93,20 +106,24 @@ class AluguelRepository {
     return alugueis;
   }
 
-  static async findConflictAnuncio(idAnuncio: string, dataInicio: Date, dataFim: Date) {
+  static async findConflictAnuncio(
+    idAnuncio: string,
+    dataInicio: Date,
+    dataFim: Date,
+  ) {
     const [aluguel] = await db
-    .select()
-    .from(alugueis)
-    .where(
-      and(
-        eq(alugueis.idAnuncio, idAnuncio),
-        lte(alugueis.dataInicio, dataFim),
-        gte(alugueis.dataFim, dataInicio),
-      ),
-    )
-    .limit(1)
+      .select()
+      .from(alugueis)
+      .where(
+        and(
+          eq(alugueis.idAnuncio, idAnuncio),
+          lte(alugueis.dataInicio, dataFim),
+          gte(alugueis.dataFim, dataInicio),
+        ),
+      )
+      .limit(1);
 
-    return aluguel
+    return aluguel;
   }
 }
 

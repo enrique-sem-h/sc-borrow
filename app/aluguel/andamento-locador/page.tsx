@@ -1,32 +1,148 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ConfirmedOrderModal } from "@/components/ui/confirmed-order";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-export default function AndamentoLocadorPage() {
+type AluguelDetalhe = {
+  id: string;
+  status: string;
+  dataInicio: string;
+  dataFim: string;
+  valorTotal: number;
+  locatario: { nome: string } | null;
+  anuncio: {
+    titulo: string;
+    valorDiario: number;
+    fotos: { url: string; principal: boolean }[];
+  } | null;
+};
+
+const STATUS_ORDER = [
+  "WAITING_FOR_PAYMANT",
+  "WAITING_FOR_DISPATCH",
+  "WAITING_FOR_DELIVERY",
+  "ITEM_IN_HAND",
+  "COMPLETED",
+];
+
+function timelineSteps(status: string, locatarioNome: string) {
+  const idx = STATUS_ORDER.indexOf(status);
+  return [
+    {
+      label: "Pedido recebido",
+      done: idx >= STATUS_ORDER.indexOf("WAITING_FOR_DISPATCH"),
+    },
+    {
+      label: "Envio confirmado",
+      done: idx >= STATUS_ORDER.indexOf("WAITING_FOR_DELIVERY"),
+    },
+    {
+      label: `Item com ${locatarioNome || "o locatário"}`,
+      done: idx >= STATUS_ORDER.indexOf("ITEM_IN_HAND"),
+    },
+    {
+      label: "Aluguel concluído",
+      done: idx >= STATUS_ORDER.indexOf("COMPLETED"),
+    },
+  ];
+}
+
+function AndamentoLocadorContent() {
   const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const params = useSearchParams();
+  const id = params?.get("id") ?? "";
 
-  const item = {
-    name: "Barraca de camp",
-    image: "https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=600&q=80",
-    dates: "10 - 14 Abr",
-    pricePerDay: "R$ 150",
-    daysCount: 3,
-    subtotal: "R$450,00",
-    deposit: "R$600,00",
-    serviceFee: "R$ 30,00",
-    totalPrice: "R$1080,00"
+  const [aluguel, setAluguel] = useState<AluguelDetalhe | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dispatching, setDispatching] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    const token = localStorage.getItem("token") ?? "";
+    fetch(`/api/aluguel/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => setAluguel(d.data))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleDispatch = async () => {
+    if (!aluguel) return;
+    setDispatching(true);
+    const token = localStorage.getItem("token") ?? "";
+    try {
+      const res = await fetch(`/api/aluguel/${aluguel.id}/dispatch`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setAluguel((prev) =>
+          prev ? { ...prev, status: "WAITING_FOR_DELIVERY" } : prev,
+        );
+        setIsModalOpen(true);
+      }
+    } finally {
+      setDispatching(false);
+    }
   };
 
-  const timelineSteps = [
-    { label: "Pedido aguardando checklist", isCompleted: true },
-    { label: "Confirmação de entrega realizada com sucesso", isCompleted: false },
-    { label: "Item alugado para o locatário: Zé", isCompleted: false },
-    { label: "Solicitação de devolução recebida", isCompleted: false },
-  ];
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Carregando...
+      </div>
+    );
+  }
+
+  if (!aluguel) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Aluguel não encontrado.
+      </div>
+    );
+  }
+
+  const foto =
+    aluguel.anuncio?.fotos?.find((f) => f.principal)?.url ||
+    aluguel.anuncio?.fotos?.[0]?.url ||
+    "";
+
+  const inicio = aluguel.dataInicio
+    ? format(new Date(aluguel.dataInicio), "dd MMM", { locale: ptBR })
+    : "";
+  const fim = aluguel.dataFim
+    ? format(new Date(aluguel.dataFim), "dd MMM", { locale: ptBR })
+    : "";
+
+  const dias =
+    aluguel.dataInicio && aluguel.dataFim
+      ? Math.max(
+          1,
+          Math.ceil(
+            (new Date(aluguel.dataFim).getTime() -
+              new Date(aluguel.dataInicio).getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : 1;
+
+  const valorDiario = aluguel.anuncio?.valorDiario ?? 0;
+  const subtotal = valorDiario * dias;
+  const taxaServico = 12;
+  const caucao = aluguel.valorTotal - subtotal - taxaServico;
+
+  const steps = timelineSteps(
+    aluguel.status,
+    aluguel.locatario?.nome ?? "",
+  );
+
+  const podeDespachar = aluguel.status === "WAITING_FOR_DISPATCH";
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 relative">
@@ -42,19 +158,39 @@ export default function AndamentoLocadorPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          
           <div className="md:col-span-5 border border-gray-200/80 rounded-2xl p-4 bg-white flex flex-col gap-4 shadow-sm">
             <div className="w-full aspect-[4/3] bg-gray-50 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              {foto ? (
+                <img
+                  src={foto}
+                  alt={aluguel.anuncio?.titulo}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-gray-300 text-sm">Sem imagem</div>
+              )}
             </div>
             <div className="flex justify-between items-end px-1">
               <div>
-                <h3 className="font-serif font-bold text-xl text-gray-900 leading-tight">{item.name}</h3>
-                <p className="text-xs text-gray-400 font-medium mt-1">{item.dates}</p>
+                <h3 className="font-serif font-bold text-xl text-gray-900 leading-tight">
+                  {aluguel.anuncio?.titulo ?? "Anúncio removido"}
+                </h3>
+                <p className="text-xs text-gray-400 font-medium mt-1">
+                  {inicio} — {fim}
+                </p>
+                {aluguel.locatario && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Locatário: {aluguel.locatario.nome}
+                  </p>
+                )}
               </div>
               <div className="text-right">
-                <span className="text-lg font-bold text-gray-900">{item.pricePerDay}</span>
-                <span className="block text-[10px] text-green-500 font-bold bg-green-50 px-1.5 py-0.5 rounded-md mt-1 text-center border border-green-100">● Ativo</span>
+                <span className="text-lg font-bold text-gray-900">
+                  R$ {valorDiario.toFixed(2).replace(".", ",")}
+                </span>
+                <span className="block text-[10px] text-green-500 font-bold bg-green-50 px-1.5 py-0.5 rounded-md mt-1 text-center border border-green-100">
+                  ● Ativo
+                </span>
               </div>
             </div>
           </div>
@@ -63,48 +199,67 @@ export default function AndamentoLocadorPage() {
             <div className="space-y-3 font-medium text-gray-600 text-base">
               <div className="flex justify-between">
                 <span className="text-gray-400">Valor:</span>
-                <span className="text-gray-400">{item.pricePerDay} x {item.daysCount} dias</span>
-                <span className="text-gray-800 font-semibold">{item.subtotal}</span>
+                <span className="text-gray-400">
+                  R$ {valorDiario.toFixed(2)} × {dias} dias
+                </span>
+                <span className="text-gray-800 font-semibold">
+                  R$ {subtotal.toFixed(2).replace(".", ",")}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Caução</span>
-                <span className="text-gray-800 font-semibold">{item.deposit}</span>
+                <span className="text-gray-800 font-semibold">
+                  R$ {caucao.toFixed(2).replace(".", ",")}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Taxa de serviço</span>
-                <span className="text-gray-800 font-semibold">{item.serviceFee}</span>
+                <span className="text-gray-800 font-semibold">
+                  R$ {taxaServico.toFixed(2)}
+                </span>
               </div>
               <div className="w-full h-px bg-gray-100 my-4" />
               <div className="flex justify-between text-lg font-bold text-gray-900 font-serif">
                 <span>Total</span>
-                <span>{item.totalPrice}</span>
+                <span>R$ {aluguel.valorTotal.toFixed(2).replace(".", ",")}</span>
               </div>
             </div>
 
             <div className="flex justify-center mt-8">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(true)} 
-                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-full shadow-md shadow-emerald-100 transition cursor-pointer"
+                onClick={handleDispatch}
+                disabled={!podeDespachar || dispatching}
+                className={`px-6 py-2 text-white text-sm font-bold rounded-full shadow-md transition cursor-pointer ${
+                  podeDespachar
+                    ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
               >
-                Confirmar pedido
+                {dispatching ? "Confirmando..." : "Confirmar envio do item"}
               </button>
             </div>
           </div>
         </div>
 
         <div className="mt-12 max-w-3xl mx-auto border-t border-gray-100 pt-8">
-          <h4 className="text-xl font-serif font-bold text-gray-900 mb-6 px-1">Status atual</h4>
+          <h4 className="text-xl font-serif font-bold text-gray-900 mb-6 px-1">
+            Status atual
+          </h4>
           <div className="relative pl-8 space-y-6">
             <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-gray-200" />
-            {timelineSteps.map((step, idx) => (
+            {steps.map((step, idx) => (
               <div key={idx} className="flex items-start gap-4 relative">
-                <div 
-                  className={`absolute -left-7 top-1.5 w-3.5 h-3.5 rounded-full z-10 border-2 bg-white transition-all ${
-                    step.isCompleted ? "border-black bg-black scale-110" : "border-gray-400 bg-white"
-                  }`} 
+                <div
+                  className={`absolute -left-7 top-1.5 w-3.5 h-3.5 rounded-full z-10 border-2 transition-all ${
+                    step.done
+                      ? "border-black bg-black scale-110"
+                      : "border-gray-400 bg-white"
+                  }`}
                 />
-                <p className={`text-base font-medium ${step.isCompleted ? "text-gray-900 font-semibold" : "text-gray-400"}`}>
+                <p
+                  className={`text-base font-medium ${step.done ? "text-gray-900 font-semibold" : "text-gray-400"}`}
+                >
                   {step.label}
                 </p>
               </div>
@@ -116,32 +271,38 @@ export default function AndamentoLocadorPage() {
 
         <div className="flex justify-center items-center gap-3 max-w-xl mx-auto">
           <button
-            onClick={() => router.push("/checklist/enviar-locatario")} 
+            onClick={() =>
+              router.push(`/checklist/enviar-locatario?aluguelId=${aluguel.id}`)
+            }
             className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-serif font-semibold rounded-xl text-base transition shadow-sm"
           >
             Checklist de entrega
           </button>
           <button
-            onClick={() => router.push("/checklist/confirma-devolucao")}
+            onClick={() =>
+              router.push(
+                `/checklist/confirma-devolucao?aluguelId=${aluguel.id}`,
+              )
+            }
             className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-serif font-semibold rounded-xl text-base transition shadow-sm"
           >
             Checklist de devolução
           </button>
-          <button
-            onClick={() => router.push("/chats")}
-            className="py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-800 font-serif font-semibold rounded-xl text-base transition shadow-sm"
-          >
-            Chat
-          </button>
         </div>
-
       </div>
 
       <ConfirmedOrderModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-
     </div>
+  );
+}
+
+export default function AndamentoLocadorPage() {
+  return (
+    <Suspense>
+      <AndamentoLocadorContent />
+    </Suspense>
   );
 }
