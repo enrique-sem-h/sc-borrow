@@ -4,11 +4,19 @@ import jwt from "jsonwebtoken";
 
 class AuthService {
   public async register(body: any) {
-    const foundUser = await UserRepository.findByCpf(body.cpf);
+    const foundUserByCpf = await UserRepository.findByCpf(body.cpf);
 
-    if (foundUser) {
+    if (foundUserByCpf) {
       return {
-        error: "Este usuário já existe",
+        error: "CPF já cadastrado.",
+      };
+    }
+
+    const foundUserByEmail = await UserRepository.findByEmail(body.email);
+
+    if (foundUserByEmail) {
+      return {
+        error: "E-mail já cadastrado.",
       };
     }
 
