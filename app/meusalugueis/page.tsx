@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { dbFirebase } from "@/infra/firebase";
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { LogoutModal } from "@/components/ui/logout-modal";
 import { AvaliarModal } from "@/components/ui/rate-modal";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
@@ -157,6 +159,37 @@ export default function MeusAlugueisPage() {
     router.push("/");
   };
 
+  const abrirChat = async (aluguel: any) => {
+    try {
+      const conversasRef = collection(dbFirebase, "conversas");
+      const q = query(conversasRef, where("idAluguel", "==", aluguel.id));
+      const snapshot = await getDocs(q);
+
+      let chatId: string;
+
+      if (!snapshot.empty) {
+        chatId = snapshot.docs[0].id;
+      } else {
+        const periodo = `${new Date(aluguel.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguel.dataFim).toLocaleDateString("pt-BR")}`;
+        const docRef = await addDoc(conversasRef, {
+          idAluguel: aluguel.id,
+          idAnuncio: aluguel.idAnuncio,
+          idLocador: aluguel.idLocador,
+          idLocatario: aluguel.idLocatario,
+          itemAcordo: aluguel.anuncio?.titulo || aluguel.titulo || "Produto",
+          periodoAcordo: periodo,
+          nomeUsuario: "Proprietário",
+          criadoEm: serverTimestamp(),
+        });
+        chatId = docRef.id;
+      }
+
+      router.push(`/chats?id=${chatId}`);
+    } catch (error) {
+      console.error("Erro ao abrir chat:", error);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f8f9fa] flex p-8 gap-12 font-sans">
       <aside className="w-80 bg-white rounded-[32px] p-8 shadow-sm h-fit flex flex-col justify-between min-h-[520px]">
@@ -248,6 +281,12 @@ export default function MeusAlugueisPage() {
                           Sem imagem
                         </div>
                       )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); abrirChat(aluguel); }}
+                        className="absolute top-3 left-3 bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition z-10"
+                      >
+                        <MessageCircle size={18} />
+                      </button>
                       {aluguel.notificacoes && aluguel.notificacoes > 0 ? (
                         <span className="absolute top-3 right-3 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
                           {aluguel.notificacoes}

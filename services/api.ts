@@ -11,6 +11,21 @@ import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
+type AnuncioDetalhado = Anuncio & {
+  fotos: {
+    id: string;
+    url: string;
+    ordem: number;
+    principal: boolean;
+    anuncioId: string;
+  }[];
+
+  datasBloqueadas?: {
+    dataInicio: string;
+    dataFim: string;
+  }[];
+};
+
 class ApiService {
   private api = axios.create({
     baseURL: "http://localhost:3000/api",
@@ -85,11 +100,7 @@ class ApiService {
     get: async (
       id: string,
     ): Promise<{
-      data: Anuncio & {
-        fotos: {
-          url: string;
-        }[];
-      };
+      data: AnuncioDetalhado;
     }> => {
       const response = await this.api.get(`anuncio/${id}`);
 

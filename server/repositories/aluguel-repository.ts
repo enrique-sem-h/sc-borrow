@@ -29,15 +29,19 @@ class AluguelRepository {
     return result;
   }
 
-  static async read(id: string): Promise<Aluguel | undefined> {
-    // Chamar o Drizzle para ler anuncio
-    const aluguel = await db.query.alugueis.findFirst({
+  static async read(id: string) {
+    return db.query.alugueis.findFirst({
+      with: {
+        locador: true,
+        locatario: true,
+        anuncio: {
+          with: { fotos: true },
+        },
+      },
       where(fields, operators) {
         return operators.eq(fields.id, id);
       },
     });
-
-    return aluguel;
   }
 
   static async getAlugueisComoLocatarioByUser(

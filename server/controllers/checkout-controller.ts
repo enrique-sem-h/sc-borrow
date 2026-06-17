@@ -6,8 +6,15 @@ import Stripe from "stripe";
 import { validate } from "../middlewares/validate";
 import { pagamentoSchema } from "@/modules/zod/schemas/pagamentoSchema";
 import AluguelService from "../services/aluguel-service";
+import AluguelRepository from "../repositories/aluguel-repository";
 import { CreateAluguelDTO } from "../types";
 import { buffer } from "stream/consumers";
+import { db } from "@/infra/database";
+import { anuncios } from "@/infra/database/schemas/anunciosSchema";
+import { eq } from "drizzle-orm";
+import UserRepository from "../repositories/user-repository";
+import { dbFirebase } from "@/infra/firebase";
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -27,6 +34,18 @@ class CheckoutController extends BaseController {
       validate({ body: pagamentoSchema }),
       async () => {
         try {
+          const conflito = await AluguelRepository.findConflictAnuncio(
+            req.body.idAnuncio,
+            new Date(req.body.dataInicio),
+            new Date(req.body.dataFim),
+          );
+
+          if (conflito) {
+            return res.status(409).json({
+              error: "Este anúncio já está reservado para as datas selecionadas.",
+            });
+          }
+
           const paymentIntent = await stripe.paymentIntents.create({
             amount: req.body.valor,
             currency: "brl",
@@ -79,19 +98,69 @@ class CheckoutController extends BaseController {
       const intent = event.data.object;
       const data = intent.metadata;
 
+      const [anuncio] = await db
+        .select()
+        .from(anuncios)
+        .where(eq(anuncios.id, data.idAnuncio))
+        .limit(1);
+
+      const idLocador = anuncio?.usuarioId;
+      if (!idLocador) {
+        return res.status(400).json({ error: "Anúncio não encontrado" });
+      }
+
       const aluguelDTO = {
         dataFim: new Date(data.dataFim),
         dataInicio: new Date(data.dataInicio),
         idAnuncio: data.idAnuncio,
-        idLocador: data.userId,
+        idLocador,
         idLocatario: data.idLocatario,
         valorTotal: intent.amount / 100,
       } as CreateAluguelDTO;
 
-      const aluguel = await this.aluguelService.create(aluguelDTO);
+      let aluguel;
+      try {
+        aluguel = await this.aluguelService.create(aluguelDTO);
+      } catch (err) {
+        console.error("Erro ao criar aluguel no webhook:", err);
+        return res.status(200).json({ received: true });
+      }
 
       if (aluguel) {
-        res.status(200).json({ message: "aluguel created!", aluguel });
+        try {
+          const conversasRef = collection(dbFirebase, "conversas");
+          const existing = await getDocs(
+            query(conversasRef, where("idAluguel", "==", aluguel.id)),
+          );
+
+          if (existing.empty) {
+            const [locador, locatario] = await Promise.all([
+              UserRepository.read(idLocador),
+              UserRepository.read(data.idLocatario),
+            ]);
+
+            const periodo = `${new Date(data.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(data.dataFim).toLocaleDateString("pt-BR")}`;
+
+            await addDoc(conversasRef, {
+              idAluguel: aluguel.id,
+              idAnuncio: data.idAnuncio,
+              idLocador,
+              idLocatario: data.idLocatario,
+              nomeLocador: locador?.nome || "Proprietário",
+              nomeLocatario: locatario?.nome || "Locatário",
+              participantes: [idLocador, data.idLocatario],
+              itemAcordo: anuncio.titulo,
+              periodoAcordo: periodo,
+              ultimaMensagem: "",
+              naoLidas: {},
+              criadoEm: serverTimestamp(),
+            });
+          }
+        } catch (err) {
+          console.error("Erro ao criar conversa no Firestore:", err);
+        }
+
+        return res.status(200).json({ message: "aluguel created!", aluguel });
       }
     }
 

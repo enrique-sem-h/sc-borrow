@@ -67,7 +67,6 @@ export default function DetalhesAnuncioPage() {
   const anunciosQuery = useGetAnuncio(idAnuncio);
   const anuncio = anunciosQuery.data?.data;
   const loading = anunciosQuery.isLoading;
-  const fotoPrincipal = anuncio?.fotos.find((foto) => foto.principal);
 
   const {
     handleSubmit,
@@ -79,14 +78,6 @@ export default function DetalhesAnuncioPage() {
     resolver: zodResolver(reservaSchema),
     defaultValues: { dataInicio: "", dataFim: "" },
   });
-
-  if (loading) {
-    return null;
-  }
-
-  if (!anuncio) {
-    return router.back();
-  }
 
   const dataInicioW = watch("dataInicio");
   const dataFimW = watch("dataFim");
@@ -148,6 +139,14 @@ export default function DetalhesAnuncioPage() {
     router.push(`/confirmarreserva?${query.toString()}`);
   };
 
+  if (loading) {
+    return null;
+  }
+
+  if (!anuncio) {
+    return router.back;
+  }
+
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
       <header className="px-12 py-4 border-b border-gray-100 flex items-center gap-4">
@@ -163,9 +162,13 @@ export default function DetalhesAnuncioPage() {
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
           <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {fotoPrincipal ? (
+            {anuncio.foto_principal ? (
               <img
-                src={fotoPrincipal.url}
+                src={
+                  fotoPricipal.startsWith("http")
+                    ? fotoPricipal
+                    : `/${fotoPricipal}`
+                }
                 alt={anuncio?.titulo}
                 className="max-h-full object-contain"
               />

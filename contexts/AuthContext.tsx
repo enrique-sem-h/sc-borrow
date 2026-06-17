@@ -9,16 +9,19 @@ type Context = {
   logout: () => void;
   user: Usuario | null;
   isAuth: boolean;
+  isLoadingUser: boolean;
 };
 
 const AuthContext = createContext<Context | undefined>(undefined);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const isAuth = !!user;
 
   useEffect(() => {
     (async () => {
+      setLoadingUser(true);
       try {
         const user = localStorage.getItem("user");
 
@@ -33,6 +36,8 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.log(error.message);
+      } finally {
+        setLoadingUser(false);
       }
     })();
   }, []);
@@ -56,8 +61,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuth }}>
-      {children}
+    <AuthContext.Provider
+      value={{ user, login, logout, isAuth, isLoadingUser: loadingUser }}
+    >
+      {!loadingUser ? children : null}
     </AuthContext.Provider>
   );
 };
