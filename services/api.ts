@@ -113,8 +113,27 @@ class ApiService {
 
       return response.data;
     },
-    edit: async (id: string, newData: UpdateAnuncioDTO) => {
-      const response = await this.api.put(`anuncio/${id}`, newData);
+    edit: async (id: string, newData: any) => {
+      const formData = new FormData();
+      const { fotos, ...restData } = newData;
+
+      for (const [key, value] of Object.entries(restData)) {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      }
+
+      if (Array.isArray(fotos)) {
+        fotos.forEach((foto) => {
+          if (foto instanceof File) {
+            formData.append("fotos", foto, foto.name);
+          }
+        });
+      }
+
+      const response = await this.api.put(`anuncio/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       return response.data;
     },

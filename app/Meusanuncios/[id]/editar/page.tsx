@@ -3,31 +3,22 @@ import AnunciarForm from "@/components/forms/anunciar-form";
 import { useEditAnuncio } from "@/modules/react-query/mutations/anuncios-mutations";
 import { useGetAnuncio } from "@/modules/react-query/queries/anuncios-queries";
 import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
-import { UpdateAnuncioDTO } from "@/server/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, Image as ImageIcon, Check } from "lucide-react";
+import { ChevronLeft, Check } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import z from "zod";
 
-function maskCurrency(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  return (parseInt(digits, 10) / 100).toFixed(2).replace(".", ",");
-}
-
-type FormType = UpdateAnuncioDTO;
-
 const schema = insertAnuncioSchema.extend({
-  // fotos: z.array(z.instanceof(File)).min(3),
+  fotos: z.array(z.any()).min(3),
 });
+
+type FormType = z.infer<typeof schema>;
 
 export default function EditarAnuncioPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const params = useParams();
   const idAnuncio = params?.id as string;
 
@@ -51,21 +42,14 @@ export default function EditarAnuncioPage() {
     },
   });
 
-  const {
-    setValues,
-    formState: { errors },
-  } = formHook;
+  const { reset } = formHook;
 
   const onFormSubmit: SubmitHandler<FormType> = async (data: FormType) => {
-    console.log(data);
-
     if (!idAnuncio) return;
 
     try {
-      const response = await editAnuncioMutation.mutateAsync({
-        id: idAnuncio,
-        data,
-      });
+      await editAnuncioMutation.mutateAsync({ id: idAnuncio, data } as any);
+      setShowModal(true);
     } catch (error) {
       toast("Erro ao salvar anúncio", { type: "error" });
     }
@@ -73,17 +57,10 @@ export default function EditarAnuncioPage() {
 
   useEffect(() => {
     if (getAnuncioQuery.isFetching) return;
+    if (!getAnuncioQuery.data?.data) return;
 
-    if (getAnuncioQuery.error) {
-    } else {
-      const { fotos, ...others } = getAnuncioQuery.data.data;
-
-      const fotosToFiles = fotos.map((foto) => {
-        return foto;
-      });
-
-      setValues({ ...others, fotos: fotosToFiles });
-    }
+    const { fotos, ...others } = getAnuncioQuery.data.data;
+    reset({ ...others, fotos });
   }, [getAnuncioQuery.isFetching]);
 
   if (loadingAnuncio) {
@@ -98,14 +75,6 @@ export default function EditarAnuncioPage() {
 
   return (
     <main className="h-screen w-full bg-white flex flex-col overflow-hidden font-sans text-[#1a1a1a]">
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/*"
-        className="hidden"
-      />
-
       <header className="px-12 py-6 flex items-center gap-6 shrink-0">
         <button
           onClick={() => router.back()}
@@ -176,34 +145,5 @@ export default function EditarAnuncioPage() {
         }
       `}</style>
     </main>
-  );
-}
-
-function Label({ text, required }: { text: string; required?: boolean }) {
-  return (
-    <label className="block text-gray-700 text-sm font-serif font-semibold mb-1.5 ml-1">
-      {text}
-      {required && <span className="text-red-500 ml-1 font-sans">*</span>}
-    </label>
-  );
-}
-
-function Input({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-}) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm outline-none focus:ring-4 focus:ring-blue-50/50 shadow-sm transition-all placeholder:text-gray-300"
-    />
   );
 }
