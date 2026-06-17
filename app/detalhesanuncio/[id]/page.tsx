@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useForm, Controller } from "react-hook-form";
@@ -38,27 +37,6 @@ const reservaSchema = z
 
 type ReservaFormValues = z.infer<typeof reservaSchema>;
 
-interface AnuncioDetalhes {
-  id: string;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  valorDiario: number;
-  caucao: number;
-  foto_principal: string | null;
-}
-
-const MOCK_ANUNCIO: AnuncioDetalhes = {
-  id: "",
-  titulo: "Furadeira de Impacto 1/2 Pol. 600W 220V Tramontina PRO-424100-F6",
-  descricao:
-    "Ideal para perfurações em concreto, alvenaria e madeira. Alta performance, empunhadura ergonômica, acompanha chave de mandril e manual técnico.",
-  categoria: "Ferramentas",
-  valorDiario: 35.0,
-  caucao: 100.0,
-  foto_principal: null,
-};
-
 export default function DetalhesAnuncioPage() {
   const router = useRouter();
   const params = useParams();
@@ -67,6 +45,7 @@ export default function DetalhesAnuncioPage() {
   const anunciosQuery = useGetAnuncio(idAnuncio);
   const anuncio = anunciosQuery.data?.data;
   const loading = anunciosQuery.isLoading;
+  const fotoPricipal = anuncio?.fotos.find((foto) => foto.principal);
 
   const {
     handleSubmit,
@@ -81,12 +60,23 @@ export default function DetalhesAnuncioPage() {
 
   const dataInicioW = watch("dataInicio");
   const dataFimW = watch("dataFim");
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+
+  if (loading) {
+    return null;
+  }
+
+  if (!anuncio) {
+    return router.back();
+  }
 
   const datasBloqueadas =
     anuncio?.datasBloqueadas?.map((periodo) => ({
       from: parseISO(periodo.dataInicio.slice(0, 10)),
       to: parseISO(periodo.dataFim.slice(0, 10)),
     })) ?? [];
+  console.log(anuncio);
 
   const obterRangeDoForm = (): DateRange | undefined => {
     const inicio = dataInicioW ? parseISO(dataInicioW) : undefined;
@@ -129,7 +119,7 @@ export default function DetalhesAnuncioPage() {
       idAnuncio: idAnuncio,
       idLocatario: user?.id ?? "",
       titulo: anuncio.titulo,
-      foto: anuncio.foto_principal ?? "",
+      foto: fotoPricipal?.url ?? "",
       dataInicio: data.dataInicio,
       dataFim: data.dataFim,
       valorDiario: String(anuncio.valorDiario),
@@ -138,14 +128,6 @@ export default function DetalhesAnuncioPage() {
     });
     router.push(`/confirmarreserva?${query.toString()}`);
   };
-
-  if (loading) {
-    return null;
-  }
-
-  if (!anuncio) {
-    return router.back;
-  }
 
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
@@ -162,13 +144,9 @@ export default function DetalhesAnuncioPage() {
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
           <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {anuncio.foto_principal ? (
+            {fotoPricipal ? (
               <img
-                src={
-                  fotoPricipal.startsWith("http")
-                    ? fotoPricipal
-                    : `/${fotoPricipal}`
-                }
+                src={fotoPricipal.url}
                 alt={anuncio?.titulo}
                 className="max-h-full object-contain"
               />
@@ -195,7 +173,7 @@ export default function DetalhesAnuncioPage() {
             <div className="w-14 h-14 bg-gray-200 rounded-full flex-shrink-0" />
             <div>
               <h3 className="text-base font-bold flex items-center gap-1.5 text-gray-900">
-                Proprietário
+                {anuncio.locador.nome}
                 <CheckCircle
                   size={16}
                   className="text-blue-500 fill-blue-500 text-white"
@@ -278,6 +256,12 @@ export default function DetalhesAnuncioPage() {
                   range_end: "rounded-r-full bg-blue-600",
                   range_middle: "bg-blue-50 text-blue-600",
                 }}
+                disabled={[
+                  {
+                    before: tomorrowDate,
+                  },
+                  ...datasBloqueadas,
+                ]}
               />
             </div>
 

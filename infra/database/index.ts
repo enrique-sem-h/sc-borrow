@@ -11,6 +11,8 @@ import {
   alugueisRelations,
   usuarioRelations,
 } from "./schemas/alugueisSchema";
+
+import { usuariosRelations as usersRelations } from "./schemas/usuariosSchema";
 import { usuarios } from "./schemas/usuariosSchema";
 
 const config = {
@@ -31,6 +33,7 @@ export const db = drizzle(poolConnection, {
     alugueis,
     usuarioRelations,
     alugueisRelations,
+    usersRelations,
   },
   mode: "default",
 });

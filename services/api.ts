@@ -11,7 +11,7 @@ import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
-type AnuncioDetalhado = Anuncio & {
+export type AnuncioDetalhado = Anuncio & {
   fotos: {
     id: string;
     url: string;
@@ -19,7 +19,7 @@ type AnuncioDetalhado = Anuncio & {
     principal: boolean;
     anuncioId: string;
   }[];
-
+  locador: Usuario;
   datasBloqueadas?: {
     dataInicio: string;
     dataFim: string;

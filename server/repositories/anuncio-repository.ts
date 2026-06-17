@@ -8,6 +8,7 @@ import { db } from "@/infra/database/index";
 import { eq, ne, and } from "drizzle-orm";
 import { usuarios } from "@/infra/database/schemas/usuariosSchema";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
+import { AnuncioDetalhado } from "@/services/api";
 
 class AnuncioRepository {
   static async getAll(userId: string): Promise<Anuncio[]> {
@@ -49,32 +50,27 @@ class AnuncioRepository {
     return result;
   }
 
-  static async read(id: string): Promise<Anuncio | undefined> {
+  static async read(id: string): Promise<AnuncioDetalhado | undefined> {
     // Chamar o Drizzle para ler anuncio
     //
     const anuncio = await db.query.anuncios.findFirst({
       where(fields, operators) {
         return operators.eq(fields.id, id);
       },
-      with: { fotos: true },
+      with: { fotos: true, locador: true },
     });
 
-    if(!anuncio) {
+    if (!anuncio) {
       return undefined;
     }
 
     const datasBloqueadas = await db
-    .select({
-      dataInicio: alugueis.dataInicio,
-      dataFim: alugueis.dataFim,
-    })
-    .from(alugueis)
-    .where(
-      and(
-        eq(alugueis.idAnuncio, id),
-        ne(alugueis.status, "CANCELLED"),
-      ),
-    );
+      .select({
+        dataInicio: alugueis.dataInicio,
+        dataFim: alugueis.dataFim,
+      })
+      .from(alugueis)
+      .where(and(eq(alugueis.idAnuncio, id), ne(alugueis.status, "CANCELLED")));
 
     return {
       ...anuncio,
