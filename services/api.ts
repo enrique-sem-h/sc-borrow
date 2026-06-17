@@ -82,7 +82,15 @@ class ApiService {
 
       return response.data;
     },
-    get: async (id: string) => {
+    get: async (
+      id: string,
+    ): Promise<{
+      data: Anuncio & {
+        fotos: {
+          url: string;
+        }[];
+      };
+    }> => {
       const response = await this.api.get(`anuncio/${id}`);
 
       return response.data;

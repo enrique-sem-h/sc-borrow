@@ -35,11 +35,13 @@ export const alugueis = mysqlTable("alugueis", {
     length: 50,
     enum: [
       "WAITING_FOR_PAYMANT",
-      "CANCELLED",
+      "WAITING_FOR_CONFIRM",
       "WAITING_FOR_DISPATCH",
       "WAITING_FOR_DELIVERY",
       "ITEM_IN_HAND",
+      "WAITING_FOR_RETURN_CONFIRM",
       "COMPLETED",
+      "CANCELLED",
     ],
   }).default("WAITING_FOR_DISPATCH"),
 });
