@@ -164,9 +164,9 @@ export default function DetalhesAnuncioPage() {
             {fotoPricipal ? (
               <img
                 src={
-                  fotoPricipal.startsWith("http")
-                  ? fotoPricipal
-                  : `/${fotoPricipal}`
+                  fotoPricipal.startsWith("http") || fotoPricipal.startsWith("/")
+                    ? fotoPricipal
+                    : `/${fotoPricipal}`
                 }
                 alt={anuncio?.titulo}
                 className="max-h-full object-contain"
