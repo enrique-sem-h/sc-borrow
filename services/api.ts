@@ -28,7 +28,7 @@ export type AnuncioDetalhado = Anuncio & {
 
 class ApiService {
   private api = axios.create({
-    baseURL: "http://localhost:3000/api",
+    baseURL: process.env.NEXT_PUBLIC_APP_URL,
     headers: {
       Accept: "application/json",
     },
@@ -162,8 +162,27 @@ class ApiService {
 
       return response.data;
     },
-    edit: async (id: string, newData: UpdateAnuncioDTO) => {
-      const response = await this.api.put(`anuncio/${id}`, newData);
+    edit: async (id: string, newData: any) => {
+      const formData = new FormData();
+      const { fotos, ...restData } = newData;
+
+      for (const [key, value] of Object.entries(restData)) {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      }
+
+      if (Array.isArray(fotos)) {
+        fotos.forEach((foto) => {
+          if (foto instanceof File) {
+            formData.append("fotos", foto, foto.name);
+          }
+        });
+      }
+
+      const response = await this.api.put(`anuncio/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       return response.data;
     },

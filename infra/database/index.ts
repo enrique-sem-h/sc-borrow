@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import mysql, { SslOptions } from "mysql2/promise";
 import {
   anuncios,
   anunciosRelations,
@@ -14,12 +14,15 @@ import {
 
 import { usuariosRelations as usersRelations } from "./schemas/usuariosSchema";
 import { usuarios } from "./schemas/usuariosSchema";
+import { boolean } from "zod";
 
-const config = {
+const config: mysql.PoolOptions = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT ?? "3306"),
+  ssl: getSslValues(),
 };
 
 const poolConnection = mysql.createPool(config);
@@ -37,3 +40,15 @@ export const db = drizzle(poolConnection, {
   },
   mode: "default",
 });
+
+function getSslValues(): string | SslOptions | undefined {
+  if (process.env.CA_CERTIFICATE) {
+    return {
+      ca: process.env.CA_CERTIFICATE,
+      rejectUnauthorized: true,
+    };
+  }
+  return process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: true }
+    : { rejectUnauthorized: false };
+}
