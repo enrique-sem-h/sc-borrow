@@ -28,7 +28,7 @@ type AnuncioDetalhado = Anuncio & {
 
 class ApiService {
   private api = axios.create({
-    baseURL: process.env.APP_URL,
+    baseURL: process.env.NEXT_PUBLIC_APP_URL,
     headers: {
       Accept: "application/json",
     },
