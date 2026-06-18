@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "POST") {
-    return aluguelHandlers.cancel(req as NextAuthApiRequest, res);
+    return aluguelHandlers.confirmAluguel(req as NextAuthApiRequest, res);
   }
-  return res.status(405).json({ error: "Method not allowed" });
+  return res.status(405).json({ error: "Metodo nao permitido" });
 }

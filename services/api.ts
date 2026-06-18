@@ -65,6 +65,57 @@ class ApiService {
 
       return response.data;
     },
+    get: async (
+      id: string,
+    ): Promise<{
+      data: Aluguel & {
+        locador: Usuario;
+        locatario: Usuario;
+        anuncio: Anuncio & {
+          fotos: {
+            url: string;
+            principal: string;
+          }[];
+        };
+      };
+    }> => {
+      const response = await this.api.get(`aluguel/${id}`);
+
+      return response.data;
+    },
+
+    changeStatus: async (id: string, status: Aluguel["status"]) => {
+      let route: string;
+      switch (status) {
+        case "WAITING_FOR_DISPATCH":
+          route = "/confirm-aluguel";
+          break;
+        case "WAITING_FOR_DELIVERY":
+          route = "/dispatch";
+          break;
+        case "ITEM_IN_HAND":
+          route = "/confirm-received";
+          break;
+        case "WAITING_FOR_RETURN_CONFIRM":
+          route = "/confirm-returning";
+          break;
+        case "COMPLETED":
+          route = "/confirm-returned-item";
+          break;
+        case "CANCELLED":
+          route = "/cancel";
+          break;
+        default:
+          throw new Error("Invalid status");
+      }
+
+      const endpoint = `aluguel/${id}${route}`;
+      console.log("Changing status", id, status, endpoint);
+
+      const response = await this.api.post(endpoint);
+
+      return response.data;
+    },
   };
 
   public anuncios = {

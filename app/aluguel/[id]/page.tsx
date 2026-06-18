@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ConfirmedOrderModal } from "@/components/ui/confirmed-order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -12,35 +12,13 @@ import { useGetAluguel } from "@/modules/react-query/queries/aluguel-queries";
 import { Aluguel } from "@/server/types";
 import { aluguelStatusArr } from "@/infra/database/schemas/alugueisSchema";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/contexts/AuthContext";
 
-function timelineSteps(status: Aluguel["status"], locatarioNome: string) {
-  const enumToArr = aluguelStatusArr;
-  const idx = status === "CANCELLED" ? -1 : enumToArr.indexOf(status);
-
-  return [
-    {
-      label: "Pedido recebido",
-      done: idx >= enumToArr.indexOf("WAITING_FOR_DISPATCH"),
-    },
-    {
-      label: "Envio confirmado",
-      done: idx >= enumToArr.indexOf("WAITING_FOR_DELIVERY"),
-    },
-    {
-      label: `Item com ${locatarioNome || "o locatário"}`,
-      done: idx >= enumToArr.indexOf("ITEM_IN_HAND"),
-    },
-    {
-      label: "Aluguel concluído",
-      done: idx >= enumToArr.indexOf("COMPLETED"),
-    },
-  ];
-}
-
-function AndamentoLocadorContent() {
+function AndamentoAluguelContent() {
   const router = useRouter();
-  const params = useSearchParams();
-  const id = params?.get("id") ?? "";
+  const params = useParams()!;
+  const id = params.id;
+  const { user } = useAuth()!;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dispatching, setDispatching] = useState(false);
@@ -49,6 +27,7 @@ function AndamentoLocadorContent() {
   const aluguel = aluguelQuery.data?.data;
   const mutation = useChangeAluguelStatus();
   const loadingMutation = mutation.isPending;
+  const isLocador = aluguel?.locador.id === user?.id;
 
   const handleDispatch = async () => {
     const currentIndex = aluguelStatusArr.indexOf(aluguel!.status);
@@ -88,6 +67,67 @@ function AndamentoLocadorContent() {
       setDispatching(false);
     }
   };
+
+  function timelineSteps(status: Aluguel["status"], locatarioNome: string) {
+    const enumToArr = aluguelStatusArr;
+    const idx = status === "CANCELLED" ? -1 : enumToArr.indexOf(status);
+
+    if (isLocador) {
+      return [
+        {
+          label: "Pedido recebido",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_CONFIRM"),
+        },
+        {
+          label: "Pedido confirmado",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_DISPATCH"),
+        },
+        {
+          label: "Envio confirmado",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_DELIVERY"),
+        },
+        {
+          label: `Item com o locatário`,
+          done: idx >= enumToArr.indexOf("ITEM_IN_HAND"),
+        },
+        {
+          label: "Envio confirmado pelo locatário",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_RETURN_CONFIRM"),
+        },
+        {
+          label: "Aluguel concluído",
+          done: idx >= enumToArr.indexOf("COMPLETED"),
+        },
+      ];
+    } else {
+      return [
+        {
+          label: "Pedido realizado com sucesso",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_CONFIRM"),
+        },
+        {
+          label: "Pedido confirmado pelo locador",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_DISPATCH"),
+        },
+        {
+          label: "Envio confirmado pelo locador",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_DELIVERY"),
+        },
+        {
+          label: "Item recebido",
+          done: idx >= enumToArr.indexOf("ITEM_IN_HAND"),
+        },
+        {
+          label: "Aguardando confirmação de chegada do item",
+          done: idx >= enumToArr.indexOf("WAITING_FOR_RETURN_CONFIRM"),
+        },
+        {
+          label: "Aluguel concluído",
+          done: idx >= enumToArr.indexOf("COMPLETED"),
+        },
+      ];
+    }
+  }
 
   if (loading) {
     return (
@@ -186,7 +226,6 @@ function AndamentoLocadorContent() {
 
   function renderButton() {
     const currentIndex = aluguelStatusArr.indexOf(aluguel!.status);
-    const nextStatus = aluguelStatusArr.at(currentIndex + 1);
     const currentStatus = aluguel!.status;
     console.log(currentStatus, "currentStatus");
 
@@ -201,8 +240,6 @@ function AndamentoLocadorContent() {
       "ITEM_IN_HAND",
     ];
 
-    const isLocador = true;
-
     const isVisible = isLocador
       ? visibleForLocador.includes(currentStatus)
       : visibleForLocatario.includes(currentStatus);
@@ -215,9 +252,9 @@ function AndamentoLocadorContent() {
       <button
         type="button"
         onClick={handleDispatch}
-        disabled={!podeDespachar || dispatching}
+        disabled={loadingMutation}
         className={`px-6 py-2 text-white text-sm font-bold rounded-full shadow-md transition cursor-pointer ${
-          podeDespachar
+          true
             ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
             : "bg-gray-300 cursor-not-allowed"
         }`}
@@ -226,6 +263,20 @@ function AndamentoLocadorContent() {
       </button>
     );
   }
+
+  async function handleCancel() {
+    try {
+      await mutation.mutateAsync({
+        id,
+        status: "CANCELLED",
+      });
+    } catch (error) {
+      toast("Erro ao cancelar", {
+        type: "error",
+      });
+    }
+  }
+  console.log(aluguel);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 relative">
@@ -310,6 +361,21 @@ function AndamentoLocadorContent() {
             </div>
 
             <div className="flex justify-center mt-8">{renderButton()}</div>
+            {!["CANCELLED", "COMPLETED"].includes(aluguel.status) && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={handleCancel}
+                  disabled={loadingMutation}
+                  className="px-6 py-2 bg-[#f0655d] hover:bg-red-600 text-white text-sm font-bold rounded-full shadow-md shadow-red-100 transition disabled:opacity-60"
+                >
+                  {loadingMutation ? (
+                    <Spinner className="size-3" />
+                  ) : (
+                    "Cancelar pedido"
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -373,7 +439,7 @@ function AndamentoLocadorContent() {
 export default function AndamentoLocadorPage() {
   return (
     <Suspense>
-      <AndamentoLocadorContent />
+      <AndamentoAluguelContent />
     </Suspense>
   );
 }

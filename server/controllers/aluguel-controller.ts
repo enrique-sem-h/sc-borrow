@@ -47,9 +47,8 @@ class AluguelController extends BaseController {
           }
 
           return fail("erro ao adicionar aluguel", 500);
-
-        }catch(err) {
-            return res.status(400).json({
+        } catch (err) {
+          return res.status(400).json({
             error: err instanceof Error ? err.message : "Erro ao criar aluguel",
           });
         }
@@ -178,13 +177,17 @@ class AluguelController extends BaseController {
     });
   }
 
-  public async confirmReceived(req: NextAuthApiRequest, res: NextApiResponse) {
+  public async confirmAluguel(req: NextAuthApiRequest, res: NextApiResponse) {
     this.handleRequest(req, res, async () => {
       try {
         const { id } = req.query;
         const caller = req.userId;
 
-        await this.aluguelService.confirmReceived(id as string, caller);
+        await this.aluguelService.confirmAluguel(id as string, caller);
+
+        return res.status(200).send({
+          message: "Success",
+        });
       } catch (err) {
         if (err instanceof NotFoundError) {
           return res.status(404).send({
@@ -206,6 +209,90 @@ class AluguelController extends BaseController {
         const caller = req.userId;
 
         await this.aluguelService.dispatch(id as string, caller);
+
+        return res.status(200).send({
+          message: "Success",
+        });
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
+      }
+    });
+  }
+
+  public async confirmReceived(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.confirmReceived(id as string, caller);
+
+        return res.status(200).send({
+          message: "Success",
+        });
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
+      }
+    });
+  }
+
+  public async confirmReturningItem(
+    req: NextAuthApiRequest,
+    res: NextApiResponse,
+  ) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.confirmReturningItem(id as string, caller);
+
+        return res.status(200).send({
+          message: "Success",
+        });
+      } catch (err) {
+        if (err instanceof NotFoundError) {
+          return res.status(404).send({
+            error: "Aluguel not found",
+          });
+        }
+
+        return res.status(500).send({
+          error: err.message,
+        });
+      }
+    });
+  }
+
+  public async confirmReturnedItem(
+    req: NextAuthApiRequest,
+    res: NextApiResponse,
+  ) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const { id } = req.query;
+        const caller = req.userId;
+
+        await this.aluguelService.confirmReturnedItem(id as string, caller);
+        return res.status(200).send({
+          message: "Success",
+        });
       } catch (err) {
         if (err instanceof NotFoundError) {
           return res.status(404).send({
@@ -227,6 +314,10 @@ class AluguelController extends BaseController {
         const caller = req.userId;
 
         await this.aluguelService.cancel(id as string, caller);
+
+        return res.status(200).send({
+          message: "Success",
+        });
       } catch (err) {
         if (err instanceof NotFoundError) {
           return res.status(404).send({

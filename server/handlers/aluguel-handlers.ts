@@ -8,8 +8,11 @@ const aluguelHandlers = {
   delete: controller.delete.bind(controller),
   update: controller.update.bind(controller),
   getAll: controller.getAll.bind(controller),
+  confirmAluguel: controller.confirmAluguel.bind(controller),
   dispatch: controller.dispatch.bind(controller),
   confirmReceived: controller.confirmReceived.bind(controller),
+  confirmReturningItem: controller.confirmReturningItem.bind(controller),
+  confirmReturnedItem: controller.confirmReturnedItem.bind(controller),
   cancel: controller.cancel.bind(controller),
 };
 

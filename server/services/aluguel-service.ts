@@ -19,15 +19,14 @@ export class NotFoundError extends Error {
 
 class AluguelService extends BaseService {
   public async create(body: CreateAluguelDTO): Promise<Aluguel> {
-
-    if(!body.idAnuncio) {
+    if (!body.idAnuncio) {
       throw new Error("Anúncio inválido.");
     }
-    
+
     const conflito = await AluguelRepository.findConflictAnuncio(
       body.idAnuncio,
       body.dataInicio,
-      body.dataFim
+      body.dataFim,
     );
 
     if (conflito) {
@@ -57,30 +56,17 @@ class AluguelService extends BaseService {
     return AluguelRepository.delete(id);
   }
 
-  public async confirmAluguel(id: string) {
+  public async confirmAluguel(id: string, caller: string) {
     const aluguel = await AluguelRepository.read(id);
 
     if (!aluguel) {
       throw new NotFoundError("Aluguel not found");
     }
 
-    this.ensureInStatus(aluguel, "WAITING_FOR_PAYMANT");
+    this.ensureCallerIsLocador(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_CONFIRM");
 
     await this.changeStatus(aluguel, "WAITING_FOR_DISPATCH");
-  }
-
-  public async confirmReceived(id: string, caller: string) {
-    const aluguel = await AluguelRepository.read(id);
-
-    if (!aluguel) {
-      throw new NotFoundError("Aluguel not found");
-    }
-
-    this.ensureCallerIsLocatario(aluguel, caller);
-    this.ensureIsInDataRangeOrCancel(aluguel);
-    this.ensureInStatus(aluguel, "WAITING_FOR_DELIVERY");
-
-    await this.changeStatus(aluguel, "ITEM_IN_HAND");
   }
 
   public async dispatch(id: string, caller: string) {
@@ -91,10 +77,48 @@ class AluguelService extends BaseService {
     }
 
     this.ensureCallerIsLocador(aluguel, caller);
-    this.ensureIsInDataRangeOrCancel(aluguel);
     this.ensureInStatus(aluguel, "WAITING_FOR_DISPATCH");
 
     await this.changeStatus(aluguel, "WAITING_FOR_DELIVERY");
+  }
+
+  public async confirmReceived(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocatario(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_DELIVERY");
+
+    await this.changeStatus(aluguel, "ITEM_IN_HAND");
+  }
+
+  public async confirmReturningItem(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocatario(aluguel, caller);
+    this.ensureInStatus(aluguel, "ITEM_IN_HAND");
+
+    await this.changeStatus(aluguel, "WAITING_FOR_RETURN_CONFIRM");
+  }
+
+  public async confirmReturnedItem(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocador(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_RETURN_CONFIRM");
+
+    await this.changeStatus(aluguel, "COMPLETED");
   }
 
   public async cancel(id: string, caller: string) {
@@ -159,6 +183,8 @@ class AluguelService extends BaseService {
     const isInDataRange = now >= aluguel.dataInicio && now <= aluguel.dataFim;
 
     if (!isInDataRange) {
+      console.log("ISN't in data range");
+
       await this.changeStatus(aluguel, "CANCELLED");
       throw new Error(`Aluguel is not in data range`);
     }
