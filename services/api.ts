@@ -11,7 +11,6 @@ import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
 import axios from "axios";
 
-
 type AnuncioDetalhado = Anuncio & {
   fotos: {
     id: string;
@@ -27,10 +26,9 @@ type AnuncioDetalhado = Anuncio & {
   }[];
 };
 
-
 class ApiService {
   private api = axios.create({
-    baseURL: "http://localhost:3000/api",
+    baseURL: process.env.APP_URL,
     headers: {
       Accept: "application/json",
     },
