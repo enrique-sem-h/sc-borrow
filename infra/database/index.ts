@@ -19,6 +19,7 @@ const config: mysql.PoolOptions = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT ?? "3306"),
   ssl: getSslValues(),
 };
 
@@ -38,9 +39,9 @@ export const db = drizzle(poolConnection, {
 });
 
 function getSslValues(): string | SslOptions | undefined {
-  if (process.env.POSTGRES_CA) {
+  if (process.env.CA_CERTIFICATE) {
     return {
-      ca: process.env.POSTGRES_CA,
+      ca: process.env.CA_CERTIFICATE,
       rejectUnauthorized: true,
     };
   }

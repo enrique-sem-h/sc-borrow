@@ -10,12 +10,6 @@ if (process.env.NODE_ENV === "test") {
   config({ path: ".env", override: true });
 }
 
-console.log({
-  database: process.env.DB_NAME,
-  host: process.env.DB_HOST,
-  password: process.env.DB_PASSWORD || "",
-  user: process.env.DB_USER,
-});
 export default defineConfig({
   schema: "./infra/database/schemas/*",
   out: "./infra/database/migrations",
@@ -25,5 +19,19 @@ export default defineConfig({
     host: process.env.DB_HOST,
     password: process.env.DB_PASSWORD || undefined,
     user: process.env.DB_USER,
+    port: parseInt(process.env.DB_PORT ?? "3306"),
+    ssl: getSslValues(),
   },
 });
+
+function getSslValues() {
+  if (process.env.CA_CERTIFICATE) {
+    return {
+      ca: process.env.CA_CERTIFICATE,
+      rejectUnauthorized: true,
+    };
+  }
+  return process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: true }
+    : { rejectUnauthorized: false };
+}
