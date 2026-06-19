@@ -1,14 +1,15 @@
-import {
-  Anuncio,
-  AnuncioInsert,
-} from "@/infra/database/schemas/anunciosSchema";
+import { Anuncio } from "@/infra/database/schemas/anunciosSchema";
 import {
   Usuario,
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
-import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
+import type {
+  Aluguel,
+  CreateAnuncioDTO,
+  NotificacaoDTO,
+} from "@/server/types";
 import axios from "axios";
 
 export type AnuncioDetalhado = Anuncio & {
@@ -24,6 +25,10 @@ export type AnuncioDetalhado = Anuncio & {
     dataInicio: string;
     dataFim: string;
   }[];
+};
+
+type AnuncioEditPayload = Partial<Omit<CreateAnuncioDTO, "fotos">> & {
+  fotos?: unknown[];
 };
 
 class ApiService {
@@ -118,6 +123,19 @@ class ApiService {
     },
   };
 
+  public notificacoes = {
+    getAll: async (): Promise<{ data: NotificacaoDTO[] }> => {
+      const response = await this.api.get("notificacoes");
+
+      return response.data;
+    },
+    markAsRead: async (id: string): Promise<{ data: NotificacaoDTO }> => {
+      const response = await this.api.patch(`notificacoes/${id}`);
+
+      return response.data;
+    },
+  };
+
   public anuncios = {
     insert: async (data: CreateAnuncioDTO) => {
       const formData = new FormData();
@@ -162,7 +180,7 @@ class ApiService {
 
       return response.data;
     },
-    edit: async (id: string, newData: any) => {
+    edit: async (id: string, newData: AnuncioEditPayload) => {
       const formData = new FormData();
       const { fotos, ...restData } = newData;
 

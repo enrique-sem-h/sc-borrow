@@ -14,7 +14,6 @@ import {
 
 import { usuariosRelations as usersRelations } from "./schemas/usuariosSchema";
 import { usuarios } from "./schemas/usuariosSchema";
-import { boolean } from "zod";
 
 const config: mysql.PoolOptions = {
   host: process.env.DB_HOST,

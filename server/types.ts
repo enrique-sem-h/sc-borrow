@@ -1,5 +1,6 @@
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
+import { notificacoes } from "@/infra/database/schemas/notificacoesSchema";
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { NextApiRequest } from "next";
 import formidable from "formidable";
@@ -50,3 +51,6 @@ export interface NextAuthApiRequest extends NextApiRequest {
 export interface NextFormApiRequest extends NextApiRequest {
   files?: formidable.Files<string>;
 }
+
+export type CreateNotificacaoDTO = InferInsertModel<typeof notificacoes>;
+export type NotificacaoDTO = InferSelectModel<typeof notificacoes>;

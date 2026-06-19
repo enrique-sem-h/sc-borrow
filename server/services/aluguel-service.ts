@@ -1,14 +1,15 @@
-import {
-  alugueis,
-  AluguelStatus,
-  AluguelType,
-} from "@/infra/database/schemas/alugueisSchema";
 import { AluguelTipo } from "../controllers/aluguel-controller";
 import AluguelRepository from "../repositories/aluguel-repository";
-import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
+import {
+  Aluguel,
+  CreateAluguelDTO,
+  CreateNotificacaoDTO,
+  UpdateAluguelDTO,
+} from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
 import { arquivarConversaPorAluguel } from "../lib/arquivarConversa";
+import NotificacoesRepository from "../repositories/notificacoes-repository";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -33,7 +34,18 @@ class AluguelService extends BaseService {
     if (conflito) {
       throw new Error("Este anúncio já está alugado nesse período.");
     }
-    return await AluguelRepository.create(body);
+    const create = await AluguelRepository.create(body);
+
+    if (create) {
+      const notificacao = {
+        type: "aluguel",
+        title: "Novo Aluguel",
+        usuarioId: body.idLocador,
+        message: `Novo aluguel no valor de R$${body.valorTotal}. Verifique em Meus Alugueis`,
+      } as CreateNotificacaoDTO;
+      await NotificacoesRepository.create(notificacao);
+    }
+    return create;
   }
 
   public async update(id: string, body: UpdateAluguelDTO) {
