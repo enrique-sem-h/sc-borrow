@@ -106,13 +106,6 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
             </button>
           </div>
         </div>
-
-        <button
-          onClick={() => router.push("/meusalugueis/historico")}
-          className="px-5 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition"
-        >
-          Histórico
-        </button>
       </div>
 
       {loading && (
