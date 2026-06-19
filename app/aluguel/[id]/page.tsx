@@ -171,7 +171,7 @@ function AndamentoAluguelContent() {
 
   const valorDiario = aluguel.anuncio?.valorDiario ?? 0;
   const subtotal = valorDiario * dias;
-  const taxaServico = 12;
+  const taxaServico = subtotal * 0.12;
   const caucao = aluguel.valorTotal - subtotal - taxaServico;
 
   const steps = timelineSteps(aluguel.status!, aluguel.locatario?.nome ?? "");

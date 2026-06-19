@@ -108,7 +108,7 @@ export default function DetalhesAnuncioPage() {
 
   let totalDias = 0;
   let valorAluguel = 0;
-  const taxaServico = 12.0;
+  let taxaServico = 0;
   let valorTotal = 0;
 
   if (dataInicioW && dataFimW) {
@@ -118,6 +118,7 @@ export default function DetalhesAnuncioPage() {
     if (diffTime >= 0) {
       totalDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       valorAluguel = anuncio.valorDiario * totalDias;
+      taxaServico = valorAluguel * 0.12;
       valorTotal = valorAluguel + taxaServico;
     }
   }
