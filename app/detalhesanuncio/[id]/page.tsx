@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useForm, Controller } from "react-hook-form";
@@ -9,6 +10,7 @@ import {
   CheckCircle,
   MapPin,
   ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -45,7 +47,7 @@ export default function DetalhesAnuncioPage() {
   const anunciosQuery = useGetAnuncio(idAnuncio);
   const anuncio = anunciosQuery.data?.data;
   const loading = anunciosQuery.isLoading;
-  const fotoPricipal = anuncio?.fotos.find((foto) => foto.principal);
+  const [fotoIndex, setFotoIndex] = useState(0);
 
   const {
     handleSubmit,
@@ -68,8 +70,14 @@ export default function DetalhesAnuncioPage() {
   }
 
   if (!anuncio) {
-    return router.back();
+    router.back();
+    return null;
   }
+
+  const fotos = [...(anuncio.fotos ?? [])].sort((a, b) => (b.principal ? 1 : 0) - (a.principal ? 1 : 0));
+  const fotoPricipal = fotos.find((f) => f.principal);
+  const fotoAtual = fotos[fotoIndex];
+  const totalFotos = fotos.length;
 
   const datasBloqueadas =
     anuncio?.datasBloqueadas?.map((periodo) => ({
@@ -143,13 +151,45 @@ export default function DetalhesAnuncioPage() {
 
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
-          <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {fotoPricipal ? (
-              <img
-                src={fotoPricipal.url}
-                alt={anuncio?.titulo}
-                className="max-h-full object-contain"
-              />
+          <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex flex-col items-center justify-center shadow-sm relative">
+            {totalFotos > 0 ? (
+              <>
+                <img
+                  src={fotoAtual.url}
+                  alt={anuncio.titulo}
+                  className="max-h-full max-w-full object-contain p-8"
+                />
+
+                {totalFotos > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFotoIndex((i) => (i - 1 + totalFotos) % totalFotos)}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow transition"
+                    >
+                      <ChevronLeft size={20} className="text-gray-700" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFotoIndex((i) => (i + 1) % totalFotos)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow transition"
+                    >
+                      <ChevronRight size={20} className="text-gray-700" />
+                    </button>
+
+                    <div className="absolute bottom-4 flex gap-2">
+                      {fotos.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setFotoIndex(i)}
+                          className={`w-2 h-2 rounded-full transition ${i === fotoIndex ? "bg-gray-700" : "bg-gray-300"}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="text-gray-300 flex flex-col items-center gap-2">
                 <ImageIcon size={64} strokeWidth={1} />
