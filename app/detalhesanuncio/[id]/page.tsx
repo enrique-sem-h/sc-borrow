@@ -324,16 +324,21 @@ export default function DetalhesAnuncioPage() {
               </div>
             )}
 
-            <div className="border-t-2 border-dashed border-gray-100 pt-4 flex justify-between items-center">
-              <span className="font-serif font-bold text-lg text-gray-900">
-                Total:
-              </span>
-              <span className="text-2xl font-serif font-extrabold text-gray-900">
-                R${" "}
-                {totalDias > 0
-                  ? valorTotal.toFixed(2).replace(".", ",")
-                  : "0,00"}
-              </span>
+            <div className="border-t-2 border-dashed border-gray-100 pt-4">
+              <div className="flex justify-between items-center">
+                <span className="font-serif font-bold text-lg text-gray-900">
+                  Total:
+                </span>
+                <span className="text-2xl font-serif font-extrabold text-gray-900">
+                  R${" "}
+                  {totalDias > 0
+                    ? valorTotal.toFixed(2).replace(".", ",")
+                    : "0,00"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 text-right mt-1">
+                (+ caução: R$ {anuncio.caucao.toFixed(2).replace(".", ",")})
+              </p>
             </div>
 
             <button
