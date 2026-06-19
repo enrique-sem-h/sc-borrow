@@ -1,18 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Input } from "./input";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Field, FieldError } from "@/components/ui/field";
 import FormInput from "./form-input";
-import {
-  Anuncio,
-  AnuncioInsert,
-} from "@/infra/database/schemas/anunciosSchema";
-import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
 import apiService from "@/services/api";
@@ -79,23 +71,31 @@ const schema = insertUserSchema
     },
   );
 
+function Label({
+  children,
+  required,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+      {children}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+  );
+}
+
 export default function RegisterModal({
   isOpen,
   onClose,
   onLogin,
   onSuccess,
 }: RegisterModalProps) {
-  const [cep, setCep] = useState("");
-  const [numero, setNumero] = useState("");
+  const [showRequiredError, setShowRequiredError] = useState(false);
 
-  const {
-    handleSubmit,
-    control,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<FormType>({
-    resolver: zodResolver(schema),
+  const { handleSubmit, control, setValue } = useForm<FormType>({
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       uf: "DF",
       bairro: "",
@@ -118,14 +118,18 @@ export default function RegisterModal({
     setValue("numero", isNaN(parsed) || parsed <= 0 ? 0 : parsed);
   }
 
-  const onFormSubmit = async (data: any): SubmitHandler<any> => {
+  const onFormSubmit = async (data: any) => {
+    setShowRequiredError(false);
     try {
-      const response = await apiService.register(data);
-
+      await apiService.register(data);
       onSuccess();
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const onInvalidSubmit = () => {
+    setShowRequiredError(true);
   };
 
   return (
@@ -148,201 +152,187 @@ export default function RegisterModal({
 
         <form
           className="flex flex-col gap-5"
-          onSubmit={handleSubmit(onFormSubmit)}
+          onSubmit={handleSubmit(onFormSubmit, onInvalidSubmit)}
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Controller
-              name="nome"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Nome Completo"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Nome Completo</Label>
+              <Controller
+                name="nome"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="Nome Completo" {...field} />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="telefone"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Telefone"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="email"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Email"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="cpf"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="CPF"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="senha"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Senha"
-                    error={fieldState.error?.message}
-                    {...field}
-                    type="password"
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Telefone</Label>
+              <Controller
+                name="telefone"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="Telefone" {...field} />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="confirmarSenha"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1">
+              <Label required>Email</Label>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="Email" {...field} />
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>CPF</Label>
+              <Controller
+                name="cpf"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="CPF" {...field} />
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>Senha</Label>
+              <Controller
+                name="senha"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="Senha" type="password" {...field} />
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>Confirmar Senha</Label>
+              <Controller
+                name="confirmarSenha"
+                control={control}
+                render={({ field, fieldState }) => (
                   <FormInput
                     placeholder="Confirmar Senha"
+                    type="password"
                     error={fieldState.error?.message}
                     {...field}
-                    type="password"
                   />
-                );
-              }}
-            />
+                )}
+              />
+            </div>
           </div>
 
           <div className="border-b border-gray-100" />
 
           <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="cep"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1">
+              <Label required>CEP</Label>
+              <Controller
+                name="cep"
+                control={control}
+                render={({ field }) => (
                   <FormInput
                     placeholder="CEP"
-                    error={fieldState.error?.message}
                     {...field}
                     onChange={(e) => {
                       handleCepChange(e);
                       field.onChange(e);
                     }}
                   />
-                );
-              }}
-            />
-            <Controller
-              name="uf"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="UF"
-                    error={fieldState.error?.message}
-                    readOnly
-                    {...field}
-                    value="DF"
-                  />
-                );
-              }}
-            />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="logradouro"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    className="col-span-2"
-                    placeholder="Logradouro"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label>UF</Label>
+              <Controller
+                name="uf"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="UF" readOnly {...field} value="DF" />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="bairro"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1 col-span-2">
+              <Label required>Logradouro</Label>
+              <Controller
+                name="logradouro"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="Logradouro" {...field} />
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 col-span-2">
+              <Label required>Bairro</Label>
+              <Controller
+                name="bairro"
+                control={control}
+                render={({ field }) => (
                   <select
-                    name="bairro"
+                    {...field}
                     className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
                   >
-                    <option value={""} disabled>
-                      Bairro
+                    <option value="" disabled>
+                      Selecione o bairro
                     </option>
-                    {BAIRROS_DF.map((b) => {
-                      return (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
-                      );
-                    })}
+                    {BAIRROS_DF.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
                   </select>
-                );
-              }}
-            />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="numero"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1">
+              <Label required>Número</Label>
+              <Controller
+                name="numero"
+                control={control}
+                render={({ field }) => (
                   <FormInput
-                    placeholder="Numero"
-                    error={fieldState.error?.message}
-                    {...field}
+                    placeholder="Número"
                     type="number"
+                    {...field}
                     onChange={(e) => {
                       handleNumeroChange(e);
                       field.onChange(e);
                     }}
                   />
-                );
-              }}
-            />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="complemento"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1">
+              <Label>Complemento</Label>
+              <Controller
+                name="complemento"
+                control={control}
+                render={({ field }) => (
                   <FormInput
                     placeholder="Complemento (opcional)"
-                    error={fieldState.error?.message}
                     {...field}
+                    value={field.value ?? ""}
                   />
-                );
-              }}
-            />
+                )}
+              />
+            </div>
           </div>
+
+          {showRequiredError && (
+            <p className="text-red-500 text-sm text-center font-medium">
+              Por favor, preencha todos os campos obrigatórios
+            </p>
+          )}
 
           <button className="bg-gray-300 hover:bg-gray-400 transition rounded-xl py-3 text-2xl font-semibold mt-2">
             Cadastrar-se
