@@ -55,7 +55,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4 relative">
+      <header className="w-full bg-white border-b border-gray-200 px-4 md:px-8 py-4 relative sticky top-0 z-50">
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
