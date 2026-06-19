@@ -8,6 +8,7 @@ import AluguelRepository from "../repositories/aluguel-repository";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
+import { arquivarConversaPorAluguel } from "../lib/arquivarConversa";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -137,9 +138,20 @@ class AluguelService extends BaseService {
       throw new Error("You don't have permission to cancel this aluguel");
     }
 
-    return await AluguelRepository.update(aluguel.id, {
+    const result = await AluguelRepository.update(aluguel.id, {
       status: "CANCELLED",
     });
+
+    try {
+      await arquivarConversaPorAluguel(
+        aluguel.id,
+        "O aluguel foi cancelado. Esta conversa foi encerrada.",
+      );
+    } catch (err) {
+      console.error("Erro ao arquivar conversa do aluguel:", err);
+    }
+
+    return result;
   }
 
   private ensureInStatus(
