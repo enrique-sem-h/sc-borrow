@@ -24,7 +24,7 @@ import z from "zod";
 type FormType = CreateAnuncioDTO;
 
 const schema = insertAnuncioSchema.extend({
-  fotos: z.array(z.instanceof(File)).min(3),
+  fotos: z.array(z.instanceof(File)).min(3, "Necessário pelo menos 3 fotos"),
 });
 
 export default function CriarAnuncioPage() {
