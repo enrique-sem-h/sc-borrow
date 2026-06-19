@@ -1,11 +1,13 @@
 "use client";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
+import { selectAluguelSchema } from "@/modules/zod/schemas/alugueisSchemas";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel } from "@/server/types";
 import { MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
+import { AvaliarModal } from "@/components/ui/rate-modal";
 
 type MeusAlugueisPageProps = {
   className?: string;
@@ -56,7 +58,10 @@ const StatusBadge = ({
           Concluído
         </span>
         <button
-          onClick={onAvaliar}
+          onClick={(e)=> {
+            e.stopPropagation();
+            onAvaliar?.();
+          }}
           className="px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-300 transition"
         >
           Avaliar
@@ -72,6 +77,8 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
   const alugueisQuery = useGetAlugueis(tipo);
   const alugueis = alugueisQuery.data?.data;
   const loading = alugueisQuery.isLoading;
+  const [aluguelParaAvaliar, setAluguelParaAvaliar] =
+  useState<Aluguel | null>(null);
 
   const getChecklistPath = (aluguelId: string) => `/aluguel/${aluguelId}`;
 
@@ -151,7 +158,11 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
                           {aluguel.valorTotal.toFixed(2).replace(".", ",")}
                         </span>
                         <div className="mt-1">
-                          <StatusBadge status={aluguel.status} />
+                          <StatusBadge status={aluguel.status} 
+                            onAvaliar={()=> {
+                              setAluguelParaAvaliar(aluguel);
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -186,6 +197,17 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
           )}
         </>
       )}
+      <AvaliarModal
+        isOpen={!!aluguelParaAvaliar}
+        onClose={()=> setAluguelParaAvaliar(null)}
+        itemNome={aluguelParaAvaliar?.anuncio?.titulo ?? ""}
+        periodoLocacao={
+          aluguelParaAvaliar
+          ? `${new Date(aluguelParaAvaliar.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguelParaAvaliar.dataFim).toLocaleDateString("pt-BR")}`
+          :""
+        }
+        idAluguel={aluguelParaAvaliar?.id ?? ""}
+        />
     </>
   );
 };

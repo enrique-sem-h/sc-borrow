@@ -187,6 +187,18 @@ class ApiService {
       return response.data;
     },
   };
+
+  public avaliacoes = {
+    create: async (data: {
+      nota: number;
+      mensagem: string;
+      idUsuario: string;
+      idAluguel: string;
+    }) => {
+      const response = await this.api.post("avaliacao", data);
+      return response.data;
+    },
+  };
 }
 
 const apiService = new ApiService();
