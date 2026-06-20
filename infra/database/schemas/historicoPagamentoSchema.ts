@@ -14,12 +14,13 @@ export const historicoPagamentos = mysqlTable("historico_pagamentos", {
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-  aluguelId: varchar("aluguel_id", { length: 36 })
-    .notNull()
-    .references(() => alugueis.id, {
+  aluguelId: varchar("aluguel_id", { length: 36 }).references(
+    () => alugueis.id,
+    {
       onDelete: "no action",
       onUpdate: "cascade",
-    }),
+    },
+  ),
   message: varchar("message", { length: 255 }).notNull(),
   saldo: float("saldo").notNull(),
 });

@@ -1,0 +1,1 @@
+ALTER TABLE `historico_pagamentos` MODIFY COLUMN `aluguel_id` varchar(36);

@@ -1,11 +1,8 @@
 import { db } from "@/infra/database";
-import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import {
   HistoricoPagamentoInsert,
   historicoPagamentos,
 } from "@/infra/database/schemas/historicoPagamentoSchema";
-import { usuarios } from "@/infra/database/schemas/usuariosSchema";
-import { eq } from "drizzle-orm";
 
 class HistoricoPagamentoRepository {
   static async create(body: HistoricoPagamentoInsert) {

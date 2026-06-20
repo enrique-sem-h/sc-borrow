@@ -56,6 +56,12 @@ class ApiService {
   }
 
   public users = {
+    resgatar: async () => {
+      const response = await this.api.get("/users/carteira/resgatar");
+
+      return response.data;
+    },
+
     carteira: async (): Promise<{
       data: (HistoricoPagamento & {
         aluguel: Aluguel & {

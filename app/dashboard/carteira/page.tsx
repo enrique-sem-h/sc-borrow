@@ -1,11 +1,14 @@
 "use client";
+import { ResgatarSaldoModal } from "@/components/ui/resgatar-saldo-modal";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useResgatarSaldo } from "@/modules/react-query/mutations/user-mutations";
 import {
   useGetCarteira,
   useGetSaldo,
 } from "@/modules/react-query/queries/user-queries";
 import { ReactNode, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 type DashboardCarteiraPageProps = {
   className?: string;
@@ -16,6 +19,7 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
   className,
   children,
 }) => {
+  const [showResgatarSaldoModal, setShowResgatarSaldoModal] = useState(false);
   const { user } = useAuth()!;
   const carteiraQuery = useGetCarteira();
   const saldoQuery = useGetSaldo();
@@ -23,8 +27,37 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
   const loadingCarteira = carteiraQuery.isLoading;
   const loadingSaldo = saldoQuery.isLoading;
 
+  const resgatarSaldoMutation = useResgatarSaldo();
+
+  const [loadingResgatarSaldo, setLoadingResgatarSaldo] = useState(false);
+
   const carteiraData = carteiraQuery.data?.data;
   const saldoData = saldoQuery.data?.data;
+
+  async function handleConfirm() {
+    try {
+      setLoadingResgatarSaldo(true);
+
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(null);
+        }, 2000);
+      });
+
+      await resgatarSaldoMutation.mutateAsync();
+
+      setShowResgatarSaldoModal(false);
+      setLoadingResgatarSaldo(false);
+
+      toast("Saldo resgatado com sucesso", {
+        type: "success",
+      });
+    } catch (error) {
+      toast("Erro ao resgatar saldo", {
+        type: "error",
+      });
+    }
+  }
 
   return (
     <>
@@ -48,6 +81,7 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
         </div>
         <button
           type="button"
+          onClick={() => setShowResgatarSaldoModal(true)}
           className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 transition rounded-xl text-sm font-semibold text-gray-700"
         >
           Resgatar saldo
@@ -80,6 +114,13 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
             </div>
           ))}
       </div>
+
+      <ResgatarSaldoModal
+        loading={loadingResgatarSaldo}
+        isOpen={showResgatarSaldoModal}
+        onClose={() => setShowResgatarSaldoModal(false)}
+        onConfirm={handleConfirm}
+      />
     </>
   );
 };

@@ -62,6 +62,21 @@ class UserRepository {
       })
       .where(eq(usuarios.id, id));
   }
+  static async resgatarSaldo(id: string) {
+    const user = await db.query.usuarios.findFirst({
+      where(fields, operators) {
+        return operators.eq(fields.id, id);
+      },
+    });
+    const saldo = user;
+    await db
+      .update(usuarios)
+      .set({
+        saldo: 0,
+      })
+      .where(eq(usuarios.id, id));
+    return saldo;
+  }
 }
 
 export default UserRepository;

@@ -19,6 +19,10 @@ class UserService {
 
     return rep;
   }
+
+  public async resgatarSaldo(userId: string) {
+    await UserRepository.resgatarSaldo(userId);
+  }
 }
 
 export default UserService;

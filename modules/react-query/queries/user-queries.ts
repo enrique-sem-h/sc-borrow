@@ -31,7 +31,7 @@ export function useGetSaldo() {
 export function useGetRep() {
   const { isAuth } = useAuth()!;
   const query = useQuery({
-    queryKey: ["saldo"],
+    queryKey: ["rep"],
     queryFn: apiService.users.rep,
     enabled: isAuth,
     staleTime: 0,
