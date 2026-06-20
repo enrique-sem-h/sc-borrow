@@ -14,7 +14,14 @@ import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { eq } from "drizzle-orm";
 import UserRepository from "../repositories/user-repository";
 import { dbFirebase } from "@/infra/firebase";
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -42,7 +49,8 @@ class CheckoutController extends BaseController {
 
           if (conflito) {
             return res.status(409).json({
-              error: "Este anúncio já está reservado para as datas selecionadas.",
+              error:
+                "Este anúncio já está reservado para as datas selecionadas.",
             });
           }
 

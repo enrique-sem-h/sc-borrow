@@ -8,6 +8,7 @@ import AluguelRepository from "../repositories/aluguel-repository";
 import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
+import HistoricoPagamentoRepository from "../repositories/historico-pagamento-repository";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -118,7 +119,45 @@ class AluguelService extends BaseService {
     this.ensureCallerIsLocador(aluguel, caller);
     this.ensureInStatus(aluguel, "WAITING_FOR_RETURN_CONFIRM");
 
+    const inicio = new Date(aluguel.dataInicio);
+    const fim = new Date(aluguel.dataFim);
+    const diffTime = fim.getTime() - inicio.getTime();
+
+    const totalDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const caucao = aluguel.anuncio!.caucao;
+    const subTotal = aluguel.anuncio!.valorDiario * totalDias;
+    const taxa = subTotal * 0.12;
+
+    const saldoLocador = parseFloat(subTotal.toFixed(2));
+    const saldoLocatario = parseFloat(caucao.toFixed(2));
+
+    const locadorId = aluguel.idLocador;
+    console.log("locadorId", locadorId);
+    const locatarioId = aluguel.idLocatario;
+    console.log("locatarioId", locatarioId);
+
+    console.log("Caucao", caucao);
+    console.log("Taxa", taxa);
+    console.log("Subtotal", subTotal);
+    console.log("Saldo Locador", saldoLocador);
+    console.log("Saldo locatario", saldoLocatario);
+
     await this.changeStatus(aluguel, "COMPLETED");
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locadorId,
+      aluguelId: id,
+      message: "Pagamento recebido pelo aluguel",
+      saldo: saldoLocador,
+    });
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locatarioId,
+      aluguelId: id,
+      message: "Caucao devolvida",
+      saldo: saldoLocatario,
+    });
+    await UserRepository.addSaldo(locadorId, saldoLocador);
+    await UserRepository.addSaldo(locatarioId, saldoLocatario);
   }
 
   public async cancel(id: string, caller: string) {
@@ -137,9 +176,23 @@ class AluguelService extends BaseService {
       throw new Error("You don't have permission to cancel this aluguel");
     }
 
-    return await AluguelRepository.update(aluguel.id, {
-      status: "CANCELLED",
-    });
+    const valorTotal = aluguel.valorTotal;
+
+    const saldoLocatario = valorTotal;
+
+    const locatarioId = aluguel.idLocatario;
+
+    await Promise.all([
+      HistoricoPagamentoRepository.create({
+        usuarioId: locatarioId,
+        aluguelId: id,
+        message: "Valor devolvido devido ao cancelamento do aluguel",
+        saldo: saldoLocatario,
+      }),
+      AluguelRepository.update(aluguel.id, {
+        status: "CANCELLED",
+      }),
+    ]);
   }
 
   private ensureInStatus(

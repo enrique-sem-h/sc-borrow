@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
 import { InferSelectModel, relations } from "drizzle-orm";
+import { historicoPagamentos } from "./historicoPagamentoSchema";
 
 export enum AluguelStatus {
   WAITING_FOR_PAYMANT,
@@ -71,4 +72,5 @@ export const alugueisRelations = relations(alugueis, (r) => ({
     fields: [alugueis.idAnuncio],
     references: [anuncios.id],
   }),
+  pagamentos: r.many(historicoPagamentos),
 }));

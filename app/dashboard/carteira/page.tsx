@@ -1,4 +1,10 @@
 "use client";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useGetCarteira,
+  useGetSaldo,
+} from "@/modules/react-query/queries/user-queries";
 import { ReactNode, useEffect, useState } from "react";
 
 type DashboardCarteiraPageProps = {
@@ -6,89 +12,20 @@ type DashboardCarteiraPageProps = {
   children: ReactNode;
 };
 
-interface Transacao {
-  id: number;
-  descricao: string;
-  item: string;
-  valor: number;
-  tipo: "entrada" | "saida";
-}
-
-const MOCK_SALDO = 100.51;
-
-const MOCK_TRANSACOES: Transacao[] = [
-  {
-    id: 1,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-  {
-    id: 2,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-  {
-    id: 3,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-  {
-    id: 4,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-  {
-    id: 5,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-  {
-    id: 6,
-    descricao: "Pagamento Recebido de aluguel",
-    item: "Barraca de camp",
-    valor: 56.0,
-    tipo: "entrada",
-  },
-];
-
 const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
   className,
   children,
 }) => {
-  const [saldo, setSaldo] = useState<number>(0);
-  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const { user } = useAuth()!;
+  const carteiraQuery = useGetCarteira();
+  const saldoQuery = useGetSaldo();
 
-  useEffect(() => {
-    async function carregar() {
-      try {
-        const res = await fetch("/carteira/api");
-        if (res.ok) {
-          const data = await res.json();
-          setSaldo(data.saldo ?? MOCK_SALDO);
-          setTransacoes(
-            data.transacoes?.length ? data.transacoes : MOCK_TRANSACOES,
-          );
-        } else {
-          setSaldo(MOCK_SALDO);
-          setTransacoes(MOCK_TRANSACOES);
-        }
-      } catch {
-        setSaldo(MOCK_SALDO);
-        setTransacoes(MOCK_TRANSACOES);
-      }
-    }
-    carregar();
-  }, []);
+  const loadingCarteira = carteiraQuery.isLoading;
+  const loadingSaldo = saldoQuery.isLoading;
+
+  const carteiraData = carteiraQuery.data?.data;
+  const saldoData = saldoQuery.data?.data;
+
   return (
     <>
       <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">
@@ -101,9 +38,13 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
       <div className="flex items-center justify-between bg-gray-100 rounded-2xl px-6 py-5 mb-8">
         <div className="flex items-center gap-4">
           <span className="text-base font-bold text-gray-700">Saldo:</span>
-          <span className="text-2xl font-bold text-gray-900">
-            R$ {saldo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-          </span>
+          {loadingSaldo && <Spinner className="size-5" />}
+          {saldoData != null && (
+            <span className="text-2xl font-bold text-gray-900">
+              R${" "}
+              {saldoData.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -114,23 +55,30 @@ const DashboardCarteiraPage: React.FC<DashboardCarteiraPageProps> = ({
       </div>
 
       <div className="rounded-2xl overflow-hidden border border-gray-100">
-        {transacoes.map((t, i) => (
-          <div
-            key={t.id}
-            className={`flex items-center justify-between px-6 py-4 ${
-              i % 2 === 0 ? "bg-gray-100" : "bg-white"
-            }`}
-          >
-            <span className="text-sm text-gray-800">
-              <span className="font-bold">{t.descricao}</span>
-              {" - "}
-              <span className="text-gray-400">{t.item}</span>
-            </span>
-            <span className="text-sm font-semibold text-gray-800 shrink-0 ml-4">
-              R$ {t.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-        ))}
+        <div className="flex items-center justify-center">
+          {loadingCarteira && <Spinner className="size-5" />}
+        </div>
+        {carteiraData &&
+          carteiraData.map((t, i) => (
+            <div
+              key={t.id}
+              className={`flex items-center justify-between px-6 py-4 ${
+                i % 2 === 0 ? "bg-gray-100" : "bg-white"
+              }`}
+            >
+              <span className="text-sm text-gray-800">
+                <span className="font-bold">{t.message}</span>
+                {" - "}
+                <span className="text-gray-400">
+                  {t.aluguel.anuncio.titulo}
+                </span>
+              </span>
+              <span className="text-sm font-semibold text-gray-800 shrink-0 ml-4">
+                R${" "}
+                {t.saldo.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          ))}
       </div>
     </>
   );

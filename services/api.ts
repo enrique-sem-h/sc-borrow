@@ -2,6 +2,7 @@ import {
   Anuncio,
   AnuncioInsert,
 } from "@/infra/database/schemas/anunciosSchema";
+import { HistoricoPagamento } from "@/infra/database/schemas/historicoPagamentoSchema";
 import {
   Usuario,
   UsuarioInsert,
@@ -49,6 +50,28 @@ class ApiService {
   public setToken(token: string) {
     this.api.defaults.headers.Authorization = `Bearer ${token}`;
   }
+
+  public users = {
+    carteira: async (): Promise<{
+      data: (HistoricoPagamento & {
+        aluguel: Aluguel & {
+          anuncio: Anuncio;
+        };
+      })[];
+    }> => {
+      const response = await this.api.get("/users/carteira");
+
+      return response.data;
+    },
+
+    saldo: async (): Promise<{
+      data: number;
+    }> => {
+      const response = await this.api.get("/users/saldo");
+
+      return response.data;
+    },
+  };
 
   public alugueis = {
     getAll: async (

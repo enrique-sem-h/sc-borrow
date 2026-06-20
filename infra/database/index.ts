@@ -15,6 +15,10 @@ import {
 import { usuariosRelations as usersRelations } from "./schemas/usuariosSchema";
 import { usuarios } from "./schemas/usuariosSchema";
 import { boolean } from "zod";
+import {
+  historicoPagamentos,
+  historicoPagamentosRelations,
+} from "./schemas/historicoPagamentoSchema";
 
 const config: mysql.PoolOptions = {
   host: process.env.DB_HOST,
@@ -37,6 +41,8 @@ export const db = drizzle(poolConnection, {
     usuarioRelations,
     alugueisRelations,
     usersRelations,
+    historicoPagamentos,
+    historicoPagamentosRelations,
   },
   mode: "default",
 });

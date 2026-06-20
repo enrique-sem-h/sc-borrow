@@ -33,10 +33,10 @@ export type CreateFotoAnuncioDTO = {
 };
 
 export type Aluguel = InferSelectModel<typeof alugueis>;
+export type AluguelInsert = InferInsertModel<typeof alugueis>;
 export type CreateAluguelDTO = Optional<Aluguel, "id">;
-export type UpdateAluguelDTO = Omit<
-  Aluguel,
-  "id" | "idAnuncio" | "idLocador" | "idLocatario"
+export type UpdateAluguelDTO = Partial<
+  Omit<AluguelInsert, "id" | "idAnuncio" | "idLocador" | "idLocatario">
 >;
 
 export interface NextAuthMiddlewareApiRequest extends NextApiRequest {
