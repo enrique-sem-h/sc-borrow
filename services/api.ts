@@ -238,6 +238,13 @@ class ApiService {
       const response = await this.api.post("avaliacao", data);
       return response.data;
     },
+
+    getByAluguel: async (idAluguel: string, idUsuario: string) => {
+      const response = await this.api.get(
+        `avaliacao/aluguel/${idAluguel}?idUsuario=${idUsuario}`,);
+      return response.data;
+    }
+
   };
 }
 

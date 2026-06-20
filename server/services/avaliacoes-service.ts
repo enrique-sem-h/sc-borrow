@@ -21,6 +21,10 @@ class AvalicaoService {
   public async delete(id: string) {
     return await AvaliacaoRepository.delete(id);
   }
+
+  public async findByAluguelId(idAluguel: string, idUsuario: string) {
+    return await AvaliacaoRepository.findAluguelId(idAluguel, idUsuario);
+  }
 }
 
 export default AvalicaoService;

@@ -1,14 +1,15 @@
 "use client";
 import { Spinner } from "@/components/ui/spinner";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
-import { selectAluguelSchema } from "@/modules/zod/schemas/alugueisSchemas";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
 import { Aluguel } from "@/server/types";
 import { MessageCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { AvaliarModal } from "@/components/ui/rate-modal";
+import { VisualizarAvaliarModal } from "@/components/ui/view-rate";
 import StatusBadge from "@/components/ui/status-badge";
+import apiService from "@/services/api";
 
 type MeusAlugueisPageProps = {
   className?: string;
@@ -20,20 +21,42 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tipo = searchParams?.get("tipo") || "locatario";
+
   const alugueisQuery = useGetAlugueis(tipo);
   const alugueis = alugueisQuery.data?.data;
   const loading = alugueisQuery.isLoading;
-  const [aluguelParaAvaliar, setAluguelParaAvaliar] = useState<Aluguel | null>(
-    null,
-  );
+
+  const [aluguelParaAvaliar, setAluguelParaAvaliar] =
+    useState<Aluguel | null>(null);
+  const [avaliacaoVisualizada, setAvaliacaoVisualizada] =
+    useState<any | null>(null);
+  const [aluguelVisualizado, setAluguelVisualizado] =
+    useState<Aluguel | null>(null);
 
   const getChecklistPath = (aluguelId: string) => `/aluguel/${aluguelId}`;
 
   const changeTipo = (tipo: AluguelTipo) => {
     const params = new URLSearchParams(searchParams?.toString());
     params.set("tipo", tipo);
-
     router.replace(`${pathname}?${params.toString()}`);
+  };
+
+  const handleAvaliar = async (aluguel: Aluguel) => {
+    const idUsuario =
+      tipo === "locatario" ? aluguel.idLocatario : aluguel.idLocador;
+
+    const response = await apiService.avaliacoes.getByAluguel(
+      aluguel.id,
+      idUsuario,
+    );
+
+    if (response.data) {
+      setAvaliacaoVisualizada(response.data);
+      setAluguelVisualizado(aluguel);
+      return;
+    }
+
+    setAluguelParaAvaliar(aluguel);
   };
 
   return (
@@ -114,9 +137,7 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
                         <div className="mt-1">
                           <StatusBadge
                             status={aluguel.status}
-                            onAvaliar={() => {
-                              setAluguelParaAvaliar(aluguel);
-                            }}
+                            onAvaliar={() => handleAvaliar(aluguel)}
                           />
                         </div>
                       </div>
@@ -152,6 +173,7 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
           )}
         </>
       )}
+
       <AvaliarModal
         isOpen={!!aluguelParaAvaliar}
         onClose={() => setAluguelParaAvaliar(null)}
@@ -162,6 +184,22 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
             : ""
         }
         idAluguel={aluguelParaAvaliar?.id ?? ""}
+      />
+
+      <VisualizarAvaliarModal
+        isOpen={!!avaliacaoVisualizada}
+        onClose={() => {
+          setAvaliacaoVisualizada(null);
+          setAluguelVisualizado(null);
+        }}
+        itemNome={aluguelVisualizado?.anuncio?.titulo ?? ""}
+        periodoLocacao={
+          aluguelVisualizado
+            ? `${new Date(aluguelVisualizado.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguelVisualizado.dataFim).toLocaleDateString("pt-BR")}`
+            : ""
+        }
+        nota={avaliacaoVisualizada?.nota ?? 0}
+        comentario={avaliacaoVisualizada?.mensagem ?? ""}
       />
     </>
   );

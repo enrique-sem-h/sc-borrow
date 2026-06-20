@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/infra/database/index";
 import { avaliacoes } from "@/infra/database/schemas/avaliacoesSchema";
 import { CreateAvaliacaoDTO, UpdateAvaliacaoDTO } from "../dtos/avaliacao-dto";
+import { id } from "date-fns/locale";
 
 class AvaliacaoRepository {
   static async create(body: CreateAvaliacaoDTO) {
@@ -42,6 +43,21 @@ class AvaliacaoRepository {
 
   static async delete(id: string) {
     await db.delete(avaliacoes).where(eq(avaliacoes.id, id));
+  }
+
+  static async findAluguelId(idAluguel: string, idUsuario: string) {
+    const avaliacao = await db
+    .select()
+    .from(avaliacoes)
+    .where(
+      and(
+        eq(avaliacoes.idAluguel, idAluguel),
+        eq(avaliacoes.idUsuario, idUsuario),
+      )
+
+    );
+
+    return avaliacao[0];
   }
 }
 
