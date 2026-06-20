@@ -8,9 +8,21 @@ export function useGetAlugueis(type?: AluguelTipo) {
   const { isAuth } = useAuth();
 
   const query = useQuery({
-    queryKey: ["anuncio", type],
+    queryKey: ["alugueis", type],
     queryFn: () => apiService.alugueis.getAll(type),
     enabled: isAuth,
+  });
+
+  return query;
+}
+
+export function useGetAluguel(id: string) {
+  const { isAuth } = useAuth()!;
+
+  const query = useQuery({
+    queryKey: ["aluguel", id],
+    queryFn: () => apiService.alugueis.get(id),
+    enabled: isAuth && !!id,
   });
 
   return query;

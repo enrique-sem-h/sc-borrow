@@ -6,47 +6,33 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ConfirmedOrderModal } from "@/components/ui/confirmed-order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useChangeAluguelStatus } from "@/modules/react-query/mutations/alugueis-mutations";
+import { toast } from "react-toastify";
+import { useGetAluguel } from "@/modules/react-query/queries/aluguel-queries";
+import { Aluguel } from "@/server/types";
+import { aluguelStatusArr } from "@/infra/database/schemas/alugueisSchema";
+import { Spinner } from "@/components/ui/spinner";
 
-type AluguelDetalhe = {
-  id: string;
-  status: string;
-  dataInicio: string;
-  dataFim: string;
-  valorTotal: number;
-  locatario: { nome: string } | null;
-  anuncio: {
-    titulo: string;
-    valorDiario: number;
-    fotos: { url: string; principal: boolean }[];
-  } | null;
-};
+function timelineSteps(status: Aluguel["status"], locatarioNome: string) {
+  const enumToArr = aluguelStatusArr;
+  const idx = status === "CANCELLED" ? -1 : enumToArr.indexOf(status);
 
-const STATUS_ORDER = [
-  "WAITING_FOR_PAYMANT",
-  "WAITING_FOR_DISPATCH",
-  "WAITING_FOR_DELIVERY",
-  "ITEM_IN_HAND",
-  "COMPLETED",
-];
-
-function timelineSteps(status: string, locatarioNome: string) {
-  const idx = STATUS_ORDER.indexOf(status);
   return [
     {
       label: "Pedido recebido",
-      done: idx >= STATUS_ORDER.indexOf("WAITING_FOR_DISPATCH"),
+      done: idx >= enumToArr.indexOf("WAITING_FOR_DISPATCH"),
     },
     {
       label: "Envio confirmado",
-      done: idx >= STATUS_ORDER.indexOf("WAITING_FOR_DELIVERY"),
+      done: idx >= enumToArr.indexOf("WAITING_FOR_DELIVERY"),
     },
     {
       label: `Item com ${locatarioNome || "o locatário"}`,
-      done: idx >= STATUS_ORDER.indexOf("ITEM_IN_HAND"),
+      done: idx >= enumToArr.indexOf("ITEM_IN_HAND"),
     },
     {
       label: "Aluguel concluído",
-      done: idx >= STATUS_ORDER.indexOf("COMPLETED"),
+      done: idx >= enumToArr.indexOf("COMPLETED"),
     },
   ];
 }
@@ -56,23 +42,34 @@ function AndamentoLocadorContent() {
   const params = useSearchParams();
   const id = params?.get("id") ?? "";
 
-  const [aluguel, setAluguel] = useState<AluguelDetalhe | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [dispatching, setDispatching] = useState(false);
-
-  useEffect(() => {
-    if (!id) return;
-    const token = localStorage.getItem("token") ?? "";
-    fetch(`/api/aluguel/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setAluguel(d.data))
-      .finally(() => setLoading(false));
-  }, [id]);
+  const aluguelQuery = useGetAluguel(id);
+  const loading = aluguelQuery.isLoading;
+  const aluguel = aluguelQuery.data?.data;
+  const mutation = useChangeAluguelStatus();
+  const loadingMutation = mutation.isPending;
 
   const handleDispatch = async () => {
+    const currentIndex = aluguelStatusArr.indexOf(aluguel!.status);
+    const nextStatus = aluguelStatusArr.at(currentIndex + 1);
+
+    try {
+      await mutation.mutateAsync({
+        id,
+        status: nextStatus,
+      });
+      toast("Sucesso", {
+        type: "success",
+      });
+    } catch (error) {
+      console.log(error.response);
+
+      toast(error.response.data.error, {
+        type: "error",
+      });
+    }
+    return;
     if (!aluguel) return;
     setDispatching(true);
     const token = localStorage.getItem("token") ?? "";
@@ -134,20 +131,105 @@ function AndamentoLocadorContent() {
 
   const valorDiario = aluguel.anuncio?.valorDiario ?? 0;
   const subtotal = valorDiario * dias;
-  const taxaServico = 12;
+  const taxaServico = subtotal * 0.12;
   const caucao = aluguel.valorTotal - subtotal - taxaServico;
 
-  const steps = timelineSteps(
-    aluguel.status,
-    aluguel.locatario?.nome ?? "",
-  );
+  const steps = timelineSteps(aluguel.status!, aluguel.locatario?.nome ?? "");
 
   const podeDespachar = aluguel.status === "WAITING_FOR_DISPATCH";
+
+  function messageFromStatus(status: Aluguel["status"]) {
+    switch (status) {
+      case "WAITING_FOR_PAYMANT":
+        return "Aguardando pagamento";
+        break;
+      case "WAITING_FOR_CONFIRM":
+        return "Aguardando confirmação";
+        break;
+      case "WAITING_FOR_DISPATCH":
+        return "Agurandando despache";
+        break;
+      case "WAITING_FOR_DELIVERY":
+        return "Aguardando entrega";
+        break;
+      case "ITEM_IN_HAND":
+        return "Agurdando devolução";
+        break;
+      case "WAITING_FOR_RETURN_CONFIRM":
+        return "Aguardando confirmação de devolução";
+        break;
+      case "COMPLETED":
+        return "Concluído";
+        break;
+      case "CANCELLED":
+        return "Cancelado";
+        break;
+    }
+  }
+
+  function buttonMessageFromStatus(status: Aluguel["status"]) {
+    switch (status) {
+      case "WAITING_FOR_CONFIRM":
+        return "Confirmar pedido";
+      case "WAITING_FOR_DISPATCH":
+        return "Confirmar despache";
+      case "WAITING_FOR_DELIVERY":
+        return "Confirmar chegada do produto";
+      case "ITEM_IN_HAND":
+        return "Confirmar despache";
+      case "WAITING_FOR_RETURN_CONFIRM":
+        return "Confirmar devolução";
+      default:
+        return "Errado";
+    }
+  }
+
+  function renderButton() {
+    const currentIndex = aluguelStatusArr.indexOf(aluguel!.status);
+    const nextStatus = aluguelStatusArr.at(currentIndex + 1);
+    const currentStatus = aluguel!.status;
+    console.log(currentStatus, "currentStatus");
+
+    const visibleForLocador: Aluguel["status"][] = [
+      "WAITING_FOR_CONFIRM",
+      "WAITING_FOR_DISPATCH",
+      "WAITING_FOR_RETURN_CONFIRM",
+    ];
+
+    const visibleForLocatario: Aluguel["status"][] = [
+      "WAITING_FOR_DELIVERY",
+      "ITEM_IN_HAND",
+    ];
+
+    const isLocador = true;
+
+    const isVisible = isLocador
+      ? visibleForLocador.includes(currentStatus)
+      : visibleForLocatario.includes(currentStatus);
+
+    if (!isVisible) {
+      return null;
+    }
+    const message = buttonMessageFromStatus(currentStatus);
+    return (
+      <button
+        type="button"
+        onClick={handleDispatch}
+        disabled={!podeDespachar || dispatching}
+        className={`px-6 py-2 text-white text-sm font-bold rounded-full shadow-md transition cursor-pointer ${
+          podeDespachar
+            ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
+            : "bg-gray-300 cursor-not-allowed"
+        }`}
+      >
+        {loadingMutation ? <Spinner className="size-3" /> : message}
+      </button>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 relative">
       <div className="w-full max-w-5xl mx-auto bg-white border border-gray-100 rounded-3xl shadow-sm p-6 md:p-12 transition-all">
-
         <div className="flex justify-start mb-6">
           <button
             onClick={() => router.back()}
@@ -221,24 +303,13 @@ function AndamentoLocadorContent() {
               <div className="w-full h-px bg-gray-100 my-4" />
               <div className="flex justify-between text-lg font-bold text-gray-900 font-serif">
                 <span>Total</span>
-                <span>R$ {aluguel.valorTotal.toFixed(2).replace(".", ",")}</span>
+                <span>
+                  R$ {aluguel.valorTotal.toFixed(2).replace(".", ",")}
+                </span>
               </div>
             </div>
 
-            <div className="flex justify-center mt-8">
-              <button
-                type="button"
-                onClick={handleDispatch}
-                disabled={!podeDespachar || dispatching}
-                className={`px-6 py-2 text-white text-sm font-bold rounded-full shadow-md transition cursor-pointer ${
-                  podeDespachar
-                    ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100"
-                    : "bg-gray-300 cursor-not-allowed"
-                }`}
-              >
-                {dispatching ? "Confirmando..." : "Confirmar envio do item"}
-              </button>
-            </div>
+            <div className="flex justify-center mt-8">{renderButton()}</div>
           </div>
         </div>
 

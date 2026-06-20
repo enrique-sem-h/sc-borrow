@@ -2,16 +2,17 @@ import {
   Anuncio,
   AnuncioInsert,
 } from "@/infra/database/schemas/anunciosSchema";
+import { HistoricoPagamento } from "@/infra/database/schemas/historicoPagamentoSchema";
 import {
   Usuario,
   UsuarioInsert,
   UsuarioLogin,
 } from "@/infra/database/schemas/usuariosSchema";
 import { AluguelTipo } from "@/server/controllers/aluguel-controller";
-import { Aluguel, CreateAnuncioDTO, UpdateAnuncioDTO } from "@/server/types";
+import type { Aluguel, CreateAnuncioDTO, NotificacaoDTO } from "@/server/types";
 import axios from "axios";
 
-type AnuncioDetalhado = Anuncio & {
+export type AnuncioDetalhado = Anuncio & {
   fotos: {
     id: string;
     url: string;
@@ -19,11 +20,15 @@ type AnuncioDetalhado = Anuncio & {
     principal: boolean;
     anuncioId: string;
   }[];
-
+  locador: Usuario;
   datasBloqueadas?: {
     dataInicio: string;
     dataFim: string;
   }[];
+};
+
+type AnuncioEditPayload = Partial<Omit<CreateAnuncioDTO, "fotos">> & {
+  fotos?: unknown[];
 };
 
 class ApiService {
@@ -50,6 +55,28 @@ class ApiService {
     this.api.defaults.headers.Authorization = `Bearer ${token}`;
   }
 
+  public users = {
+    carteira: async (): Promise<{
+      data: (HistoricoPagamento & {
+        aluguel: Aluguel & {
+          anuncio: Anuncio;
+        };
+      })[];
+    }> => {
+      const response = await this.api.get("/users/carteira");
+
+      return response.data;
+    },
+
+    saldo: async (): Promise<{
+      data: number;
+    }> => {
+      const response = await this.api.get("/users/saldo");
+
+      return response.data;
+    },
+  };
+
   public alugueis = {
     getAll: async (
       type?: AluguelTipo,
@@ -62,6 +89,70 @@ class ApiService {
     }> => {
       const query = !type ? "" : `tipo=${type}`;
       const response = await this.api.get(`aluguel?${query}`);
+
+      return response.data;
+    },
+    get: async (
+      id: string,
+    ): Promise<{
+      data: Aluguel & {
+        locador: Usuario;
+        locatario: Usuario;
+        anuncio: Anuncio & {
+          fotos: {
+            url: string;
+            principal: string;
+          }[];
+        };
+      };
+    }> => {
+      const response = await this.api.get(`aluguel/${id}`);
+
+      return response.data;
+    },
+
+    changeStatus: async (id: string, status: Aluguel["status"]) => {
+      let route: string;
+      switch (status) {
+        case "WAITING_FOR_DISPATCH":
+          route = "/confirm-aluguel";
+          break;
+        case "WAITING_FOR_DELIVERY":
+          route = "/dispatch";
+          break;
+        case "ITEM_IN_HAND":
+          route = "/confirm-received";
+          break;
+        case "WAITING_FOR_RETURN_CONFIRM":
+          route = "/confirm-returning";
+          break;
+        case "COMPLETED":
+          route = "/confirm-returned-item";
+          break;
+        case "CANCELLED":
+          route = "/cancel";
+          break;
+        default:
+          throw new Error("Invalid status");
+      }
+
+      const endpoint = `aluguel/${id}${route}`;
+      console.log("Changing status", id, status, endpoint);
+
+      const response = await this.api.post(endpoint);
+
+      return response.data;
+    },
+  };
+
+  public notificacoes = {
+    getAll: async (): Promise<{ data: NotificacaoDTO[] }> => {
+      const response = await this.api.get("notificacoes");
+
+      return response.data;
+    },
+    markAsRead: async (id: string): Promise<{ data: NotificacaoDTO }> => {
+      const response = await this.api.patch(`notificacoes/${id}`);
 
       return response.data;
     },
@@ -111,7 +202,7 @@ class ApiService {
 
       return response.data;
     },
-    edit: async (id: string, newData: any) => {
+    edit: async (id: string, newData: AnuncioEditPayload) => {
       const formData = new FormData();
       const { fotos, ...restData } = newData;
 
@@ -135,6 +226,25 @@ class ApiService {
 
       return response.data;
     },
+  };
+
+  public avaliacoes = {
+    create: async (data: {
+      nota: number;
+      mensagem: string;
+      idUsuario: string;
+      idAluguel: string;
+    }) => {
+      const response = await this.api.post("avaliacao", data);
+      return response.data;
+    },
+
+    getByAluguel: async (idAluguel: string, idUsuario: string) => {
+      const response = await this.api.get(
+        `avaliacao/aluguel/${idAluguel}?idUsuario=${idUsuario}`,);
+      return response.data;
+    }
+
   };
 }
 

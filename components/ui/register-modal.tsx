@@ -1,18 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Input } from "./input";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Field, FieldError } from "@/components/ui/field";
 import FormInput from "./form-input";
-import {
-  Anuncio,
-  AnuncioInsert,
-} from "@/infra/database/schemas/anunciosSchema";
-import { insertAnuncioSchema } from "@/modules/zod/schemas/anunciosSchemas";
 import { UsuarioInsert } from "@/infra/database/schemas/usuariosSchema";
 import { insertUserSchema } from "@/modules/zod/schemas/usuarioSchema";
 import apiService from "@/services/api";
@@ -68,6 +59,7 @@ const schema = insertUserSchema
   .extend({
     confirmarSenha: z.string().min(0),
     numero: z.coerce.number(),
+    telefone: z.string().min(1),
   })
   .refine(
     (data) => {
@@ -79,23 +71,43 @@ const schema = insertUserSchema
     },
   );
 
+function Label({
+  children,
+  required,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide ml-1">
+      {children}
+      {required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+function FieldError({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <p className="text-red-500 text-xs mt-1 ml-1">
+      Por favor, preencha todos os campos obrigatórios
+    </p>
+  );
+}
+
 export default function RegisterModal({
   isOpen,
   onClose,
   onLogin,
   onSuccess,
 }: RegisterModalProps) {
-  const [cep, setCep] = useState("");
-  const [numero, setNumero] = useState("");
-
   const {
     handleSubmit,
     control,
-    watch,
     setValue,
-    formState: { errors },
+    formState: { isSubmitted },
   } = useForm<FormType>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       uf: "DF",
       bairro: "",
@@ -104,12 +116,26 @@ export default function RegisterModal({
 
   if (!isOpen) return null;
 
-  function handleCepChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-    setValue(
-      "cep",
-      digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits,
-    );
+  function maskTelefone(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 11);
+    if (d.length > 10) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+    if (d.length > 6) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    if (d.length > 2) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length > 0) return `(${d}`;
+    return d;
+  }
+
+  function maskCpf(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 11);
+    if (d.length > 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+    if (d.length > 6) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    if (d.length > 3) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    return d;
+  }
+
+  function maskCep(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
   }
 
   function handleNumeroChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -118,10 +144,15 @@ export default function RegisterModal({
     setValue("numero", isNaN(parsed) || parsed <= 0 ? 0 : parsed);
   }
 
-  const onFormSubmit = async (data: any): SubmitHandler<any> => {
+  const onFormSubmit = async (data: any) => {
     try {
-      const response = await apiService.register(data);
-
+      const payload = {
+        ...data,
+        telefone: data.telefone.replace(/\D/g, ""),
+        cpf: data.cpf.replace(/\D/g, ""),
+        cep: data.cep.replace(/\D/g, ""),
+      };
+      await apiService.register(payload);
       onSuccess();
     } catch (error) {
       console.log(error);
@@ -151,197 +182,211 @@ export default function RegisterModal({
           onSubmit={handleSubmit(onFormSubmit)}
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Controller
-              name="nome"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Nome Completo"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Nome Completo</Label>
+              <Controller
+                name="nome"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Nome Completo" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="telefone"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Telefone"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="email"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Email"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="cpf"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="CPF"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="senha"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Senha"
-                    error={fieldState.error?.message}
-                    {...field}
-                    type="password"
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Telefone</Label>
+              <Controller
+                name="telefone"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="(xx) xxxxx-xxxx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskTelefone(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="confirmarSenha"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Confirmar Senha"
-                    error={fieldState.error?.message}
-                    {...field}
-                    type="password"
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Email</Label>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Email" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>CPF</Label>
+              <Controller
+                name="cpf"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="xxx.xxx.xxx-xx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskCpf(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>Senha</Label>
+              <Controller
+                name="senha"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Senha" type="password" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <Label required>Confirmar Senha</Label>
+              <Controller
+                name="confirmarSenha"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="Confirmar Senha"
+                      type="password"
+                      error={fieldState.error?.message}
+                      {...field}
+                    />
+                  </>
+                )}
+              />
+            </div>
           </div>
 
           <div className="border-b border-gray-100" />
 
           <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="cep"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="CEP"
-                    error={fieldState.error?.message}
-                    {...field}
-                    onChange={(e) => {
-                      handleCepChange(e);
-                      field.onChange(e);
-                    }}
-                  />
-                );
-              }}
-            />
-            <Controller
-              name="uf"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="UF"
-                    error={fieldState.error?.message}
-                    readOnly
-                    {...field}
-                    value="DF"
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>CEP</Label>
+              <Controller
+                name="cep"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="xxxxx-xxx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskCep(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="logradouro"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    className="col-span-2"
-                    placeholder="Logradouro"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label>UF</Label>
+              <Controller
+                name="uf"
+                control={control}
+                render={({ field }) => (
+                  <FormInput placeholder="UF" readOnly {...field} value="DF" />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="bairro"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <select
-                    name="bairro"
-                    className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
-                  >
-                    <option value={""} disabled>
-                      Bairro
-                    </option>
-                    {BAIRROS_DF.map((b) => {
-                      return (
+            <div className="flex flex-col gap-1 col-span-2">
+              <Label required>Logradouro</Label>
+              <Controller
+                name="logradouro"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Logradouro" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1 col-span-2">
+              <Label required>Bairro</Label>
+              <Controller
+                name="bairro"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <select
+                      {...field}
+                      className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
+                    >
+                      <option value="" disabled>
+                        Selecione o bairro
+                      </option>
+                      {BAIRROS_DF.map((b) => (
                         <option key={b} value={b}>
                           {b}
                         </option>
-                      );
-                    })}
-                  </select>
-                );
-              }}
-            />
+                      ))}
+                    </select>
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="numero"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
-                  <FormInput
-                    placeholder="Numero"
-                    error={fieldState.error?.message}
-                    {...field}
-                    type="number"
-                    onChange={(e) => {
-                      handleNumeroChange(e);
-                      field.onChange(e);
-                    }}
-                  />
-                );
-              }}
-            />
+            <div className="flex flex-col gap-1">
+              <Label required>Número</Label>
+              <Controller
+                name="numero"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="Número"
+                      type="number"
+                      {...field}
+                      onChange={(e) => {
+                        handleNumeroChange(e);
+                        field.onChange(e);
+                      }}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
+                )}
+              />
+            </div>
 
-            <Controller
-              name="complemento"
-              control={control}
-              render={({ field, fieldState }) => {
-                return (
+            <div className="flex flex-col gap-1">
+              <Label>Complemento</Label>
+              <Controller
+                name="complemento"
+                control={control}
+                render={({ field }) => (
                   <FormInput
                     placeholder="Complemento (opcional)"
-                    error={fieldState.error?.message}
                     {...field}
+                    value={field.value ?? ""}
                   />
-                );
-              }}
-            />
+                )}
+              />
+            </div>
           </div>
 
           <button className="bg-gray-300 hover:bg-gray-400 transition rounded-xl py-3 text-2xl font-semibold mt-2">

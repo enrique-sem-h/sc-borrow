@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
 import { InferSelectModel, relations } from "drizzle-orm";
+import { historicoPagamentos } from "./historicoPagamentoSchema";
 
 export enum AluguelStatus {
   WAITING_FOR_PAYMANT,
@@ -12,6 +13,16 @@ export enum AluguelStatus {
   ITEM_IN_HAND,
   COMPLETED,
 }
+export const aluguelStatusArr = [
+  "WAITING_FOR_PAYMANT",
+  "WAITING_FOR_CONFIRM",
+  "WAITING_FOR_DISPATCH",
+  "WAITING_FOR_DELIVERY",
+  "ITEM_IN_HAND",
+  "WAITING_FOR_RETURN_CONFIRM",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
 
 export const alugueis = mysqlTable("alugueis", {
   id: varchar("id", { length: 36 })
@@ -33,15 +44,10 @@ export const alugueis = mysqlTable("alugueis", {
   valorTotal: float("valor_total").notNull(),
   status: varchar("status", {
     length: 50,
-    enum: [
-      "WAITING_FOR_PAYMANT",
-      "CANCELLED",
-      "WAITING_FOR_DISPATCH",
-      "WAITING_FOR_DELIVERY",
-      "ITEM_IN_HAND",
-      "COMPLETED",
-    ],
-  }).default("WAITING_FOR_DISPATCH"),
+    enum: aluguelStatusArr,
+  })
+    .default("WAITING_FOR_CONFIRM")
+    .notNull(),
 });
 
 export const usuarioRelations = relations(usuarios, (r) => ({
@@ -66,4 +72,5 @@ export const alugueisRelations = relations(alugueis, (r) => ({
     fields: [alugueis.idAnuncio],
     references: [anuncios.id],
   }),
+  pagamentos: r.many(historicoPagamentos),
 }));

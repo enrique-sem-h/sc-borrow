@@ -3,12 +3,18 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  User, LayoutGrid, Key, DollarSign, MessageCircle,
-  HelpCircle, LogOut,
+  User,
+  LayoutGrid,
+  Key,
+  DollarSign,
+  MessageCircle,
+  HelpCircle,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { LogoutModal } from "@/components/ui/logout-modal";
+import { useGetCarteira } from "@/modules/react-query/queries/user-queries";
 
 interface Transacao {
   id: number;
@@ -19,12 +25,48 @@ interface Transacao {
 }
 
 const MOCK_TRANSACOES: Transacao[] = [
-  { id: 1, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
-  { id: 2, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
-  { id: 3, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
-  { id: 4, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
-  { id: 5, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
-  { id: 6, descricao: "Pagamento Recebido de aluguel", item: "Barraca de camp", valor: 56.00, tipo: "entrada" },
+  {
+    id: 1,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
+  {
+    id: 2,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
+  {
+    id: 3,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
+  {
+    id: 4,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
+  {
+    id: 5,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
+  {
+    id: 6,
+    descricao: "Pagamento Recebido de aluguel",
+    item: "Barraca de camp",
+    valor: 56.0,
+    tipo: "entrada",
+  },
 ];
 
 const MOCK_SALDO = 100.51;
@@ -68,6 +110,11 @@ export default function CarteiraPage() {
   const auth = useAuth();
   const { chatCount, aluguelCount, anuncioCount } = useNotifications();
   const user = auth?.user;
+  const carteiraQuery = useGetCarteira();
+  const loading = carteiraQuery.isLoading;
+  const carteiraData = carteiraQuery.data?.data;
+
+  console.log(carteira);
 
   const [saldo, setSaldo] = useState<number>(0);
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
@@ -80,7 +127,9 @@ export default function CarteiraPage() {
         if (res.ok) {
           const data = await res.json();
           setSaldo(data.saldo ?? MOCK_SALDO);
-          setTransacoes(data.transacoes?.length ? data.transacoes : MOCK_TRANSACOES);
+          setTransacoes(
+            data.transacoes?.length ? data.transacoes : MOCK_TRANSACOES,
+          );
         } else {
           setSaldo(MOCK_SALDO);
           setTransacoes(MOCK_TRANSACOES);
@@ -94,12 +143,45 @@ export default function CarteiraPage() {
   }, []);
 
   const menuItems = [
-    { id: "dados",    label: "Meus dados",    icon: <User size={20} />,           path: "/meusdados" },
-    { id: "anuncios", label: "Meus anúncios", icon: <LayoutGrid size={20} />,     path: "/Meusanuncios",  badge: anuncioCount > 0 ? anuncioCount : undefined },
-    { id: "alugueis", label: "Meus aluguéis", icon: <Key size={20} />,            path: "/meusalugueis",  badge: aluguelCount > 0 ? aluguelCount : undefined },
-    { id: "carteira", label: "Carteira",       icon: <DollarSign size={20} />,    path: "/carteira" },
-    { id: "chats",    label: "Chats",          icon: <MessageCircle size={20} />, path: "/chats",         badge: chatCount > 0 ? chatCount : undefined },
-    { id: "ajuda",    label: "Ajuda",          icon: <HelpCircle size={20} />,    path: "/ajuda" },
+    {
+      id: "dados",
+      label: "Meus dados",
+      icon: <User size={20} />,
+      path: "/meusdados",
+    },
+    {
+      id: "anuncios",
+      label: "Meus anúncios",
+      icon: <LayoutGrid size={20} />,
+      path: "/Meusanuncios",
+      badge: anuncioCount > 0 ? anuncioCount : undefined,
+    },
+    {
+      id: "alugueis",
+      label: "Meus aluguéis",
+      icon: <Key size={20} />,
+      path: "/meusalugueis",
+      badge: aluguelCount > 0 ? aluguelCount : undefined,
+    },
+    {
+      id: "carteira",
+      label: "Carteira",
+      icon: <DollarSign size={20} />,
+      path: "/carteira",
+    },
+    {
+      id: "chats",
+      label: "Chats",
+      icon: <MessageCircle size={20} />,
+      path: "/chats",
+      badge: chatCount > 0 ? chatCount : undefined,
+    },
+    {
+      id: "ajuda",
+      label: "Ajuda",
+      icon: <HelpCircle size={20} />,
+      path: "/ajuda",
+    },
   ];
 
   const handleLogout = () => {
@@ -150,7 +232,9 @@ export default function CarteiraPage() {
       </aside>
 
       <section className="flex-1 max-w-3xl">
-        <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">Carteira</h1>
+        <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4">
+          Carteira
+        </h1>
         <div className="border-t border-gray-300 mb-8" />
 
         <p className="text-lg font-bold text-gray-900 mb-4">BorrowPay:</p>
@@ -171,23 +255,29 @@ export default function CarteiraPage() {
         </div>
 
         <div className="rounded-2xl overflow-hidden border border-gray-100">
-          {transacoes.map((t, i) => (
-            <div
-              key={t.id}
-              className={`flex items-center justify-between px-6 py-4 ${
-                i % 2 === 0 ? "bg-gray-100" : "bg-white"
-              }`}
-            >
-              <span className="text-sm text-gray-800">
-                <span className="font-bold">{t.descricao}</span>
-                {" - "}
-                <span className="text-gray-400">{t.item}</span>
-              </span>
-              <span className="text-sm font-semibold text-gray-800 shrink-0 ml-4">
-                R$ {t.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-          ))}
+          {carteiraData &&
+            carteiraData.map((t, i) => (
+              <div
+                key={t.id}
+                className={`flex items-center justify-between px-6 py-4 ${
+                  i % 2 === 0 ? "bg-gray-100" : "bg-white"
+                }`}
+              >
+                <span className="text-sm text-gray-800">
+                  <span className="font-bold">{t.message}</span>
+                  {" - "}
+                  <span className="text-gray-400">
+                    {t.aluguel.anuncio.titulo}
+                  </span>
+                </span>
+                <span className="text-sm font-semibold text-gray-800 shrink-0 ml-4">
+                  R${" "}
+                  {t.saldo.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            ))}
         </div>
       </section>
 
@@ -199,3 +289,4 @@ export default function CarteiraPage() {
     </main>
   );
 }
+

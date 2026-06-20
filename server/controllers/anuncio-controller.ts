@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import BaseController from "./base-controller";
 import AnuncioService from "../services/anuncio-service";
+import { arquivarConversasPorAnuncio } from "../lib/arquivarConversa";
 import {
   CreateAnuncioDTO,
   NextAuthApiRequest,
@@ -170,6 +171,15 @@ class AnuncioController extends BaseController {
         }
 
         await this.anuncioService.delete(id);
+
+        try {
+          await arquivarConversasPorAnuncio(
+            id,
+            "O anúncio foi removido pelo proprietário. Esta conversa foi encerrada.",
+          );
+        } catch (err) {
+          console.error("Erro ao arquivar conversas do anúncio:", err);
+        }
 
         res.send("Anuncio deleted successfully");
       } catch (err) {

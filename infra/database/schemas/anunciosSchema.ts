@@ -17,12 +17,7 @@ export const anuncios = mysqlTable("anuncios", {
   descricao: varchar("descricao", { length: 255 }).notNull(),
   categoria: varchar("categoria", {
     length: 255,
-    enum: [
-      "Ferramentas",
-      "Camping",
-      "Equipamentos de festa",
-      "Lazer",
-    ],
+    enum: ["Ferramentas", "Camping", "Equipamentos de festa", "Lazer"],
   }).notNull(),
   valorDiario: float("valor_diario").notNull(),
   caucao: float("caucao").notNull(),
@@ -48,8 +43,12 @@ export const fotoAnuncios = mysqlTable("foto_anuncio", {
     .notNull(),
 });
 
-export const anunciosRelations = relations(anuncios, ({ many }) => ({
+export const anunciosRelations = relations(anuncios, ({ many, one }) => ({
   fotos: many(fotoAnuncios),
+  locador: one(usuarios, {
+    fields: [anuncios.usuarioId],
+    references: [usuarios.id],
+  }),
 }));
 
 export const fotoRelations = relations(fotoAnuncios, ({ one }) => ({

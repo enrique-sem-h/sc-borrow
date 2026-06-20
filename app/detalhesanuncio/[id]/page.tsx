@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useForm, Controller } from "react-hook-form";
@@ -10,6 +10,7 @@ import {
   CheckCircle,
   MapPin,
   ChevronLeft,
+  ChevronRight,
   Image as ImageIcon,
 } from "lucide-react";
 
@@ -19,7 +20,6 @@ import { ptBR } from "date-fns/locale";
 
 import "react-day-picker/dist/style.css";
 import { useGetAnuncio } from "@/modules/react-query/queries/anuncios-queries";
-import { Spinner } from "@/components/ui/spinner";
 
 const reservaSchema = z
   .object({
@@ -39,34 +39,16 @@ const reservaSchema = z
 
 type ReservaFormValues = z.infer<typeof reservaSchema>;
 
-interface AnuncioDetalhes {
-  id: string;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  valorDiario: number;
-  caucao: number;
-  foto_principal: string | null;
-  datasBloqueadas?: {
-    dataInicio: string;
-    dataFim: string;
-  }[];
-}
-
 export default function DetalhesAnuncioPage() {
   const router = useRouter();
   const params = useParams();
   const idAnuncio = String(params?.id ?? "");
   const { user } = useAuth();
-  const anuncioQuery = useGetAnuncio(idAnuncio);
-  const anuncio = anuncioQuery.data?.data;
-  const loading = anuncioQuery.isLoading;
-  const tomorrowDate = new Date();
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  console.log(anuncio);
+  const anunciosQuery = useGetAnuncio(idAnuncio);
+  const anuncio = anunciosQuery.data?.data;
+  const loading = anunciosQuery.isLoading;
+  const [fotoIndex, setFotoIndex] = useState(0);
 
-  const fotoPricipal =
-    anuncio?.fotos?.find((foto) => foto.principal)?.url ?? "";
   const {
     handleSubmit,
     control,
@@ -80,11 +62,29 @@ export default function DetalhesAnuncioPage() {
 
   const dataInicioW = watch("dataInicio");
   const dataFimW = watch("dataFim");
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
 
-  const datasBloqueadas = anuncio?.datasBloqueadas?.map((periodo) => ({
-    from: parseISO(periodo.dataInicio.slice(0, 10)),
-    to: parseISO(periodo.dataFim.slice(0, 10)),
-  })) ?? [];
+  if (loading) {
+    return null;
+  }
+
+  if (!anuncio) {
+    router.back();
+    return null;
+  }
+
+  const fotos = [...(anuncio.fotos ?? [])].sort((a, b) => (b.principal ? 1 : 0) - (a.principal ? 1 : 0));
+  const fotoPricipal = fotos.find((f) => f.principal);
+  const fotoAtual = fotos[fotoIndex];
+  const totalFotos = fotos.length;
+
+  const datasBloqueadas =
+    anuncio?.datasBloqueadas?.map((periodo) => ({
+      from: parseISO(periodo.dataInicio.slice(0, 10)),
+      to: parseISO(periodo.dataFim.slice(0, 10)),
+    })) ?? [];
+  console.log(anuncio);
 
   const obterRangeDoForm = (): DateRange | undefined => {
     const inicio = dataInicioW ? parseISO(dataInicioW) : undefined;
@@ -108,17 +108,17 @@ export default function DetalhesAnuncioPage() {
 
   let totalDias = 0;
   let valorAluguel = 0;
-  const taxaServico = 12.0;
+  let taxaServico = 0;
   let valorTotal = 0;
 
   if (dataInicioW && dataFimW) {
     const inicio = new Date(dataInicioW);
     const fim = new Date(dataFimW);
     const diffTime = fim.getTime() - inicio.getTime();
-
     if (diffTime >= 0) {
       totalDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      valorAluguel = anuncio?.valorDiario * totalDias;
+      valorAluguel = anuncio.valorDiario * totalDias;
+      taxaServico = valorAluguel * 0.12;
       valorTotal = valorAluguel + taxaServico;
     }
   }
@@ -127,24 +127,16 @@ export default function DetalhesAnuncioPage() {
     const query = new URLSearchParams({
       idAnuncio: idAnuncio,
       idLocatario: user?.id ?? "",
-      titulo: anuncio?.titulo ?? "",
-      foto: fotoPricipal,
+      titulo: anuncio.titulo,
+      foto: fotoPricipal?.url ?? "",
       dataInicio: data.dataInicio,
       dataFim: data.dataFim,
-      valorDiario: String(anuncio?.valorDiario),
-      caucao: String(anuncio?.caucao),
+      valorDiario: String(anuncio.valorDiario),
+      caucao: String(anuncio.caucao),
       totalDias: String(totalDias),
     });
     router.push(`/confirmarreserva?${query.toString()}`);
   };
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 w-full h-full justify-center items-center">
-        <Spinner className="size-10" />
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-white font-sans text-[#1a1a1a]">
@@ -160,17 +152,45 @@ export default function DetalhesAnuncioPage() {
 
       <div className="max-w-[1400px] mx-auto px-12 py-8 flex flex-col lg:flex-row gap-12 items-start">
         <section className="flex-1 space-y-6 w-full pt-4">
-          <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex items-center justify-center p-8 shadow-sm">
-            {fotoPricipal ? (
-              <img
-                src={
-                  fotoPricipal.startsWith("http") || fotoPricipal.startsWith("/")
-                    ? fotoPricipal
-                    : `/${fotoPricipal}`
-                }
-                alt={anuncio?.titulo}
-                className="max-h-full object-contain"
-              />
+          <div className="w-full bg-[#f8f9fa] rounded-[32px] h-[450px] overflow-hidden border border-gray-100 flex flex-col items-center justify-center shadow-sm relative">
+            {totalFotos > 0 ? (
+              <>
+                <img
+                  src={fotoAtual.url}
+                  alt={anuncio.titulo}
+                  className="max-h-full max-w-full object-contain p-8"
+                />
+
+                {totalFotos > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFotoIndex((i) => (i - 1 + totalFotos) % totalFotos)}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow transition"
+                    >
+                      <ChevronLeft size={20} className="text-gray-700" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFotoIndex((i) => (i + 1) % totalFotos)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow transition"
+                    >
+                      <ChevronRight size={20} className="text-gray-700" />
+                    </button>
+
+                    <div className="absolute bottom-4 flex gap-2">
+                      {fotos.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setFotoIndex(i)}
+                          className={`w-2 h-2 rounded-full transition ${i === fotoIndex ? "bg-gray-700" : "bg-gray-300"}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
             ) : (
               <div className="text-gray-300 flex flex-col items-center gap-2">
                 <ImageIcon size={64} strokeWidth={1} />
@@ -181,10 +201,10 @@ export default function DetalhesAnuncioPage() {
 
           <div>
             <h1 className="text-3xl font-serif font-bold text-gray-900 leading-tight">
-              {anuncio?.titulo}
+              {anuncio.titulo}
             </h1>
             <p className="text-gray-400 text-sm mt-3 leading-relaxed">
-              {anuncio?.descricao}
+              {anuncio.descricao}
             </p>
           </div>
 
@@ -194,7 +214,7 @@ export default function DetalhesAnuncioPage() {
             <div className="w-14 h-14 bg-gray-200 rounded-full flex-shrink-0" />
             <div>
               <h3 className="text-base font-bold flex items-center gap-1.5 text-gray-900">
-                {anuncio?.descricao}
+                {anuncio.locador.nome}
                 <CheckCircle
                   size={16}
                   className="text-blue-500 fill-blue-500 text-white"
@@ -210,7 +230,7 @@ export default function DetalhesAnuncioPage() {
         <aside className="w-full lg:w-[420px] bg-white border border-gray-100 rounded-[32px] p-8 shadow-xl shadow-gray-100/70 shrink-0">
           <div className="mb-6">
             <span className="text-3xl font-serif font-extrabold text-gray-900">
-              R$ {anuncio?.valorDiario}
+              R$ {anuncio.valorDiario}
             </span>
             <span className="text-gray-400 text-base font-normal">/dia</span>
           </div>
@@ -271,18 +291,18 @@ export default function DetalhesAnuncioPage() {
                 selected={obterRangeDoForm()}
                 onSelect={handleCalendarSelect}
                 locale={ptBR}
+                modifiersClassNames={{
+                  selected: "bg-blue-600 text-white rounded-md",
+                  range_start: "rounded-l-full bg-blue-600",
+                  range_end: "rounded-r-full bg-blue-600",
+                  range_middle: "bg-blue-50 text-blue-600",
+                }}
                 disabled={[
                   {
                     before: tomorrowDate,
                   },
                   ...datasBloqueadas,
                 ]}
-                modifiersClassNames={{
-                  selected: "bg-blue-600 text-white ",
-                  range_start: "rounded-l-full bg-blue-600",
-                  range_end: "rounded-r-full bg-blue-600",
-                  range_middle: "bg-blue-50 text-blue-600",
-                }}
               />
             </div>
 
@@ -290,7 +310,7 @@ export default function DetalhesAnuncioPage() {
               <div className="space-y-2 border-t border-gray-100 pt-4 text-sm text-gray-500">
                 <div className="flex justify-between">
                   <span>
-                    R$ {anuncio?.valorDiario.toFixed(2)} x {totalDias} dias
+                    R$ {anuncio.valorDiario.toFixed(2)} x {totalDias} dias
                   </span>
                   <span className="font-medium text-gray-800">
                     R$ {valorAluguel.toFixed(2).replace(".", ",")}
@@ -305,16 +325,21 @@ export default function DetalhesAnuncioPage() {
               </div>
             )}
 
-            <div className="border-t-2 border-dashed border-gray-100 pt-4 flex justify-between items-center">
-              <span className="font-serif font-bold text-lg text-gray-900">
-                Total:
-              </span>
-              <span className="text-2xl font-serif font-extrabold text-gray-900">
-                R${" "}
-                {totalDias > 0
-                  ? valorTotal.toFixed(2).replace(".", ",")
-                  : "0,00"}
-              </span>
+            <div className="border-t-2 border-dashed border-gray-100 pt-4">
+              <div className="flex justify-between items-center">
+                <span className="font-serif font-bold text-lg text-gray-900">
+                  Total:
+                </span>
+                <span className="text-2xl font-serif font-extrabold text-gray-900">
+                  R${" "}
+                  {totalDias > 0
+                    ? valorTotal.toFixed(2).replace(".", ",")
+                    : "0,00"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 text-right mt-1">
+                (+ caução: R$ {anuncio.caucao.toFixed(2).replace(".", ",")})
+              </p>
             </div>
 
             <button

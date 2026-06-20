@@ -27,8 +27,8 @@ function PagamentoContent() {
   const valorDiario = parseFloat(params?.get("valorDiario") ?? "0");
   const totalDias = parseInt(params?.get("totalDias") ?? "0");
   const caucao = parseFloat(params?.get("caucao") ?? "0");
-  const taxaServico = 12.0;
   const valorAluguel = valorDiario * totalDias;
+  const taxaServico = valorAluguel * 0.12;
   const valorTotal = valorAluguel + caucao + taxaServico;
 
   useEffect(() => {

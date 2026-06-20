@@ -41,6 +41,16 @@ class AvaliacaoController {
     });
   }
 
+  public async findByAluguelId(req: NextApiRequest,res:NextApiResponse) {
+    const {idAluguel} = req.query;
+    const {idUsuario} = req.query;
+    const  avaliacao = await this.avaliacaoService.findByAluguelId(String(idAluguel), String (idUsuario));
+
+    return res.status(200).json({
+      data: avaliacao ?? null,
+    });
+  }
+
   public async list(req: NextApiRequest, res: NextApiResponse) {
     const avaliacao = await this.avaliacaoService.list();
     return res.status(200).json({

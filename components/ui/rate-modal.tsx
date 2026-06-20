@@ -5,6 +5,8 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Star, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import apiService from "@/services/api";
 
 const avaliacaoSchema = z.object({
   nota: z.number().min(1, { message: "Selecione pelo menos 1 estrela" }).max(5),
@@ -18,11 +20,12 @@ interface AvaliarModalProps {
   onClose: () => void;
   itemNome: string;
   periodoLocacao: string;
+  idAluguel: string;
 }
 
-export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao }: AvaliarModalProps) {
+export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAluguel, }: AvaliarModalProps) {
   const [sucesso, setSucesso] = useState(false);
-
+  const { user } = useAuth();
   const { handleSubmit, control, setValue, watch, formState: { errors } } = useForm<AvaliacaoFormValues>({
     resolver: zodResolver(avaliacaoSchema),
     defaultValues: {
@@ -35,9 +38,25 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao }: Aval
 
   if (!isOpen) return null;
 
-  const onSubmit = (data: AvaliacaoFormValues) => {
-    console.log("Avaliação pronta para salvar no banco:", data);
-    setSucesso(true);
+  const onSubmit = async (data: AvaliacaoFormValues) => {
+    if (!user?.id || !idAluguel) {
+      return;
+    }
+    
+    try {
+      await apiService.avaliacoes.create({
+        nota: data.nota,
+        mensagem: data.comentario,
+        idUsuario: user.id,
+        idAluguel,
+      });
+
+      setSucesso(true);
+    } catch(error) {
+      console.error(error);
+      alert("Não foi possível enviar a avaliação.");
+    }
+
   };
 
   if (sucesso) {

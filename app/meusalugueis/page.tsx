@@ -14,7 +14,14 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { dbFirebase } from "@/infra/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { LogoutModal } from "@/components/ui/logout-modal";
 import { AvaliarModal } from "@/components/ui/rate-modal";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
@@ -58,6 +65,7 @@ const StatusBadge = ({
       </span>
     );
   }
+
   if (status === "WAITING_FOR_DISPATCH") {
     return (
       <span className="flex items-center gap-1.5 text-green-600 text-xs font-semibold">
@@ -66,6 +74,15 @@ const StatusBadge = ({
       </span>
     );
   }
+
+  if (status === "WAITING_FOR_CONFIRM") {
+    return (
+      <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+        Esperando confirmação
+      </span>
+    );
+  }
+
   if (status === "WAITING_FOR_DELIVERY") {
     return (
       <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
@@ -282,7 +299,10 @@ export default function MeusAlugueisPage() {
                         </div>
                       )}
                       <button
-                        onClick={(e) => { e.stopPropagation(); abrirChat(aluguel); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          abrirChat(aluguel);
+                        }}
                         className="absolute top-3 left-3 bg-white/95 p-1.5 rounded-lg shadow-sm hover:bg-white text-gray-600 transition z-10"
                       >
                         <MessageCircle size={18} />

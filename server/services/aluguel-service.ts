@@ -1,13 +1,16 @@
-import {
-  alugueis,
-  AluguelStatus,
-  AluguelType,
-} from "@/infra/database/schemas/alugueisSchema";
 import { AluguelTipo } from "../controllers/aluguel-controller";
 import AluguelRepository from "../repositories/aluguel-repository";
-import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
+import {
+  Aluguel,
+  CreateAluguelDTO,
+  CreateNotificacaoDTO,
+  UpdateAluguelDTO,
+} from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
+import HistoricoPagamentoRepository from "../repositories/historico-pagamento-repository";
+import { arquivarConversaPorAluguel } from "../lib/arquivarConversa";
+import NotificacoesRepository from "../repositories/notificacoes-repository";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -19,21 +22,31 @@ export class NotFoundError extends Error {
 
 class AluguelService extends BaseService {
   public async create(body: CreateAluguelDTO): Promise<Aluguel> {
-
-    if(!body.idAnuncio) {
+    if (!body.idAnuncio) {
       throw new Error("Anúncio inválido.");
     }
-    
+
     const conflito = await AluguelRepository.findConflictAnuncio(
       body.idAnuncio,
       body.dataInicio,
-      body.dataFim
+      body.dataFim,
     );
 
     if (conflito) {
       throw new Error("Este anúncio já está alugado nesse período.");
     }
-    return await AluguelRepository.create(body);
+    const create = await AluguelRepository.create(body);
+
+    if (create) {
+      const notificacao = {
+        type: "aluguel",
+        title: "Novo Aluguel",
+        usuarioId: body.idLocador,
+        message: `Novo aluguel no valor de R$${body.valorTotal}. Verifique em Meus Alugueis`,
+      } as CreateNotificacaoDTO;
+      await NotificacoesRepository.create(notificacao);
+    }
+    return create;
   }
 
   public async update(id: string, body: UpdateAluguelDTO) {
@@ -57,30 +70,17 @@ class AluguelService extends BaseService {
     return AluguelRepository.delete(id);
   }
 
-  public async confirmAluguel(id: string) {
+  public async confirmAluguel(id: string, caller: string) {
     const aluguel = await AluguelRepository.read(id);
 
     if (!aluguel) {
       throw new NotFoundError("Aluguel not found");
     }
 
-    this.ensureInStatus(aluguel, "WAITING_FOR_PAYMANT");
+    this.ensureCallerIsLocador(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_CONFIRM");
 
     await this.changeStatus(aluguel, "WAITING_FOR_DISPATCH");
-  }
-
-  public async confirmReceived(id: string, caller: string) {
-    const aluguel = await AluguelRepository.read(id);
-
-    if (!aluguel) {
-      throw new NotFoundError("Aluguel not found");
-    }
-
-    this.ensureCallerIsLocatario(aluguel, caller);
-    this.ensureIsInDataRangeOrCancel(aluguel);
-    this.ensureInStatus(aluguel, "WAITING_FOR_DELIVERY");
-
-    await this.changeStatus(aluguel, "ITEM_IN_HAND");
   }
 
   public async dispatch(id: string, caller: string) {
@@ -91,10 +91,86 @@ class AluguelService extends BaseService {
     }
 
     this.ensureCallerIsLocador(aluguel, caller);
-    this.ensureIsInDataRangeOrCancel(aluguel);
     this.ensureInStatus(aluguel, "WAITING_FOR_DISPATCH");
 
     await this.changeStatus(aluguel, "WAITING_FOR_DELIVERY");
+  }
+
+  public async confirmReceived(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocatario(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_DELIVERY");
+
+    await this.changeStatus(aluguel, "ITEM_IN_HAND");
+  }
+
+  public async confirmReturningItem(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocatario(aluguel, caller);
+    this.ensureInStatus(aluguel, "ITEM_IN_HAND");
+
+    await this.changeStatus(aluguel, "WAITING_FOR_RETURN_CONFIRM");
+  }
+
+  public async confirmReturnedItem(id: string, caller: string) {
+    const aluguel = await AluguelRepository.read(id);
+
+    if (!aluguel) {
+      throw new NotFoundError("Aluguel not found");
+    }
+
+    this.ensureCallerIsLocador(aluguel, caller);
+    this.ensureInStatus(aluguel, "WAITING_FOR_RETURN_CONFIRM");
+
+    const inicio = new Date(aluguel.dataInicio);
+    const fim = new Date(aluguel.dataFim);
+    const diffTime = fim.getTime() - inicio.getTime();
+
+    const totalDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const caucao = aluguel.anuncio!.caucao;
+    const subTotal = aluguel.anuncio!.valorDiario * totalDias;
+    const taxa = subTotal * 0.12;
+
+    const saldoLocador = parseFloat(subTotal.toFixed(2));
+    const saldoLocatario = parseFloat(caucao.toFixed(2));
+
+    const locadorId = aluguel.idLocador;
+    console.log("locadorId", locadorId);
+    const locatarioId = aluguel.idLocatario;
+    console.log("locatarioId", locatarioId);
+
+    console.log("Caucao", caucao);
+    console.log("Taxa", taxa);
+    console.log("Subtotal", subTotal);
+    console.log("Saldo Locador", saldoLocador);
+    console.log("Saldo locatario", saldoLocatario);
+
+    await this.changeStatus(aluguel, "COMPLETED");
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locadorId,
+      aluguelId: id,
+      message: "Pagamento recebido pelo aluguel",
+      saldo: saldoLocador,
+    });
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locatarioId,
+      aluguelId: id,
+      message: "Caucao devolvida",
+      saldo: saldoLocatario,
+    });
+    await UserRepository.addSaldo(locadorId, saldoLocador);
+    await UserRepository.addSaldo(locatarioId, saldoLocatario);
   }
 
   public async cancel(id: string, caller: string) {
@@ -113,9 +189,36 @@ class AluguelService extends BaseService {
       throw new Error("You don't have permission to cancel this aluguel");
     }
 
-    return await AluguelRepository.update(aluguel.id, {
+    const valorTotal = aluguel.valorTotal;
+
+    const saldoLocatario = valorTotal;
+
+    const locatarioId = aluguel.idLocatario;
+
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locatarioId,
+      aluguelId: id,
+      message: "Valor devolvido devido ao cancelamento do aluguel",
+      saldo: saldoLocatario,
+    });
+    await AluguelRepository.update(aluguel.id, {
       status: "CANCELLED",
     });
+
+    const result = await AluguelRepository.update(aluguel.id, {
+      status: "CANCELLED",
+    });
+
+    try {
+      await arquivarConversaPorAluguel(
+        aluguel.id,
+        "O aluguel foi cancelado. Esta conversa foi encerrada.",
+      );
+    } catch (err) {
+      console.error("Erro ao arquivar conversa do aluguel:", err);
+    }
+
+    return result;
   }
 
   private ensureInStatus(
@@ -159,6 +262,8 @@ class AluguelService extends BaseService {
     const isInDataRange = now >= aluguel.dataInicio && now <= aluguel.dataFim;
 
     if (!isInDataRange) {
+      console.log("ISN't in data range");
+
       await this.changeStatus(aluguel, "CANCELLED");
       throw new Error(`Aluguel is not in data range`);
     }

@@ -1,5 +1,6 @@
 import { anuncios } from "@/infra/database/schemas/anunciosSchema";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
+import { notificacoes } from "@/infra/database/schemas/notificacoesSchema";
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { NextApiRequest } from "next";
 import formidable from "formidable";
@@ -33,10 +34,10 @@ export type CreateFotoAnuncioDTO = {
 };
 
 export type Aluguel = InferSelectModel<typeof alugueis>;
+export type AluguelInsert = InferInsertModel<typeof alugueis>;
 export type CreateAluguelDTO = Optional<Aluguel, "id">;
-export type UpdateAluguelDTO = Omit<
-  Aluguel,
-  "id" | "idAnuncio" | "idLocador" | "idLocatario"
+export type UpdateAluguelDTO = Partial<
+  Omit<AluguelInsert, "id" | "idAnuncio" | "idLocador" | "idLocatario">
 >;
 
 export interface NextAuthMiddlewareApiRequest extends NextApiRequest {
@@ -50,3 +51,6 @@ export interface NextAuthApiRequest extends NextApiRequest {
 export interface NextFormApiRequest extends NextApiRequest {
   files?: formidable.Files<string>;
 }
+
+export type CreateNotificacaoDTO = InferInsertModel<typeof notificacoes>;
+export type NotificacaoDTO = InferSelectModel<typeof notificacoes>;
