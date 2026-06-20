@@ -14,7 +14,7 @@ type MeusAlugueisPageProps = {
   children: ReactNode;
 };
 
-const StatusBadge = ({
+export const StatusBadge = ({
   status,
   onAvaliar,
 }: {
@@ -34,6 +34,13 @@ const StatusBadge = ({
       <span className="flex items-center gap-1.5 text-green-600 text-xs font-semibold">
         <span className="w-2 h-2 rounded-full bg-green-500" />
         Esperando entrega
+      </span>
+    );
+  }
+  if (status === "WAITING_FOR_CONFIRM") {
+    return (
+      <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+        Esperando confirmação
       </span>
     );
   }
@@ -58,7 +65,7 @@ const StatusBadge = ({
           Concluído
         </span>
         <button
-          onClick={(e)=> {
+          onClick={(e) => {
             e.stopPropagation();
             onAvaliar?.();
           }}
@@ -77,8 +84,9 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
   const alugueisQuery = useGetAlugueis(tipo);
   const alugueis = alugueisQuery.data?.data;
   const loading = alugueisQuery.isLoading;
-  const [aluguelParaAvaliar, setAluguelParaAvaliar] =
-  useState<Aluguel | null>(null);
+  const [aluguelParaAvaliar, setAluguelParaAvaliar] = useState<Aluguel | null>(
+    null,
+  );
 
   const getChecklistPath = (aluguelId: string) => `/aluguel/${aluguelId}`;
 
@@ -158,8 +166,9 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
                           {aluguel.valorTotal.toFixed(2).replace(".", ",")}
                         </span>
                         <div className="mt-1">
-                          <StatusBadge status={aluguel.status} 
-                            onAvaliar={()=> {
+                          <StatusBadge
+                            status={aluguel.status}
+                            onAvaliar={() => {
                               setAluguelParaAvaliar(aluguel);
                             }}
                           />
@@ -199,15 +208,15 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
       )}
       <AvaliarModal
         isOpen={!!aluguelParaAvaliar}
-        onClose={()=> setAluguelParaAvaliar(null)}
+        onClose={() => setAluguelParaAvaliar(null)}
         itemNome={aluguelParaAvaliar?.anuncio?.titulo ?? ""}
         periodoLocacao={
           aluguelParaAvaliar
-          ? `${new Date(aluguelParaAvaliar.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguelParaAvaliar.dataFim).toLocaleDateString("pt-BR")}`
-          :""
+            ? `${new Date(aluguelParaAvaliar.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(aluguelParaAvaliar.dataFim).toLocaleDateString("pt-BR")}`
+            : ""
         }
         idAluguel={aluguelParaAvaliar?.id ?? ""}
-        />
+      />
     </>
   );
 };

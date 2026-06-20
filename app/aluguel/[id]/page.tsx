@@ -13,6 +13,7 @@ import { Aluguel } from "@/server/types";
 import { aluguelStatusArr } from "@/infra/database/schemas/alugueisSchema";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/contexts/AuthContext";
+import StatusBadge from "@/components/ui/status-badge";
 
 function AndamentoAluguelContent() {
   const router = useRouter();
@@ -321,9 +322,7 @@ function AndamentoAluguelContent() {
                 <span className="text-lg font-bold text-gray-900">
                   R$ {valorDiario.toFixed(2).replace(".", ",")}
                 </span>
-                <span className="block text-[10px] text-green-500 font-bold bg-green-50 px-1.5 py-0.5 rounded-md mt-1 text-center border border-green-100">
-                  ● Ativo
-                </span>
+                <StatusBadge status={aluguel.status} />
               </div>
             </div>
           </div>
