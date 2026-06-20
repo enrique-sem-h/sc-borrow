@@ -404,27 +404,6 @@ function AndamentoAluguelContent() {
         </div>
 
         <div className="w-full h-px bg-gray-200 my-8 max-w-3xl mx-auto" />
-
-        <div className="flex justify-center items-center gap-3 max-w-xl mx-auto">
-          <button
-            onClick={() =>
-              router.push(`/checklist/enviar-locatario?aluguelId=${aluguel.id}`)
-            }
-            className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-serif font-semibold rounded-xl text-base transition shadow-sm"
-          >
-            Checklist de entrega
-          </button>
-          <button
-            onClick={() =>
-              router.push(
-                `/checklist/confirma-devolucao?aluguelId=${aluguel.id}`,
-              )
-            }
-            className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-serif font-semibold rounded-xl text-base transition shadow-sm"
-          >
-            Checklist de devolução
-          </button>
-        </div>
       </div>
 
       <ConfirmedOrderModal
