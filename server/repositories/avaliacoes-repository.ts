@@ -1,8 +1,9 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { db } from "@/infra/database/index";
 import { avaliacoes } from "@/infra/database/schemas/avaliacoesSchema";
 import { CreateAvaliacaoDTO, UpdateAvaliacaoDTO } from "../dtos/avaliacao-dto";
 import { id } from "date-fns/locale";
+import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 
 class AvaliacaoRepository {
   static async create(body: CreateAvaliacaoDTO) {
@@ -45,7 +46,7 @@ class AvaliacaoRepository {
     await db.delete(avaliacoes).where(eq(avaliacoes.id, id));
   }
 
-  static async findAluguelId(idAluguel: string, idUsuario: string) {
+  static async findByAluguelId(idAluguel: string, idUsuario: string) {
     const avaliacao = await db
     .select()
     .from(avaliacoes)
@@ -59,6 +60,41 @@ class AvaliacaoRepository {
 
     return avaliacao[0];
   }
+
+
+  static async calcularReputacaoRecebida(idUsuarioAvaliado: string) {
+    const avaliacoesRecebidas = await db
+      .select({
+        nota: avaliacoes.nota,
+      })
+      .from(avaliacoes)
+      .innerJoin(alugueis, eq(avaliacoes.idAluguel, alugueis.id))
+      .where(
+        or(
+          and(
+            eq(alugueis.idLocador, idUsuarioAvaliado),
+            eq(avaliacoes.idUsuario, alugueis.idLocatario),
+          ),
+          and(
+            eq(alugueis.idLocatario, idUsuarioAvaliado),
+            eq(avaliacoes.idUsuario, alugueis.idLocador),
+          ),
+        ),
+      );
+
+    if (!avaliacoesRecebidas.length) {
+      return 0;
+    }
+
+    const soma = avaliacoesRecebidas.reduce((total, avaliacao) => {
+      return total + Number(avaliacao.nota);
+    }, 0);
+
+    const media = soma / avaliacoesRecebidas.length;
+
+    return Number(media.toFixed(2));
+  }
+  
 }
 
 export default AvaliacaoRepository;

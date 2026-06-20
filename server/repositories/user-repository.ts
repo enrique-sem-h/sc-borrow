@@ -53,6 +53,15 @@ class UserRepository {
       })
       .where(eq(usuarios.id, id));
   }
+
+    static async updateReputacao(id: string, rep: number) {
+    await db
+      .update(usuarios)
+      .set({
+        rep,
+      })
+      .where(eq(usuarios.id, id));
+  }
 }
 
 export default UserRepository;
