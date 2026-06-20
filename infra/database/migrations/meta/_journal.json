@@ -71,6 +71,13 @@
       "when": 1781909276848,
       "tag": "0009_empty_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1781916366666,
+      "tag": "0010_sweet_black_crow",
+      "breakpoints": true
     }
   ]
 }
