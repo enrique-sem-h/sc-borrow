@@ -109,7 +109,7 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
               {alugueis
                 .filter((a) => a.anuncio)
                 .map((aluguel, index) => (
-                  <button
+                  <div
                     key={index}
                     onClick={() => router.push(getChecklistPath(aluguel.id))}
                     className="flex flex-row shadow-sm border border-gray-100 rounded-2xl p-4 bg-white justify-between cursor-pointer hover:shadow-md transition-all duration-200"
@@ -159,7 +159,7 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/dashboard/chat`);
+                          router.push(`/dashboard/chat?aluguelId=${aluguel.id}`);
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-semibold transition"
                       >
@@ -167,7 +167,7 @@ const MeusAlugueisPage: React.FC<MeusAlugueisPageProps> = () => {
                         Chat
                       </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
             </div>
           )}

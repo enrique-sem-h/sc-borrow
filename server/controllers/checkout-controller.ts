@@ -80,6 +80,91 @@ class CheckoutController extends BaseController {
     );
   }
 
+  public async finalize(req: NextAuthApiRequest, res: NextApiResponse) {
+    return this.handleRequest(req, res, async () => {
+      try {
+        const { paymentIntentId } = req.body;
+        if (!paymentIntentId) {
+          return res.status(400).json({ error: "paymentIntentId obrigatório" });
+        }
+
+        const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (intent.status !== "succeeded") {
+          return res.status(400).json({ error: "Pagamento não confirmado" });
+        }
+
+        const data = intent.metadata;
+        const [anuncio] = await db
+          .select()
+          .from(anuncios)
+          .where(eq(anuncios.id, data.idAnuncio))
+          .limit(1);
+
+        const idLocador = anuncio?.usuarioId;
+        if (!idLocador) {
+          return res.status(400).json({ error: "Anúncio não encontrado" });
+        }
+
+        const aluguelDTO = {
+          dataFim: new Date(data.dataFim),
+          dataInicio: new Date(data.dataInicio),
+          idAnuncio: data.idAnuncio,
+          idLocador,
+          idLocatario: data.idLocatario,
+          valorTotal: intent.amount / 100,
+        } as CreateAluguelDTO;
+
+        let aluguel;
+        try {
+          aluguel = await this.aluguelService.create(aluguelDTO);
+        } catch (err) {
+          console.warn("Aluguel possivelmente já existe:", err.message);
+          return res.status(200).json({ message: "already exists" });
+        }
+
+        if (aluguel) {
+          try {
+            const conversasRef = collection(dbFirebase, "conversas");
+            const existing = await getDocs(
+              query(conversasRef, where("idAluguel", "==", aluguel.id)),
+            );
+
+            if (existing.empty) {
+              const [locador, locatario] = await Promise.all([
+                UserRepository.read(idLocador),
+                UserRepository.read(data.idLocatario),
+              ]);
+              const periodo = `${new Date(data.dataInicio).toLocaleDateString("pt-BR")} - ${new Date(data.dataFim).toLocaleDateString("pt-BR")}`;
+
+              await addDoc(conversasRef, {
+                idAluguel: aluguel.id,
+                idAnuncio: data.idAnuncio,
+                idLocador,
+                idLocatario: data.idLocatario,
+                nomeLocador: locador?.nome || "Proprietário",
+                nomeLocatario: locatario?.nome || "Locatário",
+                participantes: [idLocador, data.idLocatario],
+                itemAcordo: anuncio.titulo,
+                periodoAcordo: periodo,
+                ultimaMensagem: "",
+                naoLidas: {},
+                criadoEm: serverTimestamp(),
+              });
+            }
+          } catch (err) {
+            console.error("Erro ao criar conversa no Firestore:", err);
+          }
+          return res.status(200).json({ aluguelId: aluguel.id });
+        }
+
+        return res.status(500).json({ error: "Erro ao criar aluguel" });
+      } catch (err) {
+        console.error("Erro no finalize:", err);
+        return res.status(500).json({ error: "Erro interno" });
+      }
+    });
+  }
+
   public async stripeResponse(req: NextApiRequest, res: NextApiResponse) {
     const rawBody = await buffer(req);
     const signature = req.headers["stripe-signature"];

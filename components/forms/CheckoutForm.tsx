@@ -25,6 +25,7 @@ export default function CheckoutForm({
   const expectedPaymentStatus = ["succeeded", "processing"];
 
   const [isLoading, setIsLoading] = useState(false);
+  const [aluguelId, setAluguelId] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalStatus, setModalStatus] = useState<"success" | "error">(
@@ -54,6 +55,23 @@ export default function CheckoutForm({
     }
 
     if (paymentIntent && expectedPaymentStatus.includes(paymentIntent.status)) {
+      try {
+        const token = localStorage.getItem("token") ?? "";
+        const resp = await fetch("/api/checkout/finalize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
+        });
+        const result = await resp.json();
+        if (result.aluguelId) {
+          setAluguelId(result.aluguelId);
+        }
+      } catch (err) {
+        console.error("Erro ao finalizar aluguel:", err);
+      }
       setModalStatus("success");
       setIsModalOpen(true);
     } else {
@@ -67,7 +85,11 @@ export default function CheckoutForm({
   const handleCloseModal = () => {
     setIsModalOpen(false);
     if (modalStatus === "success") {
-      router.push("/dashboard/meus-alugueis");
+      router.push(
+        aluguelId
+          ? `/dashboard/chat?aluguelId=${aluguelId}`
+          : "/dashboard/meus-alugueis",
+      );
     }
   };
 
