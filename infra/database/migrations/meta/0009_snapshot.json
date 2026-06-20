@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "530f5469-d3f0-4524-8334-a67a790852c1",
+  "id": "b647f1c2-87dd-4bac-b2c9-da8cd8d2f7aa",
   "prevId": "8f1148dd-9dcc-4ce7-83ca-3cc4089a563b",
   "tables": {
     "alugueis": {
@@ -536,26 +536,27 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "historico_pagamentos": {
-      "name": "historico_pagamentos",
+    "notificacoes": {
+      "name": "notificacoes",
       "columns": {
         "id": {
           "name": "id",
           "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "(uuid())"
         },
-        "usuario_id": {
-          "name": "usuario_id",
-          "type": "varchar(36)",
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "aluguel_id": {
-          "name": "aluguel_id",
-          "type": "varchar(36)",
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -567,9 +568,25 @@
           "notNull": true,
           "autoincrement": false
         },
-        "saldo": {
-          "name": "saldo",
-          "type": "float",
+        "read": {
+          "name": "read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "varchar(36)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -577,9 +594,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "historico_pagamentos_usuario_id_usuarios_id_fk": {
-          "name": "historico_pagamentos_usuario_id_usuarios_id_fk",
-          "tableFrom": "historico_pagamentos",
+        "notificacoes_usuario_id_usuarios_id_fk": {
+          "name": "notificacoes_usuario_id_usuarios_id_fk",
+          "tableFrom": "notificacoes",
           "tableTo": "usuarios",
           "columnsFrom": [
             "usuario_id"
@@ -587,26 +604,13 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
-          "onUpdate": "cascade"
-        },
-        "historico_pagamentos_aluguel_id_alugueis_id_fk": {
-          "name": "historico_pagamentos_aluguel_id_alugueis_id_fk",
-          "tableFrom": "historico_pagamentos",
-          "tableTo": "alugueis",
-          "columnsFrom": [
-            "aluguel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
           "onDelete": "no action",
-          "onUpdate": "cascade"
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "historico_pagamentos_id": {
-          "name": "historico_pagamentos_id",
+        "notificacoes_id": {
+          "name": "notificacoes_id",
           "columns": [
             "id"
           ]

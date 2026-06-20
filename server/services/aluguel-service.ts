@@ -1,14 +1,16 @@
-import {
-  alugueis,
-  AluguelStatus,
-  AluguelType,
-} from "@/infra/database/schemas/alugueisSchema";
 import { AluguelTipo } from "../controllers/aluguel-controller";
 import AluguelRepository from "../repositories/aluguel-repository";
-import { Aluguel, CreateAluguelDTO, UpdateAluguelDTO } from "../types";
+import {
+  Aluguel,
+  CreateAluguelDTO,
+  CreateNotificacaoDTO,
+  UpdateAluguelDTO,
+} from "../types";
 import BaseService from "./base-service";
 import UserRepository from "../repositories/user-repository";
 import HistoricoPagamentoRepository from "../repositories/historico-pagamento-repository";
+import { arquivarConversaPorAluguel } from "../lib/arquivarConversa";
+import NotificacoesRepository from "../repositories/notificacoes-repository";
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -33,7 +35,18 @@ class AluguelService extends BaseService {
     if (conflito) {
       throw new Error("Este anúncio já está alugado nesse período.");
     }
-    return await AluguelRepository.create(body);
+    const create = await AluguelRepository.create(body);
+
+    if (create) {
+      const notificacao = {
+        type: "aluguel",
+        title: "Novo Aluguel",
+        usuarioId: body.idLocador,
+        message: `Novo aluguel no valor de R$${body.valorTotal}. Verifique em Meus Alugueis`,
+      } as CreateNotificacaoDTO;
+      await NotificacoesRepository.create(notificacao);
+    }
+    return create;
   }
 
   public async update(id: string, body: UpdateAluguelDTO) {
@@ -182,17 +195,30 @@ class AluguelService extends BaseService {
 
     const locatarioId = aluguel.idLocatario;
 
-    await Promise.all([
-      HistoricoPagamentoRepository.create({
-        usuarioId: locatarioId,
-        aluguelId: id,
-        message: "Valor devolvido devido ao cancelamento do aluguel",
-        saldo: saldoLocatario,
-      }),
-      AluguelRepository.update(aluguel.id, {
-        status: "CANCELLED",
-      }),
-    ]);
+    await HistoricoPagamentoRepository.create({
+      usuarioId: locatarioId,
+      aluguelId: id,
+      message: "Valor devolvido devido ao cancelamento do aluguel",
+      saldo: saldoLocatario,
+    });
+    await AluguelRepository.update(aluguel.id, {
+      status: "CANCELLED",
+    });
+
+    const result = await AluguelRepository.update(aluguel.id, {
+      status: "CANCELLED",
+    });
+
+    try {
+      await arquivarConversaPorAluguel(
+        aluguel.id,
+        "O aluguel foi cancelado. Esta conversa foi encerrada.",
+      );
+    } catch (err) {
+      console.error("Erro ao arquivar conversa do aluguel:", err);
+    }
+
+    return result;
   }
 
   private ensureInStatus(

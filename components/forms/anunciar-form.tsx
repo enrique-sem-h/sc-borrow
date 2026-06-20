@@ -198,7 +198,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                     return (
                       <FormInput
                         placeholder="Ex: Furadeira de Impacto Bosch"
-                        error={fieldState.error?.message}
+                        error={fieldState.error ? "Tente novamente! Item obrigatório não preenchido" : undefined}
                         {...field}
                       />
                     );
@@ -215,7 +215,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                     render={({ field, fieldState }) => {
                       return (
                         <SelectFormInput
-                          error={fieldState.error?.message}
+                          error={fieldState.error ? "Tente novamente! Item obrigatório não preenchido" : undefined}
                           {...field}
                         >
                           <option value="">Selecione...</option>
@@ -242,7 +242,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                 render={({ field, fieldState }) => {
                   return (
                     <TextAreaFormInput
-                      error={fieldState.error?.message}
+                      error={fieldState.error ? "Tente novamente! Item obrigatório não preenchido" : undefined}
                       placeholder="Conte detalhes sobre o produto, voltagem, acessórios inclusos..."
                       {...field}
                     />
@@ -261,7 +261,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                     render={({ field, fieldState }) => (
                       <FormInput
                         placeholder="0,00"
-                        error={fieldState.error?.message}
+                        error={fieldState.error ? "Tente novamente! Item obrigatório não preenchido" : undefined}
                         value={formatCurrency(field.value)}
                         onChange={(e) => parseCurrency(e, field.onChange)}
                         onBlur={field.onBlur}
@@ -284,7 +284,7 @@ const AnunciarForm: React.FC<AnunciarFormProps> = ({
                   render={({ field, fieldState }) => (
                     <FormInput
                       placeholder="0,00"
-                      error={fieldState.error?.message}
+                      error={fieldState.error ? "Tente novamente! Item obrigatório não preenchido" : undefined}
                       value={formatCurrency(field.value)}
                       onChange={(e) => parseCurrency(e, field.onChange)}
                       onBlur={field.onBlur}

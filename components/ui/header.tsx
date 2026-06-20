@@ -15,6 +15,8 @@ import RegisterModal from "./register-modal";
 import { NotificationsDropdown } from "@/components/ui/notification";
 import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
+import apiService from "@/services/api";
+import type { NotificacaoDTO } from "@/server/types";
 
 export default function Header() {
   const router = useRouter();
@@ -23,6 +25,11 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState<NotificacaoDTO[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [notificationsError, setNotificationsError] = useState<string | null>(
+    null,
+  );
 
   const auth = useAuth();
   const isAuth = auth?.isAuth ?? false;
@@ -51,6 +58,53 @@ export default function Header() {
 
   function onLoginSuccess(): void {
     setIsLoginOpen(false);
+  }
+
+  async function openNotifications() {
+    if (!isAuth) {
+      toast("Logue-se para ver suas notificacoes!");
+      setIsLoginOpen(true);
+      return;
+    }
+
+    if (isNotificationsOpen) {
+      setIsNotificationsOpen(false);
+      return;
+    }
+
+    setIsNotificationsOpen(true);
+    setIsLoadingNotifications(true);
+    setNotificationsError(null);
+
+    try {
+      const response = await apiService.notificacoes.getAll();
+      setNotifications(response.data);
+    } catch (error) {
+      console.error(error);
+      setNotificationsError("Nao foi possivel carregar as notificacoes.");
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }
+
+  async function markNotificationAsRead(id: string) {
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification,
+      ),
+    );
+
+    try {
+      const response = await apiService.notificacoes.markAsRead(id);
+      setNotifications((current) =>
+        current.map((notification) =>
+          notification.id === id ? response.data : notification,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      toast("Nao foi possivel marcar a notificacao como lida.");
+    }
   }
 
   return (
@@ -123,7 +177,7 @@ export default function Header() {
 
             <div className="relative">
               <button
-                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                onClick={openNotifications}
                 aria-label="Notificações"
                 className={`p-2 rounded-lg transition ${
                   isNotificationsOpen
@@ -137,6 +191,10 @@ export default function Header() {
               <NotificationsDropdown
                 isOpen={isNotificationsOpen}
                 onClose={() => setIsNotificationsOpen(false)}
+                notifications={notifications}
+                isLoading={isLoadingNotifications}
+                error={notificationsError}
+                onMarkAsRead={markNotificationAsRead}
               />
             </div>
 
@@ -213,7 +271,7 @@ export default function Header() {
 
             <div className="relative w-full">
               <button
-                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                onClick={openNotifications}
                 className="flex items-center justify-between w-full px-4 py-3 rounded-xl hover:bg-gray-100 transition text-gray-700"
               >
                 <div className="flex items-center gap-3">
@@ -226,6 +284,10 @@ export default function Header() {
                 <NotificationsDropdown
                   isOpen={isNotificationsOpen}
                   onClose={() => setIsNotificationsOpen(false)}
+                  notifications={notifications}
+                  isLoading={isLoadingNotifications}
+                  error={notificationsError}
+                  onMarkAsRead={markNotificationAsRead}
                 />
               </div>
             </div>
@@ -286,4 +348,3 @@ export default function Header() {
     </>
   );
 }
-

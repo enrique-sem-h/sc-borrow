@@ -23,6 +23,7 @@ interface Mensagem {
   id: string;
   texto: string;
   remetenteId: string;
+  tipo?: string;
   timestamp: string;
   lida: boolean;
 }
@@ -38,6 +39,7 @@ interface Conversa {
   periodoAcordo: string;
   ultimaMensagem: string;
   naoLidas: Record<string, number>;
+  arquivada?: boolean;
 }
 
 type ChatFormValues = {
@@ -85,21 +87,24 @@ function DashboardChatContent() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const lista = snapshot.docs.map((d) => {
-        const dados = d.data();
-        return {
-          id: d.id,
-          idAluguel: dados.idAluguel || "",
-          nomeLocador: dados.nomeLocador || "Proprietário",
-          nomeLocatario: dados.nomeLocatario || "Locatário",
-          idLocador: dados.idLocador || "",
-          idLocatario: dados.idLocatario || "",
-          itemAcordo: dados.itemAcordo || "Produto",
-          periodoAcordo: dados.periodoAcordo || "",
-          ultimaMensagem: dados.ultimaMensagem || "",
-          naoLidas: dados.naoLidas || {},
-        } as Conversa;
-      });
+      const lista = snapshot.docs
+        .map((d) => {
+          const dados = d.data();
+          return {
+            id: d.id,
+            idAluguel: dados.idAluguel || "",
+            nomeLocador: dados.nomeLocador || "Proprietário",
+            nomeLocatario: dados.nomeLocatario || "Locatário",
+            idLocador: dados.idLocador || "",
+            idLocatario: dados.idLocatario || "",
+            itemAcordo: dados.itemAcordo || "Produto",
+            periodoAcordo: dados.periodoAcordo || "",
+            ultimaMensagem: dados.ultimaMensagem || "",
+            naoLidas: dados.naoLidas || {},
+            arquivada: dados.arquivada ?? false,
+          } as Conversa;
+        })
+        .filter((c) => !c.arquivada);
       setConversas(lista);
 
       const idParam = params?.get("id");
@@ -155,7 +160,11 @@ function DashboardChatContent() {
           });
         }
 
-        if (dados.remetenteId !== usuarioLogadoId && dados.lida === false) {
+        if (
+          dados.remetenteId !== usuarioLogadoId &&
+          dados.tipo !== "sistema" &&
+          dados.lida === false
+        ) {
           const mRef = doc(
             dbFirebase,
             "conversas",
@@ -171,6 +180,7 @@ function DashboardChatContent() {
           id: snapshotDoc.id,
           texto: dados.texto,
           remetenteId: dados.remetenteId,
+          tipo: dados.tipo,
           timestamp: horaFormatada,
           lida: dados.lida,
         } as Mensagem;
@@ -303,7 +313,19 @@ function DashboardChatContent() {
                 Acordo: {conversaAtiva.itemAcordo}
               </p>
               {mensagens.map((m) => {
+                const ehSistema = m.tipo === "sistema";
                 const ehMinha = m.remetenteId === usuarioLogadoId;
+
+                if (ehSistema) {
+                  return (
+                    <div key={m.id} className="flex justify-center my-2">
+                      <span className="text-xs text-gray-400 italic bg-gray-50 border border-gray-100 rounded-full px-4 py-1.5 text-center max-w-[80%]">
+                        {m.texto}
+                      </span>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={m.id}
