@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,6 +59,7 @@ const schema = insertUserSchema
   .extend({
     confirmarSenha: z.string().min(0),
     numero: z.coerce.number(),
+    telefone: z.string().min(1),
   })
   .refine(
     (data) => {
@@ -86,15 +86,27 @@ function Label({
   );
 }
 
+function FieldError({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <p className="text-red-500 text-xs mt-1 ml-1">
+      Por favor, preencha todos os campos obrigatórios
+    </p>
+  );
+}
+
 export default function RegisterModal({
   isOpen,
   onClose,
   onLogin,
   onSuccess,
 }: RegisterModalProps) {
-  const [showRequiredError, setShowRequiredError] = useState(false);
-
-  const { handleSubmit, control, setValue } = useForm<FormType>({
+  const {
+    handleSubmit,
+    control,
+    setValue,
+    formState: { isSubmitted },
+  } = useForm<FormType>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
       uf: "DF",
@@ -104,12 +116,26 @@ export default function RegisterModal({
 
   if (!isOpen) return null;
 
-  function handleCepChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-    setValue(
-      "cep",
-      digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits,
-    );
+  function maskTelefone(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 11);
+    if (d.length > 10) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+    if (d.length > 6) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    if (d.length > 2) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length > 0) return `(${d}`;
+    return d;
+  }
+
+  function maskCpf(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 11);
+    if (d.length > 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+    if (d.length > 6) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    if (d.length > 3) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    return d;
+  }
+
+  function maskCep(value: string): string {
+    const d = value.replace(/\D/g, "").slice(0, 8);
+    return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
   }
 
   function handleNumeroChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -119,17 +145,18 @@ export default function RegisterModal({
   }
 
   const onFormSubmit = async (data: any) => {
-    setShowRequiredError(false);
     try {
-      await apiService.register(data);
+      const payload = {
+        ...data,
+        telefone: data.telefone.replace(/\D/g, ""),
+        cpf: data.cpf.replace(/\D/g, ""),
+        cep: data.cep.replace(/\D/g, ""),
+      };
+      await apiService.register(payload);
       onSuccess();
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const onInvalidSubmit = () => {
-    setShowRequiredError(true);
   };
 
   return (
@@ -152,7 +179,7 @@ export default function RegisterModal({
 
         <form
           className="flex flex-col gap-5"
-          onSubmit={handleSubmit(onFormSubmit, onInvalidSubmit)}
+          onSubmit={handleSubmit(onFormSubmit)}
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex flex-col gap-1">
@@ -160,8 +187,11 @@ export default function RegisterModal({
               <Controller
                 name="nome"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="Nome Completo" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Nome Completo" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -171,8 +201,15 @@ export default function RegisterModal({
               <Controller
                 name="telefone"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="Telefone" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="(xx) xxxxx-xxxx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskTelefone(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -182,8 +219,11 @@ export default function RegisterModal({
               <Controller
                 name="email"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="Email" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Email" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -193,8 +233,15 @@ export default function RegisterModal({
               <Controller
                 name="cpf"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="CPF" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="xxx.xxx.xxx-xx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskCpf(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -204,8 +251,11 @@ export default function RegisterModal({
               <Controller
                 name="senha"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="Senha" type="password" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Senha" type="password" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -216,12 +266,14 @@ export default function RegisterModal({
                 name="confirmarSenha"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <FormInput
-                    placeholder="Confirmar Senha"
-                    type="password"
-                    error={fieldState.error?.message}
-                    {...field}
-                  />
+                  <>
+                    <FormInput
+                      placeholder="Confirmar Senha"
+                      type="password"
+                      error={fieldState.error?.message}
+                      {...field}
+                    />
+                  </>
                 )}
               />
             </div>
@@ -235,15 +287,15 @@ export default function RegisterModal({
               <Controller
                 name="cep"
                 control={control}
-                render={({ field }) => (
-                  <FormInput
-                    placeholder="CEP"
-                    {...field}
-                    onChange={(e) => {
-                      handleCepChange(e);
-                      field.onChange(e);
-                    }}
-                  />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="xxxxx-xxx"
+                      {...field}
+                      onChange={(e) => field.onChange(maskCep(e.target.value))}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -264,8 +316,11 @@ export default function RegisterModal({
               <Controller
                 name="logradouro"
                 control={control}
-                render={({ field }) => (
-                  <FormInput placeholder="Logradouro" {...field} />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput placeholder="Logradouro" {...field} />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -275,20 +330,23 @@ export default function RegisterModal({
               <Controller
                 name="bairro"
                 control={control}
-                render={({ field }) => (
-                  <select
-                    {...field}
-                    className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
-                  >
-                    <option value="" disabled>
-                      Selecione o bairro
-                    </option>
-                    {BAIRROS_DF.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
+                render={({ field, fieldState }) => (
+                  <>
+                    <select
+                      {...field}
+                      className="col-span-2 border-2 rounded-xl px-5 py-3 text-lg outline-none text-gray-700 focus:border-gray-400 transition bg-white"
+                    >
+                      <option value="" disabled>
+                        Selecione o bairro
                       </option>
-                    ))}
-                  </select>
+                      {BAIRROS_DF.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -298,16 +356,19 @@ export default function RegisterModal({
               <Controller
                 name="numero"
                 control={control}
-                render={({ field }) => (
-                  <FormInput
-                    placeholder="Número"
-                    type="number"
-                    {...field}
-                    onChange={(e) => {
-                      handleNumeroChange(e);
-                      field.onChange(e);
-                    }}
-                  />
+                render={({ field, fieldState }) => (
+                  <>
+                    <FormInput
+                      placeholder="Número"
+                      type="number"
+                      {...field}
+                      onChange={(e) => {
+                        handleNumeroChange(e);
+                        field.onChange(e);
+                      }}
+                    />
+                    <FieldError show={!!fieldState.error && isSubmitted} />
+                  </>
                 )}
               />
             </div>
@@ -327,12 +388,6 @@ export default function RegisterModal({
               />
             </div>
           </div>
-
-          {showRequiredError && (
-            <p className="text-red-500 text-sm text-center font-medium">
-              Por favor, preencha todos os campos obrigatórios
-            </p>
-          )}
 
           <button className="bg-gray-300 hover:bg-gray-400 transition rounded-xl py-3 text-2xl font-semibold mt-2">
             Cadastrar-se
