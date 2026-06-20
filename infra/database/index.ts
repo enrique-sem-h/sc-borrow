@@ -6,11 +6,7 @@ import {
   fotoAnuncios,
   fotoRelations,
 } from "./schemas/anunciosSchema";
-import {
-  alugueis,
-  alugueisRelations,
-  usuarioRelations,
-} from "./schemas/alugueisSchema";
+import { alugueis, alugueisRelations } from "./schemas/alugueisSchema";
 
 import { usuariosRelations as usersRelations } from "./schemas/usuariosSchema";
 import { usuarios } from "./schemas/usuariosSchema";
@@ -38,7 +34,6 @@ export const db = drizzle(poolConnection, {
     fotoAnuncios,
     fotoRelations,
     alugueis,
-    usuarioRelations,
     alugueisRelations,
     usersRelations,
     historicoPagamentos,

@@ -51,6 +51,26 @@ class UserController extends BaseController {
       }
     });
   }
+
+  public getRep(req: NextAuthApiRequest, res: NextApiResponse) {
+    this.handleRequest(req, res, async () => {
+      try {
+        const userId = req.userId;
+
+        const result = await this.userService.getRep(userId);
+
+        return res.status(200).send({
+          data: result,
+        });
+      } catch (error) {
+        console.error(error);
+
+        return res.status(500).send({
+          error: "Error",
+        });
+      }
+    });
+  }
 }
 
 export default UserController;

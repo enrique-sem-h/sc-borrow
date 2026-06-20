@@ -75,6 +75,13 @@ class ApiService {
 
       return response.data;
     },
+    rep: async (): Promise<{
+      data: number;
+    }> => {
+      const response = await this.api.get("/users/rep");
+
+      return response.data;
+    },
   };
 
   public alugueis = {
@@ -241,10 +248,10 @@ class ApiService {
 
     getByAluguel: async (idAluguel: string, idUsuario: string) => {
       const response = await this.api.get(
-        `avaliacao/aluguel/${idAluguel}?idUsuario=${idUsuario}`,);
+        `avaliacao/aluguel/${idAluguel}?idUsuario=${idUsuario}`,
+      );
       return response.data;
-    }
-
+    },
   };
 }
 

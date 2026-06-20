@@ -54,7 +54,7 @@ class UserRepository {
       .where(eq(usuarios.id, id));
   }
 
-    static async updateReputacao(id: string, rep: number) {
+  static async updateReputacao(id: string, rep: number) {
     await db
       .update(usuarios)
       .set({

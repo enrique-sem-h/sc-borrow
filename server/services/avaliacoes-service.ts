@@ -55,3 +55,4 @@ class AvalicaoService {
 }
 
 export default AvalicaoService;
+

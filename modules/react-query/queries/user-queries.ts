@@ -27,3 +27,16 @@ export function useGetSaldo() {
 
   return query;
 }
+
+export function useGetRep() {
+  const { isAuth } = useAuth()!;
+  const query = useQuery({
+    queryKey: ["saldo"],
+    queryFn: apiService.users.rep,
+    enabled: isAuth,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  return query;
+}

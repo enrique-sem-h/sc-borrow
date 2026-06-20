@@ -7,6 +7,7 @@ import ProtectedRoute from "@/contexts/ProtectedRoute";
 import { alugueis } from "@/infra/database/schemas/alugueisSchema";
 import { useGetAlugueis } from "@/modules/react-query/queries/aluguel-queries";
 import { useGetAnuncios } from "@/modules/react-query/queries/anuncios-queries";
+import { useGetRep } from "@/modules/react-query/queries/user-queries";
 import {
   User,
   LayoutGrid,
@@ -48,6 +49,10 @@ const MenuItem = ({ icon, label, active, onClick, badge }: any) => (
 const DasboardLayout: React.FC<DasboardLayoutProps> = ({ children }) => {
   const alugueisQuery = useGetAlugueis("locatario");
   const anunciosQuery = useGetAnuncios();
+  const repQuery = useGetRep();
+
+  const rep = repQuery.data?.data || 0.0;
+
   const alugueis = alugueisQuery.data?.data;
   const anuncios = anunciosQuery.data?.data?.anuncios;
   const aluguelCount = alugueis?.length || 0;
@@ -125,7 +130,7 @@ const DasboardLayout: React.FC<DasboardLayoutProps> = ({ children }) => {
               </h2>
               <p className="text-gray-400 text-sm flex items-center gap-1 mt-1">
                 <span className="text-yellow-500">★</span>
-                {user?.rep ? user.rep.toFixed(1) : "0.0"}{" "}
+                {rep.toFixed(1)}{" "}
                 <span className="text-gray-300 font-light">(Reputação)</span>
               </p>
             </div>

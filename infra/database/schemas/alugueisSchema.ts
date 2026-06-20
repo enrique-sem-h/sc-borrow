@@ -1,9 +1,10 @@
 import { mysqlTable, varchar, timestamp, float } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
-import { usuarios } from "./usuariosSchema";
 import { anuncios } from "./anunciosSchema";
-import { InferSelectModel, relations } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import { historicoPagamentos } from "./historicoPagamentoSchema";
+import { usuarios } from "./usuariosSchema";
+import { avaliacoes } from "./avaliacoesSchema";
 
 export enum AluguelStatus {
   WAITING_FOR_PAYMANT,
@@ -49,13 +50,6 @@ export const alugueis = mysqlTable("alugueis", {
     .default("WAITING_FOR_CONFIRM")
     .notNull(),
 });
-
-export const usuarioRelations = relations(usuarios, (r) => ({
-  alugueisComoLocatario: r.many(alugueis, {
-    relationName: "alugueis_locatario",
-  }),
-  alugueisComoLocador: r.many(alugueis, { relationName: "alugueis_locador" }),
-}));
 
 export const alugueisRelations = relations(alugueis, (r) => ({
   locador: r.one(usuarios, {

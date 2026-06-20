@@ -11,6 +11,14 @@ class UserService {
     const saldo = user!.saldo;
     return saldo;
   }
+
+  public async getRep(userId: string) {
+    const user = await UserRepository.read(userId);
+    const rep = user!.rep;
+    console.log("Rep", rep);
+
+    return rep;
+  }
 }
 
 export default UserService;

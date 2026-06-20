@@ -10,7 +10,9 @@ import apiService from "@/services/api";
 
 const avaliacaoSchema = z.object({
   nota: z.number().min(1, { message: "Selecione pelo menos 1 estrela" }).max(5),
-  comentario: z.string().min(5, { message: "O comentário deve ter pelo menos 5 caracteres" }),
+  comentario: z
+    .string()
+    .min(5, { message: "O comentário deve ter pelo menos 5 caracteres" }),
 });
 
 type AvaliacaoFormValues = z.infer<typeof avaliacaoSchema>;
@@ -23,10 +25,22 @@ interface AvaliarModalProps {
   idAluguel: string;
 }
 
-export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAluguel, }: AvaliarModalProps) {
+export function AvaliarModal({
+  isOpen,
+  onClose,
+  itemNome,
+  periodoLocacao,
+  idAluguel,
+}: AvaliarModalProps) {
   const [sucesso, setSucesso] = useState(false);
   const { user } = useAuth();
-  const { handleSubmit, control, setValue, watch, formState: { errors } } = useForm<AvaliacaoFormValues>({
+  const {
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<AvaliacaoFormValues>({
     resolver: zodResolver(avaliacaoSchema),
     defaultValues: {
       nota: 0,
@@ -42,7 +56,7 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
     if (!user?.id || !idAluguel) {
       return;
     }
-    
+
     try {
       await apiService.avaliacoes.create({
         nota: data.nota,
@@ -52,26 +66,34 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
       });
 
       setSucesso(true);
-    } catch(error) {
+    } catch (error) {
       console.error(error);
       alert("Não foi possível enviar a avaliação.");
     }
-
   };
 
   if (sucesso) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
         <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl relative border border-gray-100 text-center">
-          <button 
-            onClick={() => { setSucesso(false); onClose(); }} 
+          <button
+            onClick={() => {
+              setSucesso(false);
+              onClose();
+            }}
             className="absolute top-4 right-4 text-gray-400 hover:text-black transition"
           >
             <X size={20} />
           </button>
-          <h1 className="text-2xl font-['Shrikhand'] tracking-tight mb-4">BORROW</h1>
-          <h2 className="text-3xl font-serif font-bold text-gray-900 mb-2">Obrigado!</h2>
-          <p className="text-gray-500 font-medium">Sua avaliação foi enviada com sucesso</p>
+          <h1 className="text-2xl font-['Shrikhand'] tracking-tight mb-4">
+            BORROW
+          </h1>
+          <h2 className="text-3xl font-serif font-bold text-gray-900 mb-2">
+            Obrigado!
+          </h2>
+          <p className="text-gray-500 font-medium">
+            Sua avaliação foi enviada com sucesso
+          </p>
         </div>
       </div>
     );
@@ -80,13 +102,17 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
       <div className="w-full max-w-sm bg-white rounded-[28px] p-8 shadow-2xl relative border border-gray-100">
-        
-        <h1 className="text-center text-2xl font-['Shrikhand'] tracking-tight mb-2">BORROW</h1>
+        <h1 className="text-center text-2xl font-['Shrikhand'] tracking-tight mb-2">
+          BORROW
+        </h1>
         <div className="border-b border-gray-100 mb-4" />
-        
-        <h2 className="text-xl font-serif font-bold text-center text-gray-900 mb-1">Avaliação</h2>
+
+        <h2 className="text-xl font-serif font-bold text-center text-gray-900 mb-1">
+          Avaliação
+        </h2>
         <p className="text-center text-xs text-gray-400 font-medium mb-6">
-          <span className="font-bold text-gray-700">{itemNome}</span> (Locação de {periodoLocacao})
+          <span className="font-bold text-gray-700">{itemNome}</span> (Locação
+          de {periodoLocacao})
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -100,23 +126,33 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
                     <button
                       key={estrela}
                       type="button"
-                      onClick={() => setValue("nota", estrela, { shouldValidate: true })}
+                      onClick={() =>
+                        setValue("nota", estrela, { shouldValidate: true })
+                      }
                       className="transition-transform hover:scale-110"
                     >
                       <Star
                         size={28}
-                        className={estrela <= notaAtual ? "fill-gray-900 text-gray-900" : "text-gray-300"}
+                        className={
+                          estrela <= notaAtual
+                            ? "fill-gray-900 text-gray-900"
+                            : "text-gray-300"
+                        }
                       />
                     </button>
                   ))}
                 </div>
               )}
             />
-            {errors.nota && <p className="text-red-500 text-xs mt-1">{errors.nota.message}</p>}
+            {errors.nota && (
+              <p className="text-red-500 text-xs mt-1">{errors.nota.message}</p>
+            )}
           </div>
 
           <div className="flex flex-col">
-            <label className="text-sm font-bold text-gray-800 mb-1.5 ml-1">Comentário:</label>
+            <label className="text-sm font-bold text-gray-800 mb-1.5 ml-1">
+              Comentário:
+            </label>
             <Controller
               name="comentario"
               control={control}
@@ -128,7 +164,11 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
                 />
               )}
             />
-            {errors.comentario && <p className="text-red-500 text-xs mt-1 ml-1">{errors.comentario.message}</p>}
+            {errors.comentario && (
+              <p className="text-red-500 text-xs mt-1 ml-1">
+                {errors.comentario.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 pt-2">
@@ -151,3 +191,4 @@ export function AvaliarModal({ isOpen, onClose, itemNome, periodoLocacao, idAlug
     </div>
   );
 }
+

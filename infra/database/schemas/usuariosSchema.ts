@@ -2,6 +2,8 @@ import { mysqlTable, int, varchar, float } from "drizzle-orm/mysql-core";
 import { randomUUID } from "node:crypto";
 import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
 import { anuncios } from "./anunciosSchema";
+import { historicoPagamentos } from "./historicoPagamentoSchema";
+import { alugueis } from "./alugueisSchema";
 
 export const usuarios = mysqlTable("usuarios", {
   id: varchar("id", { length: 36 })
@@ -25,6 +27,11 @@ export const usuarios = mysqlTable("usuarios", {
 export const usuariosRelations = relations(usuarios, ({ many }) => {
   return {
     anuncios: many(anuncios),
+    carteira: many(historicoPagamentos),
+    alugueisComoLocatario: many(alugueis, {
+      relationName: "alugueis_locatario",
+    }),
+    alugueisComoLocador: many(alugueis, { relationName: "alugueis_locador" }),
   };
 });
 

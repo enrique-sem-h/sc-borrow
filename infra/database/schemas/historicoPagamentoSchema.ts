@@ -1,10 +1,8 @@
 import { randomUUID } from "crypto";
 import { InferInsertModel, InferSelectModel, relations } from "drizzle-orm";
 import { mysqlTable, varchar, float } from "drizzle-orm/mysql-core";
-import { int } from "zod";
-import { anuncios } from "./anunciosSchema";
-import { usuarios } from "./usuariosSchema";
 import { alugueis } from "./alugueisSchema";
+import { usuarios } from "./usuariosSchema";
 
 export const historicoPagamentos = mysqlTable("historico_pagamentos", {
   id: varchar("id", { length: 36 })
